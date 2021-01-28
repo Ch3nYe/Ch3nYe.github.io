@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="网络安全 Android ML CTF">
+  <link rel="icon" href="/images/logo.png">
+  <title>Note《FIRMSCOPE Automatic Uncovering of Privilege-Escala Vulnerabilities in Pre-Installed Apps in Android Firmware》</title>
+  
+  
+  <meta property="og:title" content="Note《FIRMSCOPE Automatic Uncovering of Privilege-Escala Vulnerabilities in Pre-Installed Apps in Android Firmware》">
+  
+  
+  <meta property="og:url" content="https://ch3nye.top/Note-FIRMSCOPE-Automatic-Uncovering-of-Privilege-Escala/index.html">
+  
+  
+  <meta property="og:img" content="/images/logo.png">
+  
+  
+  <meta property="og:img" content="网络安全 Android ML CTF">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2021-01-15">
+  <meta property="og:article:modified_time" content="2021-01-15">
+  <meta property="og:article:author" content="Ch3nYe">
+  
+  
+  <meta property="og:article:tag" content="Android">
+  
+  <meta property="og:article:tag" content="论文">
+  
+  <meta property="og:article:tag" content="笔记">
+  
+  <meta property="og:article:tag" content="漏洞挖掘">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js" as="script">
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn-city.livere.com/js/embed.dist.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+  
+  
+  
+  <link href="/js/lib/prism/prism-tomorrow.min.css" rel="stylesheet" data-prism="prism-tomorrow">
+  
+  
+  
+<link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+
+  
+  
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/images/logo.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/links" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      Note《FIRMSCOPE Automatic Uncovering of Privilege-Escala Vulnerabilities in Pre-Installed Apps in Android Firmware》
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2021-01-14T16:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2021-01-15</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/论文阅读/" class="post-meta-link">论文阅读</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>2.2k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/Android/" class="post-meta-link">Android</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/论文/" class="post-meta-link">论文</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/笔记/" class="post-meta-link">笔记</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/漏洞挖掘/" class="post-meta-link">漏洞挖掘</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="firmscope-automatic-uncovering-of-privilege-escalation-vulnerabilities-in-pre-installed-apps-in-android-firmware"><a class="markdownIt-Anchor" href="#firmscope-automatic-uncovering-of-privilege-escalation-vulnerabilities-in-pre-installed-apps-in-android-firmware"></a> FIRMSCOPE: Automatic Uncovering of Privilege-Escalation Vulnerabilities in Pre-Installed Apps in Android Firmware</h1>
+<h2 id="主要解决什么问题"><a class="markdownIt-Anchor" href="#主要解决什么问题"></a> 主要解决什么问题</h2>
+<p>android 系统固件的预装软件中有很多app存在漏洞，而且这些app权限往往比较高，所以容易造成安全威胁。本文意在自动挖掘预装app中存在的权限提升漏洞。</p>
+<h2 id="使用的方法"><a class="markdownIt-Anchor" href="#使用的方法"></a> 使用的方法</h2>
+<p>系统架构，workflow：</p>
+<p><img src="/images/FIRMSCOPE0.png" alt="FIRMSCOPE0.png" / srcset="/images/LoadingImage.gif" data-src="/images/FIRMSCOPE0.png" class="lozad post-image"></p>
+<h3 id="1unpack-firmware"><a class="markdownIt-Anchor" href="#1unpack-firmware"></a> 1.unpack firmware</h3>
+<p>解压Android固件环节存在一个问题，各固件厂商的格式不一样。大部分厂商使用Android Sparse Image (SIMG) format 这种ext4格式的固件压缩方式，使用诸如e2tools这样的工具进行解压和挂载。但是，解压之后处理(unpack)就不是一致的了，有些厂商提供了第三方的unpack工具，比如华为的UApp格式，需要使用<a target="_blank" rel="noopener" href="https://github.com/superr/splituapp">Splituapp</a>进行unpack，HTC的RUU架构需要用HTC RUU DecryptTool，Sony 的.sin 架构需要用AnyXperia Dumper。一些厂商使用Sparse Data(SDAT)把image分块，分块文件可以使用Sdat2img重构回SIMG。<br />
+对于没有可用的解包工具的厂商固件，采用启发式的方法搜索一致的SIMG/ext4 头，尝试unpack。通常，镜像文件会被额外的头填充，只要剥离这些额外的头，就能得到标准镜像文件。</p>
+<p>同时，努力寻找镜像文件中的build.prop和default.prop文件，其中可能包含了build fingerprint，os version，build configuration，exact make and model等信息。</p>
+<p>另外，我找到一篇参考文章：<a target="_blank" rel="noopener" href="https://blog.csdn.net/XXOOYC/article/details/105796228">Android各厂商Rom包解压方式</a></p>
+<h3 id="2extracting-and-disassembling-apps"><a class="markdownIt-Anchor" href="#2extracting-and-disassembling-apps"></a> 2.Extracting and Disassembling Apps</h3>
+<p>从unpack的image文件中找出所有DEX,ODEX,VDEX,OAT,JAR, 和APK格式文件，关于这些格式的更多信息可以参考<a target="_blank" rel="noopener" href="https://source.android.com/devices/tech/dalvik/configure">here</a> , 因为预装app的格式各不相同，文中将将所有提取出的app转换成APK的规范格式。对于预编译的OAT app，结合Oat2Dex和Baksmali，并参考之前提取出的framework files，把嵌入到ODEX、VDEX、OAT文件中的DEX classes提取出来，这一步输出汇编的DEX classes 或反汇编的smali。</p>
+<p>把所有Dalvik bytecode反汇编成smali 代码，然后转换为中间表示IL（intermediate Language）Jasmin [35] and Jimple[36]，我们还反编译应用程序的二进制的XML manifest文件，并提取有关应用程序及其所有声明的组件的元数据。具体来说，我们提取应用程序包的名称和版本信息，使用和声明的权限，以及所有导出的组件的全名和类型，以及所有指定访问权限的导出组件。</p>
+<h3 id="3static-taint-analysis"><a class="markdownIt-Anchor" href="#3static-taint-analysis"></a> 3.Static Taint Analysis</h3>
+<p>它首先建立了过程间控制流图inter-procedural Control-Flow Graphs（ICFG）；然后，重建类层次结构并解析调用情况（第4.2.1节）；推断Def-Use链，并构建过程间数据流图inter-procedural Data-Flow Graph（IDFG）（第4.2.2节）；最后执行自定义的流敏感、上下文敏感、字段敏感和部分对象敏感的污点分析，以识别易受攻击的执行路径（第4.2.3节）。</p>
+<p>ICFG和IDFG的部分跳过，来重点看看污点分析部分：（这部分先硬翻译一下😥）</p>
+<p>根据先前IDFG架构，污点跟踪问题就转变为图遍历问题，从一个污点源到一个污点汇聚点或到多个污点汇聚点，污点源和汇聚点都是多重图中的节点。在遍历过程中，我们应用验证规则集去修剪不会到达敏感点的路径。这些上下文验证规则对于效率和精确度非常有影响，因为先前的方法在实作上在成了不必要的复杂度扩大。例如，由于无法大规模地使用call-site stack提供上下文敏感性，因为为每个call site创建stack在计算上是不可实现的 ，特别是涉及虚拟调用时，每个call site需要维护多个stack。此外，通过 字段 的流必须始终保持流敏感和上下文敏感，但是由于明显过度的开销以及跟踪和将所有这些副本链接复制到其读写整个app所在位置的复杂性，所以我们不能在每次访问该字段时就复制与该字段相应的所有节点。因此，最终，我们的分析 实现了上下文敏感，流敏感和字段敏感以及部分对象敏感：</p>
+<p><strong>Context-Sensitive：</strong></p>
+<p>我们通过将每个call指令与其自身的返回伪寄存器配对，并在污点跟踪期间保持一个调用栈覆盖在每个标记为污点路径的上方，来确保上下文敏感。</p>
+<p><strong>Flow- and Field-Sensitive：</strong></p>
+<p>我们的IDFG构造对流敏感，因为我们考虑了语句顺序并跟踪每个程序点的流。因为我们跟踪每个类字段的流，所以我们的构造也对字段敏感。</p>
+<p><strong>Partially-Insensitive：</strong></p>
+<p>确保类型兼容性使我们的分析对同级和不相关类敏感，对对象敏感，对单定义方法不敏感，对子对象和其祖先之一具有定义的虚拟方法不敏感。</p>
+<p><strong>Path-Insensitive：</strong></p>
+<p>FIRMSCOPE对路径不敏感，因为它虽然根据控制流图流动信息，但信息流动与不相关的条件分支之间可能存在的条件依赖性无关。路径敏感性是一个已知的难题，在实践中没有绝对解决方案[39]。</p>
+<p><strong>Detection Rules</strong></p>
+<p>我们开发了一套规则引擎，用YAML文件写探测规则。具体来说，我们实施了规则和插件来检测以下提权漏洞：</p>
+<p>(i) command injection;</p>
+<p>(ii) arbitrary app installation/removal;</p>
+<p>(iii) code injection;</p>
+<p>(iv) factory reset of the device;</p>
+<p>(v) SMS injection, including accessing, sending, and manipulating text messages;</p>
+<p>(vi) device recording, including audio, video, and screen recording;</p>
+<p>(vii) log leakage to external storage or to other apps;</p>
+<p>(viii) AT Command injection;</p>
+<p>(ix) wireless settings modification;</p>
+<p>(x) system settings modification.</p>
+<h2 id="结果评估"><a class="markdownIt-Anchor" href="#结果评估"></a> 结果评估</h2>
+<p>我们收集了从v4.0到v9.0的2,017个公开可用的Android固件映像（请参阅附录A以获得详细信息），总共涵盖了100多家Android供应商，其中包括全球排名前20的Android供应商。固件映像包含331,342个应用程序，具有15,144个唯一的软件包名称和39,541个唯一的软件包版本。该数据库的详细信息如表1所示。</p>
+<p><img src="/images/FIRMSCOPE1.png" alt="FIRMSCOPE1.png" / srcset="/images/LoadingImage.gif" data-src="/images/FIRMSCOPE1.png" class="lozad post-image"></p>
+<p>我们在三台服务器上部署了FIRMSCOPE，每台服务器在Intel Xeon E5-2630 v4 2.20GHz上运行64位Ubuntu 18.04，具有40个逻辑核心和150 GiB的RAM。我们使用GNU Parallel [41]实现了一个流水线来管理作业并在三个服务器上分配固件映像，并尽可能并行地分析多个应用程序，以保持最大80％的服务器负载而无内存交换。我们全面分析了每个固件映像，无论其某些应用程序是否可能出现在其他分析映像中。</p>
+<p>表2是研究结果摘要。我们发现了850个独特的特权升级漏洞（共3,483个），占分析固件的77％。命令注入漏洞排在最前面，影响了三分之一以上的固件映像。</p>
+<p><img src="/images/FIRMSCOPE2.png" alt="FIRMSCOPE2.png" / srcset="/images/LoadingImage.gif" data-src="/images/FIRMSCOPE2.png" class="lozad post-image"></p>
+<p>我们按弱点类别按供应商提供细分：</p>
+<p><img src="/images/FIRMSCOPE3.png" alt="FIRMSCOPE3.png" / srcset="/images/LoadingImage.gif" data-src="/images/FIRMSCOPE3.png" class="lozad post-image"></p>
+<p>总结：表4中显示了AOSP与供应商应用程序中已识别的漏洞的总数。大约92％的漏洞是由供应商引入的应用程序（375个唯一的软件包名称）中，而AOSP中只有8％的漏洞（18个唯一的AOSP软件包名称）。<strong>这些结果说明，类AOSP的镜像比供应商定制的镜像更安全。供应商的修改通常会带来无法预料的漏洞</strong>。</p>
+<p><img src="/images/FIRMSCOPE4.png" alt="FIRMSCOPE4.png" / srcset="/images/LoadingImage.gif" data-src="/images/FIRMSCOPE4.png" class="lozad post-image"></p>
+<h2 id="对我有什么启发"><a class="markdownIt-Anchor" href="#对我有什么启发"></a> 对我有什么启发</h2>
+<p>这文章对我这个初学者来说有几方面的意义：</p>
+<ul>
+<li>更深入的接触到android 系统镜像</li>
+<li>对android run time(art), aot(ahead of time), oat(Ahead of time)file format, odex(Optimized Dalvik Executable file)的理解加深</li>
+<li>初次接触到taint analysis（污点分析技术）</li>
+<li>CFG、DFG的构建是以后要学习的内容</li>
+</ul>
+<h2 id="这项研究的未来方向"><a class="markdownIt-Anchor" href="#这项研究的未来方向"></a> 这项研究的未来方向</h2>
+<p>其实我感觉它没有用很新的知识，就是把APP漏洞检测转到预装APP上做，多了一个拆包的过程，研究了一下AOSP-like的系统镜像和OEM厂商镜像中提权漏洞的类型和分布，并没有太多的创新点。</p>
+<p>文中构建的FIRMSCOPE系统使用静态检测技术，涉及的主要技术点包括过程间CFG、过程间DFG的构建，污点分析技术。</p>
+<p>未来，对于漏洞检测技术或许可以增加fuzzing、动态符号执行（Concoli）等动态分析技术。</p>
+<blockquote>
+<p>ref:<a target="_blank" rel="noopener" href="https://www.usenix.org/conference/usenixsecurity20/presentation/elsabagh">https://www.usenix.org/conference/usenixsecurity20/presentation/elsabagh</a></p>
+</blockquote>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-info copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/about">Ch3nYe</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/Note-FIRMSCOPE-Automatic-Uncovering-of-Privilege-Escala/">https://ch3nye.top/Note-FIRMSCOPE-Automatic-Uncovering-of-Privilege-Escala/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/ELMO-BERT-GPT/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一篇</div>
+        
+        <div class="nav-title">ELMO, BERT, GPT </div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+  <div class="nav-item-next">
+    <a href="/Android流量抓包环境配置/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">Android流量抓包环境配置 </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="lv-container" data-id="city" data-uid="MTAyMC80NjQ0Ny8yMjk1OA==">
+    <script>
+      (function (d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') {
+          return;
+        }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.defer = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  </div>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#firmscope-automatic-uncovering-of-privilege-escalation-vulnerabilities-in-pre-installed-apps-in-android-firmware"><span class="toc-text"> FIRMSCOPE: Automatic Uncovering of Privilege-Escalation Vulnerabilities in Pre-Installed Apps in Android Firmware</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="toc-text"> 主要解决什么问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%9A%84%E6%96%B9%E6%B3%95"><span class="toc-text"> 使用的方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1unpack-firmware"><span class="toc-text"> 1.unpack firmware</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2extracting-and-disassembling-apps"><span class="toc-text"> 2.Extracting and Disassembling Apps</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3static-taint-analysis"><span class="toc-text"> 3.Static Taint Analysis</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C%E8%AF%84%E4%BC%B0"><span class="toc-text"> 结果评估</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%B9%E6%88%91%E6%9C%89%E4%BB%80%E4%B9%88%E5%90%AF%E5%8F%91"><span class="toc-text"> 对我有什么启发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%99%E9%A1%B9%E7%A0%94%E7%A9%B6%E7%9A%84%E6%9C%AA%E6%9D%A5%E6%96%B9%E5%90%91"><span class="toc-text"> 这项研究的未来方向</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/images/logo.png" class="author-img">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>20</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>4</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>19</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:sud0su@163.com">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#firmscope-automatic-uncovering-of-privilege-escalation-vulnerabilities-in-pre-installed-apps-in-android-firmware"><span class="toc-text"> FIRMSCOPE: Automatic Uncovering of Privilege-Escalation Vulnerabilities in Pre-Installed Apps in Android Firmware</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="toc-text"> 主要解决什么问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%9A%84%E6%96%B9%E6%B3%95"><span class="toc-text"> 使用的方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1unpack-firmware"><span class="toc-text"> 1.unpack firmware</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2extracting-and-disassembling-apps"><span class="toc-text"> 2.Extracting and Disassembling Apps</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3static-taint-analysis"><span class="toc-text"> 3.Static Taint Analysis</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C%E8%AF%84%E4%BC%B0"><span class="toc-text"> 结果评估</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%B9%E6%88%91%E6%9C%89%E4%BB%80%E4%B9%88%E5%90%AF%E5%8F%91"><span class="toc-text"> 对我有什么启发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%99%E9%A1%B9%E7%A0%94%E7%A9%B6%E7%9A%84%E6%9C%AA%E6%9D%A5%E6%96%B9%E5%90%91"><span class="toc-text"> 这项研究的未来方向</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/备忘">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/李宏毅机器学习笔记">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">14</span>
+        </div>
+      </a>
+    
+      <a href="/categories/论文阅读">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/笔记">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
+    
+    <a href="\tags\note" title="note"><div class="tags-list-item">note</div></a>
+    
+    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
+    
+    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="\tags\学习" title="学习"><div class="tags-list-item">学习</div></a>
+    
+    <a href="\tags\总结" title="总结"><div class="tags-list-item">总结</div></a>
+    
+    <a href="\tags\笔记" title="笔记"><div class="tags-list-item">笔记</div></a>
+    
+    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
+    
+    <a href="\tags\污点分析" title="污点分析"><div class="tags-list-item">污点分析</div></a>
+    
+    <a href="\tags\比特币" title="比特币"><div class="tags-list-item">比特币</div></a>
+    
+    <a href="\tags\区块链" title="区块链"><div class="tags-list-item">区块链</div></a>
+    
+    <a href="\tags\符号执行" title="符号执行"><div class="tags-list-item">符号执行</div></a>
+    
+    <a href="\tags\Adversarial-Attack" title="Adversarial-Attack"><div class="tags-list-item">Adversarial-Attack</div></a>
+    
+    <a href="\tags\漏洞挖掘" title="漏洞挖掘"><div class="tags-list-item">漏洞挖掘</div></a>
+    
+    <a href="\tags\System-Service" title="System-Service"><div class="tags-list-item">System-Service</div></a>
+    
+    <a href="\tags\Fuzzing" title="Fuzzing"><div class="tags-list-item">Fuzzing</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#firmscope-automatic-uncovering-of-privilege-escalation-vulnerabilities-in-pre-installed-apps-in-android-firmware"><span class="toc-text"> FIRMSCOPE: Automatic Uncovering of Privilege-Escalation Vulnerabilities in Pre-Installed Apps in Android Firmware</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="toc-text"> 主要解决什么问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%9A%84%E6%96%B9%E6%B3%95"><span class="toc-text"> 使用的方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1unpack-firmware"><span class="toc-text"> 1.unpack firmware</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2extracting-and-disassembling-apps"><span class="toc-text"> 2.Extracting and Disassembling Apps</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3static-taint-analysis"><span class="toc-text"> 3.Static Taint Analysis</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C%E8%AF%84%E4%BC%B0"><span class="toc-text"> 结果评估</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%B9%E6%88%91%E6%9C%89%E4%BB%80%E4%B9%88%E5%90%AF%E5%8F%91"><span class="toc-text"> 对我有什么启发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%99%E9%A1%B9%E7%A0%94%E7%A9%B6%E7%9A%84%E6%9C%AA%E6%9D%A5%E6%96%B9%E5%90%91"><span class="toc-text"> 这项研究的未来方向</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-20</div>
+        <a href="/Note-FANS-Fuzzing-Android-Native-System-Services/"><div class="recent-posts-item-content">Note《FANS Fuzzing Android Native System Services via Automated Interface Analysis》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-16</div>
+        <a href="/ELMO-BERT-GPT/"><div class="recent-posts-item-content">ELMO, BERT, GPT</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-15</div>
+        <a href="/Note-FIRMSCOPE-Automatic-Uncovering-of-Privilege-Escala/"><div class="recent-posts-item-content">Note《FIRMSCOPE Automatic Uncovering of Privilege-Escala Vulnerabilities in Pre-Installed Apps in Android Firmware》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-14</div>
+        <a href="/Android流量抓包环境配置/"><div class="recent-posts-item-content">Android流量抓包环境配置</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2021
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">ch3nye's blog </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('data-fslightbox', 'gallery');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+    }
+    refreshFsLightbox();
+  }
+</script>
+<script>loadScript("//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-WHGL11014T');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "G-WHGL11014T", googleAnalytics)</script>
+  
+</body>
+
+</html>

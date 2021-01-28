@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="网络安全 Android ML CTF">
+  <link rel="icon" href="/images/logo.png">
+  <title>Network Compression</title>
+  
+  
+  <meta property="og:title" content="Network Compression">
+  
+  
+  <meta property="og:url" content="https://ch3nye.top/Network-Compression/index.html">
+  
+  
+  <meta property="og:img" content="/images/logo.png">
+  
+  
+  <meta property="og:img" content="网络安全 Android ML CTF">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2020-12-16">
+  <meta property="og:article:modified_time" content="2020-12-16">
+  <meta property="og:article:author" content="Ch3nYe">
+  
+  
+  <meta property="og:article:tag" content="ML">
+  
+  <meta property="og:article:tag" content="note">
+  
+  <meta property="og:article:tag" content="Next-Step-of-ML">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js" as="script">
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn-city.livere.com/js/embed.dist.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+  
+  
+  
+  <link href="/js/lib/prism/prism-tomorrow.min.css" rel="stylesheet" data-prism="prism-tomorrow">
+  
+  
+  
+<link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+
+  
+  
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/images/logo.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/links" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      Network Compression
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2020-12-15T16:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2020-12-16</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/李宏毅机器学习笔记/" class="post-meta-link">李宏毅机器学习笔记</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>4.2k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/ML/" class="post-meta-link">ML</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/note/" class="post-meta-link">note</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Next-Step-of-ML/" class="post-meta-link">Next-Step-of-ML</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="network-compression"><a class="markdownIt-Anchor" href="#network-compression"></a> Network Compression</h1>
+<p>做网络压缩的原因是这样：我们未来希望把network 放到很多的设备上使用，这些设备上存储空间有限，计算能力有限，所以我们希望能把网络做压缩，而尽可能小的损失其准确度，以适应这些设备。</p>
+<p><img src="/images/image-20201215183624702.png" alt="image-20201215183624702" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201215183624702.png" class="lozad post-image"></p>
+<h2 id="outline"><a class="markdownIt-Anchor" href="#outline"></a> Outline</h2>
+<p>先列一下本节的大纲：</p>
+<ul>
+<li>
+<p>Network Pruning</p>
+</li>
+<li>
+<p>Knowledge Distillation</p>
+</li>
+<li>
+<p>Parameter Quantization</p>
+</li>
+<li>
+<p>Architecture Design</p>
+</li>
+<li>
+<p>Dynamic Computation</p>
+</li>
+</ul>
+<p>另外，我们不会讨论硬件加速和优化相关的内容。</p>
+<h2 id="network-pruning"><a class="markdownIt-Anchor" href="#network-pruning"></a> Network Pruning</h2>
+<p>Network Pruning（网络修剪）就是把一个大的network 把一些neuron 去掉，以达到network compression 的目的。我们之所以能做到这件事，是因为我们相信我们通常训练出来的神经网络是over-parameterized，也就是说网络中的很多参数是没有用的。就是我们不需要那么多参数就能解出当前的问题，但是我们给了网络过多的参数。如果你去分析训出来的network 中的参数，你会发现很多的neuron 的output 总是0，有些weight 是非常接近0的，这些参数是没有作用的。我们就把这些没用的东西剪掉。</p>
+<p>这个概念是非常古老的，在90s就已经有了这样的想法：</p>
+<p><img src="/images/image-20201215190444564.png" alt="image-20201215190444564" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201215190444564.png" class="lozad post-image"></p>
+<p><img src="/images/image-20201215190413673.png" alt="image-20201215190413673" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201215190413673.png" class="lozad post-image"></p>
+<p>Optimal Brain Damage 意思是最优脑损伤，你可以在直觉上的这样考虑，机器做Network Pruning 就好像人类的大脑发育中的一个现象：如上图所示人类在出生时候脑中神经连接是比较少的在发育的过程中经历了增加又<strong>减少</strong>的过程。</p>
+<h3 id="weightneuron-pruning"><a class="markdownIt-Anchor" href="#weightneuron-pruning"></a> weight/neuron pruning</h3>
+<p><img src="/images/image-20201215195101562.png" alt="image-20201215195101562" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201215195101562.png" class="lozad post-image"></p>
+<p>做weight pruning 的过程如上图所示，我们先要有一个训练好的network ，然后评估每个参数（neuron或weight）的重要性。那怎么评估参数重要性呢，已经有很多的评估方法被提出来了。举例来说，对于weight 的重要性我们可以之间看他的数值大小，如果他的值很接近零就可能是不重要的weight，如果它的绝对值很大就可能是重要的参数，所以你可以通过计算weight的L1，L2的数值来看它是不是重要的；对于neuron 的重要性，你给network 一批数据，如果这个neuron 的输出几乎都是零的话，这个neuron 就可能是不重要的。</p>
+<p>接下来，你就根据重要新排序weight 或者neuron 然后去除不重要的，你就做好的裁剪的动作。然后，你要做一次fine-tune，去修补你做裁剪的时候损失的准确度，也就是说要修补你做裁剪对模型造成的损伤。接着，你就看看当前这个模型的大小和准确度你是不是满意，如果满意的话网络压缩就结束，否则你就回去步骤二重新评估重要性，以此类推。</p>
+<p>这里有个一点需要注意，通常来说你在每次prune 的时候都是裁剪掉一点点，这样迭代多次，而不要一次prune 太多以至于造成没办法修补的损伤。</p>
+<p>关于network pruning 的做法就介绍到这里，接下来我考虑一个问题：</p>
+<h3 id="why-pruning"><a class="markdownIt-Anchor" href="#why-pruning"></a> Why Pruning?</h3>
+<p>我们为什么要做network pruning ，我是说我们为什么不直接train 一个更小的网络？</p>
+<ul>
+<li>
+<p>小的神经网络比较难训</p>
+</li>
+<li>
+<p>大的神经网络更容易优化？ <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=_VuWvQUMQVk">https://www.youtube.com/watch?v=_VuWvQUMQVk</a></p>
+</li>
+<li>
+<p>Lottery Ticket Hypothesis（大乐透假设）</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1803.03635">https://arxiv.org/abs/1803.03635</a></li>
+</ul>
+</li>
+</ul>
+<p>第一点没什么好说的，众所周知小的神经网络比较难训。</p>
+<p>大的神经网络更容易优化，原因就是大的神经网络比较不容易卡在local minima、saddle point 这些点上。这也许就是为什么小的network 比较难train 的原因。所以说，我们通常选择train 好一个大的network 再做pruning 。</p>
+<p>关于大乐透假设，我们来解释一下：</p>
+<h4 id="lottery-ticket-hypothesis"><a class="markdownIt-Anchor" href="#lottery-ticket-hypothesis"></a> Lottery Ticket Hypothesis</h4>
+<p><img src="/images/image-20201215203409021.png" alt="image-20201215203409021" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201215203409021.png" class="lozad post-image"></p>
+<p>如上图所示，我们将train 好的一个大network 进行pruning 得到一个小的network 如右上角所示，我们随机初始化这个小网络的参数，重新训练这个小的网络，发现train 不起来。我们再把上述紫色的pruned 的network 设为最初始的参数，重新训练小网络，发现train 起来了。</p>
+<p>根据这个现象，作者提出了大乐透假说，就是说train network 就像买乐透一样，不同的random initialized parameters 得到不同的初始神经网络，有的train 得起来有的则不行。一个巨大的network 是由很多小的network 组成，这些小的network 就有的能train 起来有的不行，而大的network 中只要有一个小的network 能train 起来，整个大的network 就train 起来。所以你可以直觉上这样想，大的network 就相当于你一次买了很多乐透，增加中奖几率。然后你再把大的network 做pruning 找出那个能train 起来的小的network ，这个小的network 最开始初始的参数是能使它被train 起来的，所以我们看到了上图所述的现象。</p>
+<p>下面是一个与上述对立的看法。</p>
+<h4 id="rethinking-the-value-of-network-pruning"><a class="markdownIt-Anchor" href="#rethinking-the-value-of-network-pruning"></a> Rethinking the Value of Network Pruning</h4>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1810.05270">https://arxiv.org/abs/1810.05270</a></p>
+</blockquote>
+<p>这篇文章主要就是讲小的network 也是train 的起来的。</p>
+<p><img src="/images/image-20201216094741677.png" alt="image-20201216094741677" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216094741677.png" class="lozad post-image"></p>
+<p>这个文章的实验中的随机初始化参数就是真的随机初始化参数，而不是从原始模型的初始化参数copy 过来。</p>
+<p>上图是实验结果，我们可以对比Unpruned 和Fine-tuned 两列，似乎就是pruned network 也是train 的起来的。</p>
+<p>所以说，上述这两篇paper 的结论就是矛盾对立的，两篇文章都是发表在ICLR ，且是open review 的，网络上有reviewer 问到两篇paper 的对立观点，他们的作者也都对此做了一些解释，有兴趣可以自行搜索。</p>
+<h3 id="network-pruning-practical-issue"><a class="markdownIt-Anchor" href="#network-pruning-practical-issue"></a> Network Pruning-Practical Issue</h3>
+<p>Network Pruning 有一些实作上的问题是我们需要注意的，我们上面说你可以衡量weight 或者neuron 的重要性，然后prune 掉不重要的，那weight 和neuron 两者prune哪个比较好呢。</p>
+<p>如果我们prune weight：</p>
+<p><img src="/images/image-20201216100228211.png" alt="image-20201216100228211" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216100228211.png" class="lozad post-image"></p>
+<p>你prune 掉不重要的weight 后，你得到的网络架构是不规则的，所谓不规则是说，在同一层中有的neuron 吃两个input 有的吃四个input，这样的网络的算法程序你比较难实现，就算你真的实现了这种算法，你也不好用GPU 加速矩阵运算。</p>
+<p>所以实作上你做weight pruning 的话你就会把weight 设零，而不是拿掉weight，但是这么做你并没有实际上丢掉weight，模型的大小是没有变的，所以这不能达到我们的network compression 的目的。</p>
+<p><img src="/images/image-20201216100654365.png" alt="image-20201216100654365" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216100654365.png" class="lozad post-image"></p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1608.03665.pdf">https://arxiv.org/pdf/1608.03665.pdf</a></p>
+</blockquote>
+<p>紫色线是我们prune 的量，几乎都在95%以上。我们可以看到prune 以后，集中模型的速度大部分都是有所下降的。所以得不偿失，你以为prune 以后会更快，但实际上变得更慢了。</p>
+<p>所以说prune neuron 是比较好实作也比较好加速的：</p>
+<p><img src="/images/image-20201216101700269.png" alt="image-20201216101700269" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216101700269.png" class="lozad post-image"></p>
+<h2 id="knowledge-distillation"><a class="markdownIt-Anchor" href="#knowledge-distillation"></a> Knowledge Distillation</h2>
+<p><img src="/images/image-20201216101758182.png" alt="image-20201216101758182" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216101758182.png" class="lozad post-image"></p>
+<blockquote>
+<p>Knowledge Distillation</p>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1503.02531.pdf">https://arxiv.org/pdf/1503.02531.pdf</a></p>
+<p>Do Deep Nets Really Need to be Deep?</p>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1312.6184.pdf">https://arxiv.org/pdf/1312.6184.pdf</a></p>
+</blockquote>
+<p>如上图所示，Knowledge Distillation 就是用一个小的network 去学习大的network 的行为。我们不是较Student Net 正确的结果是什么，而是告诉他当前输入可能是什么，举例来说，当输入是图片1的时候，Student Net 去学习Teacher Net 的输出，它会学到当前图片有0.7的可能性是1，有0.2的可能性是7，有0.1的可能性是9。在这个过程中，Student Net 不仅会学习到当前输入的图片可能是什么，它还会学习到1和7和9是相似的，所以这样的学习方式是可以学习到更丰富的信息的。所以，有可能即使Student Net 没见过图片7，它只见过图片1和9，但是这么学完以后它是可以触类旁通的认出7的。</p>
+<p><img src="/images/image-20201216103256529.png" alt="image-20201216103256529" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216103256529.png" class="lozad post-image"></p>
+<p>Knowledge Distillation 的一个用处是用一个小的Student Net 模拟一个巨大的ensemble 的Teacher Net 。通常来说ensemble 的方法可以让你的模型的准确度更上一层楼，但是这么做是牺牲了算力和空间的，此时我们就可以用Knowledge Distillation 的方法，用一个小的network 模拟大的ensemble network 达到相近的准确度。</p>
+<h3 id="temperature"><a class="markdownIt-Anchor" href="#temperature"></a> Temperature</h3>
+<p>在Knowledge Distillation 的实作上有一个技巧叫做Temperature：</p>
+<p><img src="/images/image-20201216103546093.png" alt="image-20201216103546093" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216103546093.png" class="lozad post-image"></p>
+<p>Temperature 就是如上图所示，我们在做classification 的network 的最后会有一个softmax layer ，softmax layer 就是会把network output的值取Exponential 然后做一个normalize。我们通常会在做softmax 之前对network 的output 做除上temperature 的动作，temperature 通常是一个大于1的值。</p>
+<p>为什么这样做呢，我们举个例子。首先，我们知道Knowledge Distillation 之所以会有用是因为大的network 的输出是可能性，而不是one-hot 的向量，如果是后者那就失去了不同class 之间的相似性信息，所以为了让不同的label 之间的分数拉近一点，我们就除上temperature。本来的x通过softmax layer 得到的y的后两个维度都接近0，而x除上temperature 后通过softmax layer 得到的y的各个维度之间的分数就被拉近了。</p>
+<p>但是，在实际上Knowledge Distillation 没有特别有用。🤣</p>
+<h2 id="parameter-quantization"><a class="markdownIt-Anchor" href="#parameter-quantization"></a> Parameter Quantization</h2>
+<p>参数量化，这一节将在参数上做一点文章。</p>
+<ol>
+<li>Using less bits to represent a value</li>
+</ol>
+<p>这没什么好说的，就是去掉一些参数的精度，来换取存储空间的下降。</p>
+<ol start="2">
+<li>Weight clustering</li>
+</ol>
+<p><img src="/images/image-20201216104758315.png" alt="image-20201216104758315" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216104758315.png" class="lozad post-image"></p>
+<p>如上图所示，Weight clustering 就是将相近的参数聚簇，然后用一个映射表来存储，以降低参数占用的内存空间。一个cluster 中的参数可以取均值作为这个cluster 的值。这样做你也是会损失一些进度，但是换来了很好的模型压缩率。</p>
+<ol start="3">
+<li>Represent frequent clusters by less bits, represent rare clusters by more bits</li>
+</ol>
+<p>更进一步，你就可以把常见的clusters 用比较短的coding 表示，比较罕见的clusters 用比较长的coding 表示，以进一步提高模型压缩率。比如使用哈夫曼编码。</p>
+<h3 id="binary-weights"><a class="markdownIt-Anchor" href="#binary-weights"></a> Binary Weights</h3>
+<p>Parameter Quantization 这种思想和方法的极致就是你可不可以只用±1来表示一个weight。其实文献上有一些尝试是可以直接train binary  weight 的network，最早的一篇paper 就是下面这个Binary Connect 。</p>
+<p><img src="/images/image-20201216105206155.png" alt="image-20201216105206155" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216105206155.png" class="lozad post-image"></p>
+<blockquote>
+<p>Binary Connect: <a target="_blank" rel="noopener" href="https://arxiv.org/abs/1511.00363">https://arxiv.org/abs/1511.00363</a></p>
+<p>Binary Network:</p>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1602.02830">https://arxiv.org/abs/1602.02830</a></p>
+<p>XNOR-net:</p>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1603.05279">https://arxiv.org/abs/1603.05279</a></p>
+</blockquote>
+<p>Binary Weights 的精神就是你的参数是二元化的用±1来表示。上图灰色的点代表参数空间，每一个点都可以看作是一个binary weight 的network，这个network 中所有参数都是二元化的都是+1或者-1。</p>
+<p>然后你就初始一组参数，这组参数可以是real value 的，你就现根据当前network 的参数找一个最接近的binary weight 的network 去计算gradient ，根据这个gradient 更新当前network 的参数，然后再去根据更新后的network 找一个最接近的binary weight 的network 去计算gradient ，根据这个gradient 更新当前network 的参数，以此类推。</p>
+<p>这个Binary Connect 根据文献上的结果看起来还不错：</p>
+<p><img src="/images/image-20201216105935627.png" alt="image-20201216105935627" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216105935627.png" class="lozad post-image"></p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1511.00363">https://arxiv.org/abs/1511.00363</a></p>
+</blockquote>
+<p>从上面来看，Binary Connect 居然还比原来的network 的结果还要好，为什么呢？你可以这样想，Binary Connect 可以看作在做regularization ，它限制参数的值只能是±1。只是这个方法还是没有做Dropout 更好就是了。</p>
+<h2 id="architecture-design"><a class="markdownIt-Anchor" href="#architecture-design"></a> Architecture Design</h2>
+<p>调整network 的架构设计让它变得只需要较少的参数，以实现network compression 。这也许是现在实作上最有效的做法。</p>
+<p>先来看看fully connected network ：</p>
+<h3 id="fully-connected-network"><a class="markdownIt-Anchor" href="#fully-connected-network"></a> Fully Connected Network</h3>
+<h4 id="low-rank-approximation"><a class="markdownIt-Anchor" href="#low-rank-approximation"></a> Low rank approximation</h4>
+<p><img src="/images/image-20201216121231803.png" alt="image-20201216121231803" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216121231803.png" class="lozad post-image"></p>
+<p>如上图左上角，我们有一个network ，其中M、N两层中间有参数W，这两层分别各有M、N个neuron，然后我们在这两层中间加一个neuron比较少的linear hidden layer K，你仔细想想看，这样做参数其实是变少了。</p>
+<p>原先有<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>M</mi><mo>×</mo><mi>N</mi></mrow><annotation encoding="application/x-tex">M\times N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.76666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">M</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span></span></span></span>那么多参数，然后变成<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>M</mi><mo>×</mo><mi>K</mi><mo>+</mo><mi>K</mi><mo>×</mo><mi>N</mi></mrow><annotation encoding="application/x-tex">M\times K+K\times N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.76666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">M</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.76666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault" style="margin-right:0.07153em;">K</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.76666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault" style="margin-right:0.07153em;">K</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span></span></span></span> 个参数。如果我们调控好K的值，就可以做到减少参数的效果。</p>
+<p>但是这个trick 会对network 有一定的限制，这也是不可避免的。</p>
+<h3 id="cnn-network-compression"><a class="markdownIt-Anchor" href="#cnn-network-compression"></a> CNN-network compression</h3>
+<h4 id="review-standard-cnn"><a class="markdownIt-Anchor" href="#review-standard-cnn"></a> Review: Standard CNN</h4>
+<p><img src="/images/image-20201216122025893.png" alt="image-20201216122025893" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216122025893.png" class="lozad post-image"></p>
+<p>如果我们的input 有两个channel ，我们的filter 就要对应有两个，如上图中间所示，我们通常有多个filter 比如4个的话，这样我们得到的output 就是四个，如图右边所示。所以这个CNN 的filter 的参数个数是72个，后面我们要做network compression 看看能从72减少到多少。</p>
+<h4 id="depthwise-separable-convolution"><a class="markdownIt-Anchor" href="#depthwise-separable-convolution"></a> Depthwise Separable Convolution</h4>
+<p><img src="/images/image-20201216122507677.png" alt="image-20201216122507677" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216122507677.png" class="lozad post-image"></p>
+<p>Depthwise Separable Convolution 是把convolution拆成两个步骤：</p>
+<ol>
+<li>step1 <strong>Depthwise Convolution</strong></li>
+</ol>
+<ul>
+<li>filter 数量=输出的channel</li>
+<li>每个filter 都只处理一个channel</li>
+<li>filter 是k*k 的矩阵</li>
+<li>不同的channel 之间互相没有影响的</li>
+</ul>
+<p>这样每个filter 就不再考虑其他channel ，卷积得到输出是两层</p>
+<p><img src="/images/image-20201216123027416.png" alt="image-20201216123027416" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216123027416.png" class="lozad post-image"></p>
+<ol start="2">
+<li>step2 <strong>Pointwise Convolution</strong></li>
+</ol>
+<p><img src="/images/image-20201216123059747.png" alt="image-20201216123059747" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216123059747.png" class="lozad post-image"></p>
+<p>第二步骤，是说每个filter 都只用一个value ，用这样的filter 去处理第一步得到的两层输出，这一步的输出就和经典的CNN 的卷积输出相同了。</p>
+<p>综合这两步，filter 的参数总量是24。</p>
+<p>下面来解释一下，这个拆解的步骤和原来的CNN 有什么样的关系。</p>
+<p><img src="/images/image-20201216123643864.png" alt="image-20201216123643864" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216123643864.png" class="lozad post-image"></p>
+<p>上图上侧是一般的CNN 的卷积过程。</p>
+<p>下侧是Depthwise Separable Convolution ，观察卷积过程，第一步将得到中间产物两层的输出，然后经过第二步的每个filter 得到最终输出的每一层。这个过程你可以这样考虑，第一步使用的filter 处理了9个input ，然后把输出结果丢给第二步的filter 处理这两个output，产生一个output。这个过程和经典CNN 中的卷积做的事情类似，经典CNN 中使用一个节点处理18个input 产生一个输出，而我们现在通过叠加两层处理过程，用更少的参数做到了经典CNN 一层处理过程做到的事。</p>
+<p>接下来算一下这个方法理论上的模型压缩程度：</p>
+<p><img src="/images/image-20201216124345851.png" alt="image-20201216124345851" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216124345851.png" class="lozad post-image"></p>
+<p>计算过程如上图所示，最后结果就是从<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo stretchy="false">(</mo><mi>k</mi><mo>×</mo><mi>k</mi><mo>×</mo><mi>I</mi><mo stretchy="false">)</mo><mo>×</mo><mi>O</mi></mrow><annotation encoding="application/x-tex">(k\times k\times I)\times O</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.77777em;vertical-align:-0.08333em;"></span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.07847em;">I</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">O</span></span></span></span> ==&gt;<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>k</mi><mo>×</mo><mi>k</mi><mo>×</mo><mi>I</mi><mo>+</mo><mi>I</mi><mo>×</mo><mi>O</mi></mrow><annotation encoding="application/x-tex">k\times k\times I + I\times O</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.77777em;vertical-align:-0.08333em;"></span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.77777em;vertical-align:-0.08333em;"></span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.76666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault" style="margin-right:0.07847em;">I</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.76666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault" style="margin-right:0.07847em;">I</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">O</span></span></span></span></p>
+<h3 id="to-learn-more"><a class="markdownIt-Anchor" href="#to-learn-more"></a> To learn more ……</h3>
+<blockquote>
+<ul>
+<li>
+<p>SqueezeNet</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1602.07360">https://arxiv.org/abs/1602.07360</a></li>
+</ul>
+</li>
+<li>
+<p>MobileNet</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1704.04861">https://arxiv.org/abs/1704.04861</a></li>
+</ul>
+</li>
+<li>
+<p>ShuffleNet</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1707.01083">https://arxiv.org/abs/1707.01083</a></li>
+</ul>
+</li>
+<li>
+<p>Xception</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1610.02357">https://arxiv.org/abs/1610.02357</a></li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<h2 id="dynamic-computation"><a class="markdownIt-Anchor" href="#dynamic-computation"></a> Dynamic Computation</h2>
+<p><img src="/images/image-20201216125410492.png" alt="image-20201216125410492" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216125410492.png" class="lozad post-image"></p>
+<p>我们希望模型能调整它所的计算能力，再资源充足的时候努力做到最好，在资源紧张的时候降低计算精度以提高持续服务的时间。比如在手机快没电的时候语音助手的运行功耗的调整。</p>
+<p>这边来介绍一些可能的解决方法：</p>
+<p><img src="/images/image-20201216125620034.png" alt="image-20201216125620034" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216125620034.png" class="lozad post-image"></p>
+<ol>
+<li>训练多个模型，根据设备的情况选择适当的网络</li>
+</ol>
+<p>但是这样的方法比较吃存储空间，所以不太好。</p>
+<ol start="2">
+<li>训练中间层也可以做分类器的网络</li>
+</ol>
+<p>这个做法是说，正常情况下通过整个模型的计算输出结果，但是在资源紧张的情况下把模型的中间某些层的结果直接拿出来通过一个简单的计算就可以得到结果，以此自由调整network的运算量。</p>
+<p>如果你直接这么做结果往往是不太好的，因为你在train 整个network 的时候前面的layer 往往是学习识别很简单的信息，后面的layer 才能综合这些信息做判断。</p>
+<p>上图左下角是中有一个实验结果，纵轴就是准确率，横轴从左到右就是从模型的前到后抽出中间结果。显而易见，越深的地方抽出的中间结果才越能准确的做好任务。</p>
+<p>还有一个问题是，如果你在中间加一些classifier ，这些分类器是和整个network 一起train 的，这些classifier 的训练会伤害到整个network 的功能布局。原来network 的前几层要抽出一些基础信息，但是你现在强加的classifier 要求前几层同时能够综合这些信息，就导致前几层不能把所有的注意力都用在抽基础信息上。实验结果如上图右下角，你在比较浅的地方加classifier 整个network 的表现就会暴跌，在靠后的位置加classifier 对network 的影响就会小一些。</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1703.09844">https://arxiv.org/abs/1703.09844</a></p>
+</blockquote>
+<p>有没有方法能解决这些问题呢？有的：</p>
+<p><img src="/images/image-20201216130920989.png" alt="image-20201216130920989" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201216130920989.png" class="lozad post-image"></p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1703.09844">https://arxiv.org/abs/1703.09844</a></p>
+</blockquote>
+<p>你可以自行查阅这篇paper 。</p>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-info copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/about">Ch3nYe</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/Network-Compression/">https://ch3nye.top/Network-Compression/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/污点分析技术笔记/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一篇</div>
+        
+        <div class="nav-title">污点分析技术笔记 </div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+  <div class="nav-item-next">
+    <a href="/More-about-Auto-Encoder/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">More about Auto-Encoder </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="lv-container" data-id="city" data-uid="MTAyMC80NjQ0Ny8yMjk1OA==">
+    <script>
+      (function (d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') {
+          return;
+        }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.defer = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  </div>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#network-compression"><span class="toc-text"> Network Compression</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#outline"><span class="toc-text"> Outline</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#network-pruning"><span class="toc-text"> Network Pruning</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#weightneuron-pruning"><span class="toc-text"> weight&#x2F;neuron pruning</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#why-pruning"><span class="toc-text"> Why Pruning?</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#lottery-ticket-hypothesis"><span class="toc-text"> Lottery Ticket Hypothesis</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#rethinking-the-value-of-network-pruning"><span class="toc-text"> Rethinking the Value of Network Pruning</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#network-pruning-practical-issue"><span class="toc-text"> Network Pruning-Practical Issue</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#knowledge-distillation"><span class="toc-text"> Knowledge Distillation</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#temperature"><span class="toc-text"> Temperature</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#parameter-quantization"><span class="toc-text"> Parameter Quantization</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#binary-weights"><span class="toc-text"> Binary Weights</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#architecture-design"><span class="toc-text"> Architecture Design</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#fully-connected-network"><span class="toc-text"> Fully Connected Network</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#low-rank-approximation"><span class="toc-text"> Low rank approximation</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#cnn-network-compression"><span class="toc-text"> CNN-network compression</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#review-standard-cnn"><span class="toc-text"> Review: Standard CNN</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#depthwise-separable-convolution"><span class="toc-text"> Depthwise Separable Convolution</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#to-learn-more"><span class="toc-text"> To learn more ……</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#dynamic-computation"><span class="toc-text"> Dynamic Computation</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/images/logo.png" class="author-img">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>20</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>4</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>19</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:sud0su@163.com">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#network-compression"><span class="toc-text"> Network Compression</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#outline"><span class="toc-text"> Outline</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#network-pruning"><span class="toc-text"> Network Pruning</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#weightneuron-pruning"><span class="toc-text"> weight&#x2F;neuron pruning</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#why-pruning"><span class="toc-text"> Why Pruning?</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#lottery-ticket-hypothesis"><span class="toc-text"> Lottery Ticket Hypothesis</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#rethinking-the-value-of-network-pruning"><span class="toc-text"> Rethinking the Value of Network Pruning</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#network-pruning-practical-issue"><span class="toc-text"> Network Pruning-Practical Issue</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#knowledge-distillation"><span class="toc-text"> Knowledge Distillation</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#temperature"><span class="toc-text"> Temperature</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#parameter-quantization"><span class="toc-text"> Parameter Quantization</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#binary-weights"><span class="toc-text"> Binary Weights</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#architecture-design"><span class="toc-text"> Architecture Design</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#fully-connected-network"><span class="toc-text"> Fully Connected Network</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#low-rank-approximation"><span class="toc-text"> Low rank approximation</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#cnn-network-compression"><span class="toc-text"> CNN-network compression</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#review-standard-cnn"><span class="toc-text"> Review: Standard CNN</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#depthwise-separable-convolution"><span class="toc-text"> Depthwise Separable Convolution</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#to-learn-more"><span class="toc-text"> To learn more ……</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#dynamic-computation"><span class="toc-text"> Dynamic Computation</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/备忘">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/李宏毅机器学习笔记">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">14</span>
+        </div>
+      </a>
+    
+      <a href="/categories/论文阅读">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/笔记">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
+    
+    <a href="\tags\note" title="note"><div class="tags-list-item">note</div></a>
+    
+    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
+    
+    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="\tags\学习" title="学习"><div class="tags-list-item">学习</div></a>
+    
+    <a href="\tags\总结" title="总结"><div class="tags-list-item">总结</div></a>
+    
+    <a href="\tags\笔记" title="笔记"><div class="tags-list-item">笔记</div></a>
+    
+    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
+    
+    <a href="\tags\污点分析" title="污点分析"><div class="tags-list-item">污点分析</div></a>
+    
+    <a href="\tags\比特币" title="比特币"><div class="tags-list-item">比特币</div></a>
+    
+    <a href="\tags\区块链" title="区块链"><div class="tags-list-item">区块链</div></a>
+    
+    <a href="\tags\符号执行" title="符号执行"><div class="tags-list-item">符号执行</div></a>
+    
+    <a href="\tags\Adversarial-Attack" title="Adversarial-Attack"><div class="tags-list-item">Adversarial-Attack</div></a>
+    
+    <a href="\tags\漏洞挖掘" title="漏洞挖掘"><div class="tags-list-item">漏洞挖掘</div></a>
+    
+    <a href="\tags\System-Service" title="System-Service"><div class="tags-list-item">System-Service</div></a>
+    
+    <a href="\tags\Fuzzing" title="Fuzzing"><div class="tags-list-item">Fuzzing</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#network-compression"><span class="toc-text"> Network Compression</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#outline"><span class="toc-text"> Outline</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#network-pruning"><span class="toc-text"> Network Pruning</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#weightneuron-pruning"><span class="toc-text"> weight&#x2F;neuron pruning</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#why-pruning"><span class="toc-text"> Why Pruning?</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#lottery-ticket-hypothesis"><span class="toc-text"> Lottery Ticket Hypothesis</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#rethinking-the-value-of-network-pruning"><span class="toc-text"> Rethinking the Value of Network Pruning</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#network-pruning-practical-issue"><span class="toc-text"> Network Pruning-Practical Issue</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#knowledge-distillation"><span class="toc-text"> Knowledge Distillation</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#temperature"><span class="toc-text"> Temperature</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#parameter-quantization"><span class="toc-text"> Parameter Quantization</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#binary-weights"><span class="toc-text"> Binary Weights</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#architecture-design"><span class="toc-text"> Architecture Design</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#fully-connected-network"><span class="toc-text"> Fully Connected Network</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#low-rank-approximation"><span class="toc-text"> Low rank approximation</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#cnn-network-compression"><span class="toc-text"> CNN-network compression</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#review-standard-cnn"><span class="toc-text"> Review: Standard CNN</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#depthwise-separable-convolution"><span class="toc-text"> Depthwise Separable Convolution</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#to-learn-more"><span class="toc-text"> To learn more ……</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#dynamic-computation"><span class="toc-text"> Dynamic Computation</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-20</div>
+        <a href="/Note-FANS-Fuzzing-Android-Native-System-Services/"><div class="recent-posts-item-content">Note《FANS Fuzzing Android Native System Services via Automated Interface Analysis》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-16</div>
+        <a href="/ELMO-BERT-GPT/"><div class="recent-posts-item-content">ELMO, BERT, GPT</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-15</div>
+        <a href="/Note-FIRMSCOPE-Automatic-Uncovering-of-Privilege-Escala/"><div class="recent-posts-item-content">Note《FIRMSCOPE Automatic Uncovering of Privilege-Escala Vulnerabilities in Pre-Installed Apps in Android Firmware》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-14</div>
+        <a href="/Android流量抓包环境配置/"><div class="recent-posts-item-content">Android流量抓包环境配置</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2021
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">ch3nye's blog </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('data-fslightbox', 'gallery');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+    }
+    refreshFsLightbox();
+  }
+</script>
+<script>loadScript("//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-WHGL11014T');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "G-WHGL11014T", googleAnalytics)</script>
+  
+</body>
+
+</html>

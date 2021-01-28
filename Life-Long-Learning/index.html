@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="网络安全 Android ML CTF">
+  <link rel="icon" href="/images/logo.png">
+  <title>Life Long Learning</title>
+  
+  
+  <meta property="og:title" content="Life Long Learning">
+  
+  
+  <meta property="og:url" content="https://ch3nye.top/Life-Long-Learning/index.html">
+  
+  
+  <meta property="og:img" content="/images/logo.png">
+  
+  
+  <meta property="og:img" content="网络安全 Android ML CTF">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2020-11-14">
+  <meta property="og:article:modified_time" content="2020-11-14">
+  <meta property="og:article:author" content="Ch3nYe">
+  
+  
+  <meta property="og:article:tag" content="ML">
+  
+  <meta property="og:article:tag" content="note">
+  
+  <meta property="og:article:tag" content="Next-Step-of-ML">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js" as="script">
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn-city.livere.com/js/embed.dist.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+  
+  
+  
+  <link href="/js/lib/prism/prism-tomorrow.min.css" rel="stylesheet" data-prism="prism-tomorrow">
+  
+  
+  
+<link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+
+  
+  
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/images/logo.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/links" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      Life Long Learning
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2020-11-13T16:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2020-11-14</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/李宏毅机器学习笔记/" class="post-meta-link">李宏毅机器学习笔记</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>5.7k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/ML/" class="post-meta-link">ML</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/note/" class="post-meta-link">note</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Next-Step-of-ML/" class="post-meta-link">Next-Step-of-ML</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="life-long-learning-lll"><a class="markdownIt-Anchor" href="#life-long-learning-lll"></a> Life Long Learning (LLL)</h1>
+<blockquote>
+<p>开始之前的说明，如果读者是学过transfer learning 的话，学这一节可能会轻松很多，LLL的思想在我看来是和transfer learning是很相似的。</p>
+</blockquote>
+<p>可以直观的翻译成终身学习，我们人类在学习过程中是一直在用同一个大脑在学习，但是我们之前讲的所有机器学习的方法都是为了解决一个专门的问题设计一个模型架构然后去学习的。所以，传统的机器学习的情景和人类的学习是很不一样的，现在我们就要考虑为什么不能用同一个模型学会所有的任务。</p>
+<p><img src="/images/image-20201112141442059.png" alt="image-20201112141442059" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201112141442059.png" class="lozad post-image"></p>
+<p>也有人把Life Long Learning 称为Continuous Learning，Never Ending Learning，Incremental Learning，在不同的文献中可能有不同的叫法，我们只要知道这些方法都是再指终生学习就可。</p>
+<p><img src="/images/image-20201112141620706.png" alt="image-20201112141620706" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201112141620706.png" class="lozad post-image"></p>
+<p>现在我们回归初心，我想大多数人在学习机器学习之前的是这样认为的，机器学习就是如上图所示，我们教机器学学会任务1，再教会它任务2，我们就不断地较它各种任务，学到最后它就成了天网🤣。但是实际上我们都知道，现在的机器学习是分开任务来学的，就算是这样很多任务还是得不到很好的结果。所以机器学习现在还是很初级的阶段，在很多任务上都无法胜任。</p>
+<p>我们今天分三个部分来叙述<strong>Life-Long Learning</strong>：</p>
+<ul>
+<li><strong>Knowledge Retention 知识保留</strong>
+<ul>
+<li>but NOT Intransigence 但不顽固</li>
+</ul>
+</li>
+<li><strong>Knowledge Transfer 知识潜移</strong></li>
+<li><strong>Model Expansion 模型扩展</strong>
+<ul>
+<li>but Parameter Efficiency 但参数高效</li>
+</ul>
+</li>
+</ul>
+<p>上述的几个部分的具体含义会在下面详细解释。</p>
+<h2 id="knowledge-retention"><a class="markdownIt-Anchor" href="#knowledge-retention"></a> Knowledge Retention</h2>
+<p>but NOT Intransigence</p>
+<p>知识保留，但不顽固</p>
+<p><img src="/images/image-20201112142528085.png" alt="image-20201112142528085" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201112142528085.png" class="lozad post-image"></p>
+<p>知识保留但不顽固的精神是：我们希望模型在做完一个任务的学习之后，在学新的知识的时候，能够保留对原来任务能力，但是这种能力的保留又不能太过顽固以至于不能学会新的任务。</p>
+<h3 id="example-image"><a class="markdownIt-Anchor" href="#example-image"></a> Example - Image</h3>
+<p>我们举一个栗子看看机器的脑洞有多大。这里是影像辨识的栗子，来看看在影像辨识任务中是否需要终身学习。</p>
+<p><img src="/images/image-20201112145529217.png" alt="image-20201112145529217" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201112145529217.png" class="lozad post-image"></p>
+<p>如上图所示，我们有两个任务，都是在做手写数字辨识，但是两个的corpus 是不同的（corpus1 图片上存在一些噪声）。network 的架构是三层，每层都是50个neuron，然后让机器先学任务1，学完第一个任务以后在两个corpus 上进行测试，得到的结果如左边的柱状图（task2的结果更好一点其实是很直觉的，因为corpus2上没有noise，这可以理解为transfer learning）。然后我们在把这个模型用corpus2 进行一波训练，再在两个corpus上进行测试得到的结果如右侧柱状图，发现第一个任务有被遗忘的现象发生。</p>
+<p>这时候你可能会说，这个模型的架构太小了，他只有三层每层只有50个neuron，会发生遗忘的现象搞不好是因为它脑容量有限。但是我们实践过发现并不是模型架构太小。我们把两个corpus 混到一起用同样的模型架构train 一发，得到的结果如下图右下角：</p>
+<p><img src="/images/image-20201112150452341.png" alt="image-20201112150452341" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201112150452341.png" class="lozad post-image"></p>
+<p>所以说，明明这个模型的架构可以把两个任务都学的很好，为什么先学一个在学另一个的话会忘掉第一个任务学到的东西呢。</p>
+<h3 id="example-question-answering"><a class="markdownIt-Anchor" href="#example-question-answering"></a> Example - Question Answering</h3>
+<p>另一个栗子：问答系统，问答系统（如下图）要做的事情是训练一个Deep Network ，给这个模型看很多的文章和问题，然后你问它一个问题，他就会告诉你答案。具体怎么输入文章和问题，怎么给你答案，怎么设计网络，不是重点就不展开。</p>
+<p><img src="/images/image-20201112151252034.png" alt="image-20201112151252034" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201112151252034.png" class="lozad post-image"></p>
+<blockquote>
+<p>Model From <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1502.05698.pdf">https://arxiv.org/pdf/1502.05698.pdf</a></p>
+</blockquote>
+<p>对于QA系统已经被玩烂的corpus 是bAbi 这个数据集，这里面有20种不同的题型，比如问where、what 等。我们一次让模型学习这20种题型，每次学习完成以后我们都用题型五做一次测试，也就是以题型五作为baseline，结果如下：</p>
+<p><img src="/images/image-20201112152538453.png" alt="image-20201112152538453" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201112152538453.png" class="lozad post-image"></p>
+<p>我们可以看到只有在学完题型五的时候，再问机器题型五的问题，它可以给出很好的答案，但是在学完题型六以后它马上把题型五忘的一干二净了。</p>
+<p>这个现象在以其他的题型作为baseline 的时候同样出现了：</p>
+<p><img src="/images/image-20201112152726706.png" alt="image-20201112152726706" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201112152726706.png" class="lozad post-image"></p>
+<p>ps：有趣的是，在题型十作为baseline 的时候可能是由于题型6、9、17、18和题型10比较相似，所以在做完这些题型的QA任务的时候在题型10上也能得到比较好的结果。</p>
+<p>那你又会问了，是不是因为网络的架构不够大，机器的脑容量太小以至于学不起来。其实不是，当我们同时train这20种题型得到的结果是还不错的：</p>
+<p><img src="/images/image-20201112153013192.png" alt="image-20201112153013192" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201112153013192.png" class="lozad post-image"></p>
+<p>所以机器的遗忘是和人类很不一样的，他不是因为脑容量不够而忘记的，不知道为什么它在学过一些新的任务以后就会较大程度的遗忘以前学到的东西，这个状况我们叫做Catastrophic Forgetting（灾难性遗忘）。之所以加个形容词是因为这种遗忘是不可接收，就像下面这张图学了就忘了，淦：</p>
+<p><img src="/images/image-20201112155501751.png" alt="image-20201112155501751" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201112155501751.png" class="lozad post-image"></p>
+<h3 id="wait-a-minute"><a class="markdownIt-Anchor" href="#wait-a-minute"></a> Wait a minute…</h3>
+<p>你可能会说这个灾难性遗忘的问题你上面不是已经有了一个很好的解决方法了吗，你只要把多个任务的corpus 放在一起train 就好了啊。但是，长远来说这一招是行不通的，因为我们很难一直维护所有使用过的训练数据，而且就算我们很好的保留了所有数据，在计算上也有问题，我们每次学新任务的时候就要重新训练所有的任务，这样的代价是不可接受的。</p>
+<p>另外，<strong>多任务同时train 这个方法其实可以作为LLL的上界</strong>。</p>
+<p>总之，LLL主要探讨的问题是，让机器在学习新的知识的时候能不要忘记过去学过的东西。</p>
+<p>那这个问题有什么样的解法呢，接下来就来介绍一个经典解法。</p>
+<h3 id="elastic-weight-consolidation-ewc"><a class="markdownIt-Anchor" href="#elastic-weight-consolidation-ewc"></a> Elastic Weight Consolidation (EWC)</h3>
+<p>怎么翻译啊，弹性参数巩固?</p>
+<p>基本精神：网络中的部分参数对先前任务是比较有用的，我们在学新的任务的时候只改变不重要的参数。</p>
+<p><img src="/images/image-20201112175516139.png" alt="image-20201112175516139" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201112175516139.png" class="lozad post-image"></p>
+<p>如上图所示， <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>θ</mi><mi>b</mi></msup></mrow><annotation encoding="application/x-tex">\theta^b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.849108em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">b</span></span></span></span></span></span></span></span></span></span></span> 是模型从先前的任务中学出来的参数。</p>
+<p>每个参数 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>θ</mi><mi>i</mi><mi>b</mi></msubsup></mrow><annotation encoding="application/x-tex">\theta^{b}_{i}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.107772em;vertical-align:-0.258664em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-2.441336em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">b</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.258664em;"><span></span></span></span></span></span></span></span></span></span> 都有一个守卫 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>b</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">b_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> ，这个首位就会告诉我们这个参数有多重要，我们有多么不能更改这个参数。</p>
+<p>我们在做EWC 的时候（train 新的任务的时候）需要再原先的损失函数上加上一个regularization ，如上图所示，我们通过平方差的方式衡量新的参数 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>θ</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\theta_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 和旧的参数 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>θ</mi><mi>i</mi><mi>b</mi></msubsup></mrow><annotation encoding="application/x-tex">\theta^{b}_{i}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.107772em;vertical-align:-0.258664em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-2.441336em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">b</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.258664em;"><span></span></span></span></span></span></span></span></span></span> 的差距，让后用一个守卫值来告诉模型这个参数的重要性，当这个守卫 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>b</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">b_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 等于零的时候就是说参数 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>θ</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\theta_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 是没有约束的，可以根据当前任务随意更改，当守卫 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>b</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">b_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 趋近于无穷大的时候，说明这个参数 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>θ</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\theta_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 对先前的任务是非常重要的，希望模型不要变动这个参数。</p>
+<p><img src="/images/image-20201112181426693.png" alt="image-20201112181426693" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201112181426693.png" class="lozad post-image"></p>
+<p>所以现在问题是， <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>b</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">b_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 如何决定。这个问题我们下面来讲，先来通过一个简单的栗子再理解一下EWC的思想：</p>
+<p><img src="/images/image-20201112192731213.png" alt="image-20201112192731213" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201112192731213.png" class="lozad post-image"></p>
+<p>上图是这样的，假设我们的模型只有两个参数，这两个图是两个task 的error surface ，颜色越深error 越大。假如说我们让机器学task1的时候我们的参数从 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>θ</mi><mn>0</mn></msup></mrow><annotation encoding="application/x-tex">θ^0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span></span></span></span></span></span></span></span> 移动到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>θ</mi><mi>b</mi></msup></mrow><annotation encoding="application/x-tex">θ^b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.849108em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">b</span></span></span></span></span></span></span></span></span></span></span> ，然后我们又让机器学task2，在这学这个任务的时候我们没有加任何约束，它学完之后参数移动到了 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>θ</mi><mo>∗</mo></msup></mrow><annotation encoding="application/x-tex">θ^*</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.688696em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">∗</span></span></span></span></span></span></span></span></span></span></span> ，这时候模型参数在task1的error surface 上就是一个不太好的点。 这就直观的解释了为什么会出现Catastrophic Forgetting 。</p>
+<p>用了EWC 的话看起来是这样的：</p>
+<p><img src="/images/image-20201112193332743.png" alt="image-20201112193332743" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201112193332743.png" class="lozad post-image"></p>
+<p>当我们使用EWC 对模型的参数的变化做一个限制，就如上面说的，我们给每个参数加一个守卫 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>b</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">b_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> ，这个 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>b</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">b_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 是这么来的呢？不同文章有不同的做法，这里有一个简单的做法就是算这个参数的二次微分（loss对θ的二次微分体现参数loss变化的剧烈程度，二次微分值越大，原函数图像在该点变化越剧烈），如上图所示。我们可以看出， <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>θ</mi><mn>1</mn><mi>b</mi></msubsup></mrow><annotation encoding="application/x-tex">θ^b_1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.097216em;vertical-align:-0.24810799999999997em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-2.4518920000000004em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">b</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.24810799999999997em;"><span></span></span></span></span></span></span></span></span></span> 在二次微分曲线的平滑段其变化不会造成原函数图像的剧烈变化，我们要给它一个小的守卫 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>b</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">b_1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> ， 反之 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>θ</mi><mn>2</mn><mi>b</mi></msubsup></mrow><annotation encoding="application/x-tex">θ^b_2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.097216em;vertical-align:-0.24810799999999997em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-2.4518920000000004em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">b</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.24810799999999997em;"><span></span></span></span></span></span></span></span></span></span> 则在谷底其变化会造成二次微分值的增大，导致原函数的变化更剧烈，我们要给它一个大的守卫 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>b</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">b_2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 。也就是说，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>θ</mi><mn>1</mn><mi>b</mi></msubsup></mrow><annotation encoding="application/x-tex">θ^b_1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.097216em;vertical-align:-0.24810799999999997em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-2.4518920000000004em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">b</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.24810799999999997em;"><span></span></span></span></span></span></span></span></span></span> 能动，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>θ</mi><mn>2</mn><mi>b</mi></msubsup></mrow><annotation encoding="application/x-tex">θ^b_2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.097216em;vertical-align:-0.24810799999999997em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-2.4518920000000004em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">b</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.24810799999999997em;"><span></span></span></span></span></span></span></span></span></span> 动不得。</p>
+<p>有了上述的constraint ，我们就能让模型参数尽量不要在 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>θ</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">θ_2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 方向上移动，可以在 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>θ</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">θ_1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 上移动，得到的效果可能就会是这样的：</p>
+<p><img src="/images/image-20201112201438159.png" alt="image-20201112201438159" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201112201438159.png" class="lozad post-image"></p>
+<h3 id="ewc-experiment"><a class="markdownIt-Anchor" href="#ewc-experiment"></a> EWC - Experiment</h3>
+<p>我们来看看EWC的原始paper中的实验结果：</p>
+<p><img src="/images/image-20201112201754172.png" alt="image-20201112201754172" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201112201754172.png" class="lozad post-image"></p>
+<p>三个task其实就是对MNIST 数据集做不同的变换后做辨识任务。每行是模型对该行的task准确率的变化，从第一行可以看出，当我们用EWC的方法做完三个任务学习以后仍然能维持比较好的准确率。值得注意的是，在下面两行中，L2的方法在学习新的任务的时候发生了Intransigence（顽固）的现象，就是模型顽固的记住了以前的任务，而无法学习新的任务。</p>
+<h3 id="ewc-variant"><a class="markdownIt-Anchor" href="#ewc-variant"></a> EWC Variant</h3>
+<p>有很多EWC 的变体，给几个参考：</p>
+<blockquote>
+<ul>
+<li>
+<p>Elastic Weight Consolidation (EWC)</p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="http://www.citeulike.org/group/15400/article/14311063">http://www.citeulike.org/group/15400/article/14311063</a></p>
+</li>
+<li>
+<p>Synaptic Intelligence (SI)</p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1703.04200">https://arxiv.org/abs/1703.04200</a></p>
+</li>
+<li>
+<p>Memory Aware Synapses (MAS)</p>
+</li>
+<li>
+<p>Special part: Do not need labelled data</p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1711.09601">https://arxiv.org/abs/1711.09601</a></p>
+</li>
+</ul>
+</blockquote>
+<h3 id="generating-data"><a class="markdownIt-Anchor" href="#generating-data"></a> Generating Data</h3>
+<p>上面我们说Mutli-task Learning 虽然好用，但是由于存储和计算的限制我们不能这么做，所以采取了EWC 等其他方法，而Mutli-task Learning 可以考虑为Life-Long Learning 的upper bound。 反过来我们不禁在想，虽然说要存储所有过去的资料很难，但是Multi-task Learning 确实那么好用，那我们能不能Learning 一个model，这个model 可以产生过去的资料，所以我们只要存一个model 而不用存所有训练数据，这样我们就做Multi-task 的learning。（这里暂时忽略算力限制，只讨论数据生成问题）</p>
+<p><img src="/images/image-20201113131011170.png" alt="image-20201113131011170" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201113131011170.png" class="lozad post-image"></p>
+<p>这个过程是这样的，我们先用training data 1 训练得到解决task 1 的model，同时用这些数据生成train 一个能生成这些数据的generator ，存储这个generator 而不是存储training data ；当来了新的任务，我们就用这个generator 生成task 1的training data 和 task2 的training data 混在一起，用Multi-task Learning 的方法train 出能同时解决task1 和task2 的model，同时我们用混在一起的数据集train 出一个新的generator ，这个generator 能生成这个混合数据集；以此类推。这样我们就可以做Mutli-task Learning ，而不用存储大量数据。但是这个方法在实际中到底能不能做起来，还尚待研究，一个原因是实际上生成数据是没有那么容易的，比如说生成贴合实际的高清的影像对于机器来说就很难，关于generator model 的训练方法这里就不展开了，在生成模型的一节里有讲，GAN是一个解法。以下Generating Data 这种方法的参考：</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1705.08690">https://arxiv.org/abs/1705.08690</a></p>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1711.10563">https://arxiv.org/abs/1711.10563</a></p>
+</blockquote>
+<h3 id="adding-new-classes"><a class="markdownIt-Anchor" href="#adding-new-classes"></a> Adding New Classes</h3>
+<p>在刚才的讨论种，我们都是假设解不同的任务用的是相同的网络架构，但是如果现在我们的task 是不同，需要我们更改网络架构的话要怎么办呢？比如说，两个分类任务的类别数量不同，我们就要修改network 的output layer 。这里就列一些参考给大家：</p>
+<p><img src="/images/image-20201113132240782.png" alt="image-20201113132240782" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201113132240782.png" class="lozad post-image"></p>
+<blockquote>
+<p>Learning without forgetting (LwF)</p>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1606.09282">https://arxiv.org/abs/1606.09282</a></p>
+</blockquote>
+<p><img src="/images/image-20201113132243024.png" alt="image-20201113132243024" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201113132243024.png" class="lozad post-image"></p>
+<blockquote>
+<p>iCaRL: Incremental Classifier and Representation Learning</p>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1611.07725">https://arxiv.org/abs/1611.07725</a></p>
+</blockquote>
+<h2 id="knowledge-transfer"><a class="markdownIt-Anchor" href="#knowledge-transfer"></a> Knowledge Transfer</h2>
+<p>怎么翻译？知识迁移？</p>
+<p><img src="/images/image-20201113132402210.png" alt="image-20201113132402210" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201113132402210.png" class="lozad post-image"></p>
+<p>我们不仅希望机器可以可以记住以前学的knowledge ，我们还希望机器在学习新的knowledge 的时候能把以前学的知识做transfer。什么意思呢，我来解释一下：我们之前都是每个任务都训练一个单独的模型，这种方式会损失一个很重要的信息，就是解决不同问题之间的通用知识。形象点来说，比如你先学过线性代数和概率论，那你在学机器学习的时候就会应用先前学过的知识，学起来就会很顺利。Life-Long Learning 也是希望机器能够把不同任务之间的知识进行迁移，让以前学过的知识可以应用到解决新的任务上面。如下图，机器从一个憨憨一样的机器人学着学着就高端起来了：</p>
+<p><img src="/images/image-20201113201954663.png" alt="image-20201113201954663" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201113201954663.png" class="lozad post-image"></p>
+<p>这就是为什么我们期望用同一个模型解决多个任务，而不是为每个任务单独训练一个模型。</p>
+<h3 id="life-long-vs-transfer"><a class="markdownIt-Anchor" href="#life-long-vs-transfer"></a> Life-Long v.s. Transfer</h3>
+<p>讲了这么多transfer，你可能会说，这不就是在做transfer Learning 吗？</p>
+<p><img src="/images/image-20201113202334149.png" alt="image-20201113202334149" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201113202334149.png" class="lozad post-image"></p>
+<p>LLL 确实有应用Transfer Learning 的思想，但是它比后者更进一步。怎么说呢，Transfer Learning 的精神是应用先前任务的模型到新的任务上，让模型可以解决或者说更好的解决新的任务，而不在乎此时模型是否还能解决先前的任务；但是LLL 就比Transfer Learning 更进一步，它会考虑到模型在学会新的任务的同时，还不能忘记以前的任务的解法。</p>
+<h3 id="evaluation"><a class="markdownIt-Anchor" href="#evaluation"></a> Evaluation</h3>
+<p>讲到这里，我们来说一下如何衡量LLL 的好坏。其实，有很多不同的的衡量方法，这里简介一种。</p>
+<p><img src="/images/image-20201113203551226.png" alt="image-20201113203551226" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201113203551226.png" class="lozad post-image"></p>
+<p>这里每一行是一个模型在每个任务上的测试结果，每一列是用一个任务对一个模型在做完某些任务的训练以后进行测试的结果。</p>
+<p><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>R</mi><mrow><mi>i</mi><mo separator="true">,</mo><mi>j</mi></mrow></msub></mrow><annotation encoding="application/x-tex">R_{i,j}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.969438em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.00773em;">R</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-left:-0.00773em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span><span class="mpunct mtight">,</span><span class="mord mathdefault mtight" style="margin-right:0.05724em;">j</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span> : 在训练完task i 后，模型在task j 上的performance 。</p>
+<p>如果 i &gt; j : 在学完task i 以后，模型在先前的task j 上的performance。</p>
+<p>如果 i &lt; j : 在学完task i 以后，模型在没学过的task j 上的performance，来说明前面学完的 i 个task 能不能transfer 到 task j 上。</p>
+<p><img src="/images/image-20201113204615685.png" alt="image-20201113204615685" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201113204615685.png" class="lozad post-image"></p>
+<p>Accuracy 是指说机器在学玩所有T 个task 以后，在所有任务上的平均准确率，所以如上图红框，就把最后一行加起来取平均就是现在这个LLL model 的Accuracy ，形式化公式如上图所示。</p>
+<p>Backward Transfer 是指机器有多会做[Knowledge Retention](#Knowledge Retention)（知识保留），有多不会遗忘过去学过的任务。做法是针对每一个task 的测试集（每列），计算模型学完T 个task 以后的performance 减去模型刚学完对应该测试集的时候的performance ，求和取平均，形式化公式如上图所示。</p>
+<p>Backward Transfer 的思想就是把机器学到最后的表现减去机器刚学完那个任务还记忆犹新的表现，得到的差值通常都是负的，因为机器总是会遗忘的，它学到最后往往就一定程度的忘记以前学的任务，如果你做出来是正的，说明机器在学过新的知识以后对以前的任务有了触类旁通的效果，那就很强😮。</p>
+<p>Forward Transfer 是指机器有多会做Knowledge Transfer （知识迁移），有多会把过去学到的知识应用到新的任务上。做法是对每个task 的测试集，计算模型学过task i 以后对task i+1 的performance 减去随机初始的模型在task i+1 的performance ，求和取平均。，形式化公式如下图所示。</p>
+<p><img src="/images/image-20201114105914651.png" alt="image-20201114105914651" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201114105914651.png" class="lozad post-image"></p>
+<h3 id="gradient-episodic-memory-gem"><a class="markdownIt-Anchor" href="#gradient-episodic-memory-gem"></a> Gradient Episodic Memory (GEM)</h3>
+<p>上述的Backward Transfer 让这个值是正的就说明，model 不仅没有遗忘过学过的知识，还在学了新的知识以后对以前的任务触类旁通，这件事是有研究的，比如GEM 。</p>
+<p><img src="/images/image-20201114105942717.png" alt="image-20201114105942717" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201114105942717.png" class="lozad post-image"></p>
+<blockquote>
+<p>GEM: <a target="_blank" rel="noopener" href="https://arxiv.org/abs/1706.08840">https://arxiv.org/abs/1706.08840</a></p>
+<p>A-GEM: <a target="_blank" rel="noopener" href="https://arxiv.org/abs/1812.00420">https://arxiv.org/abs/1812.00420</a></p>
+</blockquote>
+<p>GEM 想做到的事情是，在新的task 上训练出来的gradient 在更新的参数的时候，要考虑一下过去的gradient ，使得参数更新的方向至少不能是以前梯度的方向（更新参数是要向梯度的反方向更新）。</p>
+<p>需要注意的是，这个方法需要我们保留少量的过去的数据，以便在train 新的task 的时候（每次更新参数的时候）可以计算出以前的梯度。</p>
+<p>形象点来说，以上图为例，左边，如果现在新的任务学出来的梯度是g ，那更新的时候不会对以前的梯度g1 g2 造成反向的影响；右边，如果现在新的情况是这样的，那梯度在更新的时候会影响到g1，g 和g1 的内积是负的，意味着梯度g 会把参数拉向g1 的反方向，因此会损害model 在task 1上的performance。所以我们取一个尽可能接近g 的g’ ，使得g’ 和两个过去任务数据算出来的梯度的内积都大于零。这样的话就不会损害到以前task 的performance ，搞不好还能让过去的task 的loss 变得更小。</p>
+<p>我们来看看GEM 的效果：</p>
+<p><img src="/images/image-20201114111509111.png" alt="image-20201114111509111" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201114111509111.png" class="lozad post-image"></p>
+<p>很直观，就不解释了，总而言之就是GEM 很强这样子了啦🤣。</p>
+<h2 id="model-expansion"><a class="markdownIt-Anchor" href="#model-expansion"></a> Model Expansion</h2>
+<p>but parameter efficiency</p>
+<p>模型扩张，且参数高效</p>
+<p><img src="/images/image-20201114111648688.png" alt="image-20201114111648688" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201114111648688.png" class="lozad post-image"></p>
+<p>上面讲的内容，我们都假设模型是足够大的，也就是说模型的参数够多，它是有能力把所有任务都做好，只不过因为某些原因它没有做到罢了。但是如果现在我们的模型已经学了很多任务了，所有参数都被充分利用了，他已经没有能力学新的任务了，那我们就要给模型进行扩张。同时，我们还要保证扩张不是任意的，而是有效率的扩张，如果每次学新的任务，模型都要进行一次扩张，那这样的话你最终就会无法存下你的模型，而且臃肿的模型中大概率很多参数都是没有用的。</p>
+<p>这个问题在2018年老师讲课的时候还没有很多文献可以参考，这里就流水账的记录一下老师讲的流水帐。</p>
+<h3 id="progressive-neural-networks"><a class="markdownIt-Anchor" href="#progressive-neural-networks"></a> Progressive Neural Networks</h3>
+<p><img src="/images/image-20201114112631656.png" alt="image-20201114112631656" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201114112631656.png" class="lozad post-image"></p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1606.04671">https://arxiv.org/abs/1606.04671</a></p>
+</blockquote>
+<p>这个方法是这样的，我们在学task 1的时候就正常train，在学task 2的时候就搞一个新的network ，这个网路不仅会吃训练集数据，而且会把训练集数据input 到task 1的network中得到的每层输出吃进去，这时候是fix 住task 1 network，而调整task 2 network 。同理，当学task 3的时候，搞一个新的network ，这个网络不仅吃训练集数据，而且会把训练集数据丢入task 1 network 和 task 2 network ，将其每层输出吃进去，也是fix 住前两个network 只改动第三个network 。</p>
+<p>这是一个早期的想法，2016年就出现了，但是这个方法，终究还是不太能学很多任务。</p>
+<h3 id="expert-gate"><a class="markdownIt-Anchor" href="#expert-gate"></a> Expert Gate</h3>
+<p><img src="/images/image-20201114113141466.png" alt="image-20201114113141466" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201114113141466.png" class="lozad post-image"></p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1611.06194">https://arxiv.org/abs/1611.06194</a></p>
+<p>Aljundi, R., Chakravarty, P., Tuytelaars, T.: Expert gate: Lifelong learning with a network of</p>
+<p>experts. In: CVPR (2017)</p>
+</blockquote>
+<p>思想是这样的：每一个task 训练一个network 。但是train 了另一个network ，这个network 会判断新的任务和原先的哪个任务最相似，加入现在新的任务和T1 最相似，那他就把network 1最为新任务的初始化network，希望以此做到知识迁移。但是这个方法还是每一个任务都会有一个新的network ，所以还是不太好。</p>
+<h3 id="net2net"><a class="markdownIt-Anchor" href="#net2net"></a> Net2Net</h3>
+<p>如果我们在增加network 参数的时候直接增加神经元进去，可能会破坏这个模型原来做的准确率，那我们怎么增加参数才能保证不会损害模型在原来任务上的准确率呢？Net2Net 是一个解决方法：</p>
+<p><img src="/images/image-20201114113731436.png" alt="image-20201114113731436" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201114113731436.png" class="lozad post-image"></p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1511.05641">https://arxiv.org/abs/1511.05641</a></p>
+<p>用到了Net2Net：<a target="_blank" rel="noopener" href="https://arxiv.org/abs/1811.07017">https://arxiv.org/abs/1811.07017</a></p>
+</blockquote>
+<p>Net2Net的具体做法是这样的，这里举一个栗子，如上图所示，当我么你要在中间增加一个neuron 时，我们把f 变为f/2 ，这样的话同样的输入在新旧两个模型中得到的输出就还是相同的，同时我们也增加了模型的参数。但是这样做出现一个问题，就是h[2] h[3] 两个神经元将会在后面更新参数的时候完全一样，这样的话就相当于没有扩张模型，所以我们要在这些参数上加上一个小小的noise ，让他们看起来还是有小小的不同，以便更新参数。</p>
+<p>图中第二个引用的文章就用了Net2Net，需要注意，不是来一个任务就扩张一次模型，而是当模型在新的任务的training data 上得不到好的Accuracy 的时候才用Net2Net 扩张模型。</p>
+<h2 id="curriculum-learning"><a class="markdownIt-Anchor" href="#curriculum-learning"></a> Curriculum Learning</h2>
+<p><img src="/images/image-20201114114659844.png" alt="image-20201114114659844" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201114114659844.png" class="lozad post-image"></p>
+<p>如上图所示，模型的效果是非常受任务训练顺序影响的。也就是说，会不会发生遗忘，能不能做到知识迁移，和训练任务的先后顺序是有很大关系的。假如说LLL 在未来变得非常热门，那怎么安排机器学习的任务顺序可能会是一个需要讨论的热点问题，这个问题叫做Curriculum Learning 。</p>
+<p>2018年就已经有一篇文献是在将这个问题：</p>
+<p><img src="/images/image-20201114115028440.png" alt="image-20201114115028440" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201114115028440.png" class="lozad post-image"></p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="http://taskonomy.stanford.edu/">http://taskonomy.stanford.edu/#abstract</a> CVPR 的best paper</p>
+</blockquote>
+<p>文章目的是找出任务间的先后次序，比如说先做3D-Edges 和 Normals 对 Point Matching 和Reshading 就很有帮助。</p>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-info copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/about">Ch3nYe</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/Life-Long-Learning/">https://ch3nye.top/Life-Long-Learning/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/Meta-Learning-MAML/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一篇</div>
+        
+        <div class="nav-title">Meta Learning-MAML </div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+  <div class="nav-item-next">
+    <a href="/Anomaly-Detection/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">Anomaly Detection </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="lv-container" data-id="city" data-uid="MTAyMC80NjQ0Ny8yMjk1OA==">
+    <script>
+      (function (d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') {
+          return;
+        }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.defer = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  </div>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#life-long-learning-lll"><span class="toc-text"> Life Long Learning (LLL)</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#knowledge-retention"><span class="toc-text"> Knowledge Retention</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#example-image"><span class="toc-text"> Example - Image</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#example-question-answering"><span class="toc-text"> Example - Question Answering</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#wait-a-minute"><span class="toc-text"> Wait a minute…</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#elastic-weight-consolidation-ewc"><span class="toc-text"> Elastic Weight Consolidation (EWC)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ewc-experiment"><span class="toc-text"> EWC - Experiment</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ewc-variant"><span class="toc-text"> EWC Variant</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#generating-data"><span class="toc-text"> Generating Data</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#adding-new-classes"><span class="toc-text"> Adding New Classes</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#knowledge-transfer"><span class="toc-text"> Knowledge Transfer</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#life-long-vs-transfer"><span class="toc-text"> Life-Long v.s. Transfer</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#evaluation"><span class="toc-text"> Evaluation</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#gradient-episodic-memory-gem"><span class="toc-text"> Gradient Episodic Memory (GEM)</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#model-expansion"><span class="toc-text"> Model Expansion</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#progressive-neural-networks"><span class="toc-text"> Progressive Neural Networks</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#expert-gate"><span class="toc-text"> Expert Gate</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#net2net"><span class="toc-text"> Net2Net</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#curriculum-learning"><span class="toc-text"> Curriculum Learning</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/images/logo.png" class="author-img">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>20</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>4</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>19</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:sud0su@163.com">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#life-long-learning-lll"><span class="toc-text"> Life Long Learning (LLL)</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#knowledge-retention"><span class="toc-text"> Knowledge Retention</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#example-image"><span class="toc-text"> Example - Image</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#example-question-answering"><span class="toc-text"> Example - Question Answering</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#wait-a-minute"><span class="toc-text"> Wait a minute…</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#elastic-weight-consolidation-ewc"><span class="toc-text"> Elastic Weight Consolidation (EWC)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ewc-experiment"><span class="toc-text"> EWC - Experiment</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ewc-variant"><span class="toc-text"> EWC Variant</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#generating-data"><span class="toc-text"> Generating Data</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#adding-new-classes"><span class="toc-text"> Adding New Classes</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#knowledge-transfer"><span class="toc-text"> Knowledge Transfer</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#life-long-vs-transfer"><span class="toc-text"> Life-Long v.s. Transfer</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#evaluation"><span class="toc-text"> Evaluation</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#gradient-episodic-memory-gem"><span class="toc-text"> Gradient Episodic Memory (GEM)</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#model-expansion"><span class="toc-text"> Model Expansion</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#progressive-neural-networks"><span class="toc-text"> Progressive Neural Networks</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#expert-gate"><span class="toc-text"> Expert Gate</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#net2net"><span class="toc-text"> Net2Net</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#curriculum-learning"><span class="toc-text"> Curriculum Learning</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/备忘">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/李宏毅机器学习笔记">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">14</span>
+        </div>
+      </a>
+    
+      <a href="/categories/论文阅读">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/笔记">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
+    
+    <a href="\tags\note" title="note"><div class="tags-list-item">note</div></a>
+    
+    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
+    
+    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="\tags\学习" title="学习"><div class="tags-list-item">学习</div></a>
+    
+    <a href="\tags\总结" title="总结"><div class="tags-list-item">总结</div></a>
+    
+    <a href="\tags\笔记" title="笔记"><div class="tags-list-item">笔记</div></a>
+    
+    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
+    
+    <a href="\tags\污点分析" title="污点分析"><div class="tags-list-item">污点分析</div></a>
+    
+    <a href="\tags\比特币" title="比特币"><div class="tags-list-item">比特币</div></a>
+    
+    <a href="\tags\区块链" title="区块链"><div class="tags-list-item">区块链</div></a>
+    
+    <a href="\tags\符号执行" title="符号执行"><div class="tags-list-item">符号执行</div></a>
+    
+    <a href="\tags\Adversarial-Attack" title="Adversarial-Attack"><div class="tags-list-item">Adversarial-Attack</div></a>
+    
+    <a href="\tags\漏洞挖掘" title="漏洞挖掘"><div class="tags-list-item">漏洞挖掘</div></a>
+    
+    <a href="\tags\System-Service" title="System-Service"><div class="tags-list-item">System-Service</div></a>
+    
+    <a href="\tags\Fuzzing" title="Fuzzing"><div class="tags-list-item">Fuzzing</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#life-long-learning-lll"><span class="toc-text"> Life Long Learning (LLL)</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#knowledge-retention"><span class="toc-text"> Knowledge Retention</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#example-image"><span class="toc-text"> Example - Image</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#example-question-answering"><span class="toc-text"> Example - Question Answering</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#wait-a-minute"><span class="toc-text"> Wait a minute…</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#elastic-weight-consolidation-ewc"><span class="toc-text"> Elastic Weight Consolidation (EWC)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ewc-experiment"><span class="toc-text"> EWC - Experiment</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ewc-variant"><span class="toc-text"> EWC Variant</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#generating-data"><span class="toc-text"> Generating Data</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#adding-new-classes"><span class="toc-text"> Adding New Classes</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#knowledge-transfer"><span class="toc-text"> Knowledge Transfer</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#life-long-vs-transfer"><span class="toc-text"> Life-Long v.s. Transfer</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#evaluation"><span class="toc-text"> Evaluation</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#gradient-episodic-memory-gem"><span class="toc-text"> Gradient Episodic Memory (GEM)</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#model-expansion"><span class="toc-text"> Model Expansion</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#progressive-neural-networks"><span class="toc-text"> Progressive Neural Networks</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#expert-gate"><span class="toc-text"> Expert Gate</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#net2net"><span class="toc-text"> Net2Net</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#curriculum-learning"><span class="toc-text"> Curriculum Learning</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-20</div>
+        <a href="/Note-FANS-Fuzzing-Android-Native-System-Services/"><div class="recent-posts-item-content">Note《FANS Fuzzing Android Native System Services via Automated Interface Analysis》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-16</div>
+        <a href="/ELMO-BERT-GPT/"><div class="recent-posts-item-content">ELMO, BERT, GPT</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-15</div>
+        <a href="/Note-FIRMSCOPE-Automatic-Uncovering-of-Privilege-Escala/"><div class="recent-posts-item-content">Note《FIRMSCOPE Automatic Uncovering of Privilege-Escala Vulnerabilities in Pre-Installed Apps in Android Firmware》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-14</div>
+        <a href="/Android流量抓包环境配置/"><div class="recent-posts-item-content">Android流量抓包环境配置</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2021
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">ch3nye's blog </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('data-fslightbox', 'gallery');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+    }
+    refreshFsLightbox();
+  }
+</script>
+<script>loadScript("//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-WHGL11014T');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "G-WHGL11014T", googleAnalytics)</script>
+  
+</body>
+
+</html>

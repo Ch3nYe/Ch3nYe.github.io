@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="网络安全 Android ML CTF">
+  <link rel="icon" href="/images/logo.png">
+  <title>Attack and Defense</title>
+  
+  
+  <meta property="og:title" content="Attack and Defense">
+  
+  
+  <meta property="og:url" content="https://ch3nye.top/Attack-and-Defense/index.html">
+  
+  
+  <meta property="og:img" content="/images/logo.png">
+  
+  
+  <meta property="og:img" content="网络安全 Android ML CTF">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2020-11-01">
+  <meta property="og:article:modified_time" content="2020-11-08">
+  <meta property="og:article:author" content="Ch3nYe">
+  
+  
+  <meta property="og:article:tag" content="ML">
+  
+  <meta property="og:article:tag" content="note">
+  
+  <meta property="og:article:tag" content="Next-Step-of-ML">
+  
+  <meta property="og:article:tag" content="Adversarial-Attack">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js" as="script">
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn-city.livere.com/js/embed.dist.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+  
+  
+  
+  <link href="/js/lib/prism/prism-tomorrow.min.css" rel="stylesheet" data-prism="prism-tomorrow">
+  
+  
+  
+<link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+
+  
+  
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/images/logo.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/links" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      Attack and Defense
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2020-10-31T16:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2020-11-01</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/李宏毅机器学习笔记/" class="post-meta-link">李宏毅机器学习笔记</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>5.5k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/ML/" class="post-meta-link">ML</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/note/" class="post-meta-link">note</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Next-Step-of-ML/" class="post-meta-link">Next-Step-of-ML</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Adversarial-Attack/" class="post-meta-link">Adversarial-Attack</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="attack-and-defense"><a class="markdownIt-Anchor" href="#attack-and-defense"></a> Attack and Defense</h1>
+<p>这里的攻击和防御是指针对人工智能或者说机器学习的模型的攻击与防御。</p>
+<h2 id="motivation"><a class="markdownIt-Anchor" href="#motivation"></a> Motivation</h2>
+<p>做攻击与防御的动机是什么？</p>
+<ul>
+<li>我们想把机器学习技术应用到实际生活中</li>
+<li>目前的机器学习模型在多数情况下对噪声的干扰抗性不足</li>
+<li>我希望机器学习的模型不仅能够对抗一般的噪声干扰，同时还能对抗来自人类的恶意攻击的噪声</li>
+<li>特别是对于用来做垃圾邮件分类、恶意软件检测、网络入侵检测等任务的模型，我们更加需要让这样的模型健壮起来。</li>
+</ul>
+<h2 id="attack"><a class="markdownIt-Anchor" href="#attack"></a> Attack</h2>
+<p>其实，目前多数的模型都是比较容易被攻击，而往往防御攻击是比较困的。</p>
+<h3 id="what-do-we-want-to-do"><a class="markdownIt-Anchor" href="#what-do-we-want-to-do"></a> What do we want to do?</h3>
+<p>我们到底要做的是怎么样的攻击呢，这里举一个栗子：</p>
+<p><img src="/images/image-20201031153045687.png" alt="image-20201031153045687" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201031153045687.png" class="lozad post-image"></p>
+<p>这里有一个图片辨识的模型，你给它一张猫🐱片，他就告诉你这张图片是一只猫，如上图所示。现在我们要做的事是这样，我们在图片 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> 上加上攻击者特制的噪声 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi mathvariant="normal">Δ</mi><mi>x</mi></mrow><annotation encoding="application/x-tex">Δx</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord">Δ</span><span class="mord mathdefault">x</span></span></span></span> ，使得机器认不出这张图片，或者机器会把这张图片认成另一种攻击者指定的类别。类似这样的做法就叫做对模型的<strong>对抗样本攻击(Adversarial Attack)</strong>。</p>
+<h3 id="loss-function-for-attack"><a class="markdownIt-Anchor" href="#loss-function-for-attack"></a> Loss Function for Attack</h3>
+<p>我们通常在train这样的model的时候会minimize一个损失函数，我们希望模型的输出能和真正的标签尽可能相同：</p>
+<p><img src="/images/image-20201031155712886.png" alt="image-20201031155712886" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201031155712886.png" class="lozad post-image"></p>
+<p>现在我们要对模型进行攻击，攻击分成两种：有目标的攻击和无目标的攻击。</p>
+<h3 id="non-targeted-attack"><a class="markdownIt-Anchor" href="#non-targeted-attack"></a> Non-targeted Attack</h3>
+<p>无目标的攻击的概念是这样的：我们要找一个 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mo mathvariant="normal">′</mo></msup></mrow><annotation encoding="application/x-tex">x&#x27;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.751892em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.751892em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span></span></span></span> 使其输入到模型后产生的输出能和 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>y</mi><mrow><mi>t</mi><mi>r</mi><mi>u</mi><mi>e</mi></mrow></msup></mrow><annotation encoding="application/x-tex">y^{true}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9879959999999999em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7935559999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">t</span><span class="mord mathdefault mtight" style="margin-right:0.02778em;">r</span><span class="mord mathdefault mtight">u</span><span class="mord mathdefault mtight">e</span></span></span></span></span></span></span></span></span></span></span></span> 越远越好（可以使用各种衡量方法，比如交叉熵cross entropy）。</p>
+<p><img src="/images/image-20201031161650467.png" alt="image-20201031161650467" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201031161650467.png" class="lozad post-image"></p>
+<p>这个过程也是需要训练的，不过和原来训练模型的方式不同，我们现在要fixed住模型的参数 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>θ</mi></mrow><annotation encoding="application/x-tex">θ</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span></span></span></span> ，去调整 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> ，使得模型输出 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>y</mi><mo mathvariant="normal">′</mo></msup></mrow><annotation encoding="application/x-tex">y&#x27;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.946332em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.751892em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span></span></span></span> 和正确值 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>y</mi><mrow><mi>t</mi><mi>r</mi><mi>u</mi><mi>e</mi></mrow></msup></mrow><annotation encoding="application/x-tex">y^{true}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9879959999999999em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7935559999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">t</span><span class="mord mathdefault mtight" style="margin-right:0.02778em;">r</span><span class="mord mathdefault mtight">u</span><span class="mord mathdefault mtight">e</span></span></span></span></span></span></span></span></span></span></span></span> 越远越好，所以损失函数可以定义为：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>L</mi><mo stretchy="false">(</mo><msup><mi>x</mi><mo mathvariant="normal">′</mo></msup><mo stretchy="false">)</mo><mo>=</mo><mo>−</mo><mi>C</mi><mo stretchy="false">(</mo><msup><mi>y</mi><mo mathvariant="normal">′</mo></msup><mo separator="true">,</mo><msup><mi>y</mi><mrow><mi>t</mi><mi>r</mi><mi>u</mi><mi>e</mi></mrow></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">L(x&#x27;) = -C(y&#x27;, y^{true})
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.051892em;vertical-align:-0.25em;"></span><span class="mord mathdefault">L</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.801892em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.093556em;vertical-align:-0.25em;"></span><span class="mord">−</span><span class="mord mathdefault" style="margin-right:0.07153em;">C</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.801892em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.843556em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">t</span><span class="mord mathdefault mtight" style="margin-right:0.02778em;">r</span><span class="mord mathdefault mtight">u</span><span class="mord mathdefault mtight">e</span></span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></span></p>
+<h3 id="targeted-attack"><a class="markdownIt-Anchor" href="#targeted-attack"></a> Targeted-Attack</h3>
+<p>有目标攻击的概念是这样的：我们要找一个 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mo mathvariant="normal">′</mo></msup></mrow><annotation encoding="application/x-tex">x&#x27;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.751892em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.751892em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span></span></span></span> 使其输入到模型后产生的输出能和攻击者指定的错误输出 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>y</mi><mrow><mi>f</mi><mi>a</mi><mi>l</mi><mi>s</mi><mi>e</mi></mrow></msup></mrow><annotation encoding="application/x-tex">y^{false}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.043548em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.10764em;">f</span><span class="mord mathdefault mtight">a</span><span class="mord mathdefault mtight" style="margin-right:0.01968em;">l</span><span class="mord mathdefault mtight">s</span><span class="mord mathdefault mtight">e</span></span></span></span></span></span></span></span></span></span></span></span> 越近越好（可以使用各种衡量方法，比如交叉熵cross entropy）。</p>
+<p><img src="/images/image-20201031162440972.png" alt="image-20201031162440972" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201031162440972.png" class="lozad post-image"></p>
+<p>同上，有目标的攻击也是需要训练的，一样的要fixed住模型的参数 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>θ</mi></mrow><annotation encoding="application/x-tex">θ</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span></span></span></span> ，去调整 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> ，使得模型输出 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>y</mi><mo mathvariant="normal">′</mo></msup></mrow><annotation encoding="application/x-tex">y&#x27;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.946332em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.751892em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span></span></span></span> 和正确值 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>y</mi><mrow><mi>t</mi><mi>r</mi><mi>u</mi><mi>e</mi></mrow></msup></mrow><annotation encoding="application/x-tex">y^{true}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9879959999999999em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7935559999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">t</span><span class="mord mathdefault mtight" style="margin-right:0.02778em;">r</span><span class="mord mathdefault mtight">u</span><span class="mord mathdefault mtight">e</span></span></span></span></span></span></span></span></span></span></span></span> 越远越好，同时 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>y</mi><mo mathvariant="normal">′</mo></msup></mrow><annotation encoding="application/x-tex">y&#x27;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.946332em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.751892em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span></span></span></span> 能和指定的错误输出 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>y</mi><mrow><mi>f</mi><mi>a</mi><mi>l</mi><mi>s</mi><mi>e</mi></mrow></msup></mrow><annotation encoding="application/x-tex">y^{false}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.043548em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.10764em;">f</span><span class="mord mathdefault mtight">a</span><span class="mord mathdefault mtight" style="margin-right:0.01968em;">l</span><span class="mord mathdefault mtight">s</span><span class="mord mathdefault mtight">e</span></span></span></span></span></span></span></span></span></span></span></span> 越近越好，所以损失函数可以定义为：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>L</mi><mo stretchy="false">(</mo><msup><mi>x</mi><mo mathvariant="normal">′</mo></msup><mo stretchy="false">)</mo><mo>=</mo><mo>−</mo><mi>C</mi><mo stretchy="false">(</mo><msup><mi>y</mi><mo mathvariant="normal">′</mo></msup><mo separator="true">,</mo><msup><mi>y</mi><mrow><mi>t</mi><mi>r</mi><mi>u</mi><mi>e</mi></mrow></msup><mo stretchy="false">)</mo><mo>+</mo><mi>C</mi><mo stretchy="false">(</mo><msup><mi>y</mi><mo mathvariant="normal">′</mo></msup><mo>+</mo><msup><mi>y</mi><mrow><mi>f</mi><mi>a</mi><mi>l</mi><mi>s</mi><mi>e</mi></mrow></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">L(x&#x27;) = -C(y&#x27;, y^{true}) + C(y&#x27; + y^{false})
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.051892em;vertical-align:-0.25em;"></span><span class="mord mathdefault">L</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.801892em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.093556em;vertical-align:-0.25em;"></span><span class="mord">−</span><span class="mord mathdefault" style="margin-right:0.07153em;">C</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.801892em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.843556em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">t</span><span class="mord mathdefault mtight" style="margin-right:0.02778em;">r</span><span class="mord mathdefault mtight">u</span><span class="mord mathdefault mtight">e</span></span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1.051892em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.07153em;">C</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.801892em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1.149108em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8991079999999999em;"><span style="top:-3.1130000000000004em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.10764em;">f</span><span class="mord mathdefault mtight">a</span><span class="mord mathdefault mtight" style="margin-right:0.01968em;">l</span><span class="mord mathdefault mtight">s</span><span class="mord mathdefault mtight">e</span></span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></span></p>
+<p>但是如果 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi><mi mathvariant="normal">’</mi></mrow><annotation encoding="application/x-tex">x’</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault">x</span><span class="mord">’</span></span></span></span> 和原来的图片差太多那就没什么意义了，人一眼就可以看出这张图被修改过，甚至都看不出它原来的样子了。所以，我们需要一个限制条件，让 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mn>0</mn></msup></mrow><annotation encoding="application/x-tex">x^0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span></span></span></span></span></span></span></span> 和 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mo mathvariant="normal">′</mo></msup></mrow><annotation encoding="application/x-tex">x&#x27;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.751892em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.751892em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span></span></span></span> 尽可能相同，让人认为恶意样本和原始样本看起来相同，骗过人类😁。我们的想法是如果这两者之间的差距小到一个阈值，人就不会发现，所以Constraint可以形式化的写成：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>d</mi><mo stretchy="false">(</mo><msup><mi>x</mi><mn>0</mn></msup><mo separator="true">,</mo><msup><mi>x</mi><mo mathvariant="normal">′</mo></msup><mo stretchy="false">)</mo><mo>≤</mo><mi>ε</mi></mrow><annotation encoding="application/x-tex">d(x^0,x&#x27;) \le ε
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1141079999999999em;vertical-align:-0.25em;"></span><span class="mord mathdefault">d</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8641079999999999em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.801892em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">ε</span></span></span></span></span></p>
+<h3 id="constraint"><a class="markdownIt-Anchor" href="#constraint"></a> Constraint</h3>
+<p>这个约束的distance应该怎么做呢？这里举两个栗子：</p>
+<p><img src="/images/image-20201031163453829.png" alt="image-20201031163453829" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201031163453829.png" class="lozad post-image"></p>
+<h4 id="l2-norm"><a class="markdownIt-Anchor" href="#l2-norm"></a> L2-norm</h4>
+<p>二范数如上图所示，挺好算的，就是取两者之差的平方和。</p>
+<h4 id="l-infinity"><a class="markdownIt-Anchor" href="#l-infinity"></a> L-infinity</h4>
+<p><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>L</mi><mi mathvariant="normal">∞</mi></msub></mrow><annotation encoding="application/x-tex">L_\infty</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">∞</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 范数可以理解为取所有差值中最大的一个。</p>
+<p>对于不同的模型攻击时使用的distance应该是不同的，要选择合适的方法去做（根据人类的感知，来判断某个计算distance的方法是否合适）。</p>
+<p>上图中四个颜色的方块，分别使用了两种不同的方法进行了修改，给每一个pixel一点点修改，给一个pixel比较大的修改。彩色的四个方块，所以其实 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> 有12个分量，调整后的两个图片的二范数distance计算出来的值其实时一样的，但是就人类的感官来看，似乎右下角的图片能看出来绿色更深了。我们再用无穷范数算一下，发现右下角的distance是大的，右上角则较小。所以说，似乎二范数计算distance不能很好的反应人类在图片上的感知。</p>
+<h3 id="how-to-attack"><a class="markdownIt-Anchor" href="#how-to-attack"></a> How to Attack</h3>
+<p>攻击的过程如上面所说的，就和训练神经网络的是相似的，只不过是fix住参数，根据梯度下降改变输入，找到一个 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mo>∗</mo></msup></mrow><annotation encoding="application/x-tex">x^*</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.688696em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.688696em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">∗</span></span></span></span></span></span></span></span></span></span></span> 满足我们的目的而已。这个过程可以用以下方程描述：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mo>∗</mo></msup><mo>=</mo><mi>a</mi><mi>r</mi><mi>g</mi><munder><mo><mi>min</mi><mo>⁡</mo></mo><mrow><mi>d</mi><mo stretchy="false">(</mo><msup><mi>x</mi><mn>0</mn></msup><mo separator="true">,</mo><msup><mi>x</mi><mo mathvariant="normal">′</mo></msup><mo stretchy="false">)</mo><mo>≤</mo><mi>ε</mi></mrow></munder><mi>L</mi><mo stretchy="false">(</mo><msup><mi>x</mi><mo mathvariant="normal">′</mo></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">x^* = arg\min_{d(x^0,x&#x27;) \le ε} L(x&#x27;)
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.738696em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.738696em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">∗</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.767892em;vertical-align:-0.966em;"></span><span class="mord mathdefault">a</span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mord mathdefault" style="margin-right:0.03588em;">g</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.66786em;"><span style="top:-2.009em;margin-left:0em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">d</span><span class="mopen mtight">(</span><span class="mord mtight"><span class="mord mathdefault mtight">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7463142857142857em;"><span style="top:-2.786em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">0</span></span></span></span></span></span></span></span><span class="mpunct mtight">,</span><span class="mord mtight"><span class="mord mathdefault mtight">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6828285714285715em;"><span style="top:-2.786em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mclose mtight">)</span><span class="mrel mtight">≤</span><span class="mord mathdefault mtight">ε</span></span></span></span><span style="top:-2.7em;"><span class="pstrut" style="height:2.7em;"></span><span><span class="mop">min</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.966em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault">L</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.801892em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></span></p>
+<p>这里有个限制，似乎会感到困惑，因为一般的模型训练中是没有限制的。没关系这个很好处理的，如下所示：</p>
+<p><img src="/images/image-20201031170257272.png" alt="image-20201031170257272" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201031170257272.png" class="lozad post-image"></p>
+<p>我们将原始的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>x</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">x_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 作为初始值，用计算梯度，然后更新输入为 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mi>t</mi></msup></mrow><annotation encoding="application/x-tex">x^t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7935559999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7935559999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">t</span></span></span></span></span></span></span></span></span></span></span> ，然后做个判断，看看 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mi>t</mi></msup></mrow><annotation encoding="application/x-tex">x^t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7935559999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7935559999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">t</span></span></span></span></span></span></span></span></span></span></span> 和 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mn>0</mn></msup></mrow><annotation encoding="application/x-tex">x^0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span></span></span></span></span></span></span></span> 之间的距离是否大过阈值，如果超过的话就修正一下输入，让输入符合constraint，否则就继续。那怎么修正呢，这个fix函数可以这样做：</p>
+<p><img src="/images/image-20201031170923606.png" alt="image-20201031170923606" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201031170923606.png" class="lozad post-image"></p>
+<p>fit()：对于所有符合constraint的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> 我们返回一个最接近 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mi>t</mi></msup></mrow><annotation encoding="application/x-tex">x^t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7935559999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7935559999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">t</span></span></span></span></span></span></span></span></span></span></span> 的就可以了。</p>
+<p>如上图所示，对于二范数衡量distance，就是在 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mn>0</mn></msup></mrow><annotation encoding="application/x-tex">x^0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span></span></span></span></span></span></span></span> 为圆心，ε 为半径的圆内找一个最接近 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mi>t</mi></msup></mrow><annotation encoding="application/x-tex">x^t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7935559999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7935559999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">t</span></span></span></span></span></span></span></span></span></span></span> 的输入替代 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mi>t</mi></msup></mrow><annotation encoding="application/x-tex">x^t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7935559999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7935559999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">t</span></span></span></span></span></span></span></span></span></span></span> ，如果超出了就找圆心和超出的点所在直线与圆的交点替换就可以了；对于无穷范数衡量distance，就是在任意方向上都不可以超出 ε 远的距离，如果超出了就在各个维度上都拽到边界值上就可以了。图中是二维的，实际上就上述小方块来说是12维的，真实的模型通常是上万维的。</p>
+<h3 id="example-实践"><a class="markdownIt-Anchor" href="#example-实践"></a> Example-实践</h3>
+<p>使用上述的方法，在ResNet-50这个模型上做Targeted-Attack实验，原本是一张Tiger cat的图片，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>y</mi><mrow><mi>f</mi><mi>a</mi><mi>l</mi><mi>s</mi><mi>e</mi></mrow></msup></mrow><annotation encoding="application/x-tex">y^{false}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.043548em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.10764em;">f</span><span class="mord mathdefault mtight">a</span><span class="mord mathdefault mtight" style="margin-right:0.01968em;">l</span><span class="mord mathdefault mtight">s</span><span class="mord mathdefault mtight">e</span></span></span></span></span></span></span></span></span></span></span></span> 定为Star Fish，update 50次参数的攻击效果如下：</p>
+<p><img src="/images/image-20201031171732937.png" alt="image-20201031171732937" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201031171732937.png" class="lozad post-image"></p>
+<p>效果是针不戳。我们看看两张图片的差异，因为差异太小肉眼难以看见，所以看看x50倍的效果：</p>
+<p><img src="/images/image-20201031172350221.png" alt="image-20201031172350221" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201031172350221.png" class="lozad post-image"></p>
+<p>上面我们叠加上去的噪声是我们精心构造的，那我们随机加一些噪声会怎么样呢？</p>
+<p><img src="/images/image-20201031172542604.png" alt="image-20201031172542604" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201031172542604.png" class="lozad post-image"></p>
+<p>我们可以看到，这些噪声都是比较明显的，但是前两张都被比较正确的识别出来了，至少都还是cat🐱，当我们叠加的噪声十分夸张时机器才没办法辨识这个图片。</p>
+<h3 id="what-happend"><a class="markdownIt-Anchor" href="#what-happend"></a> What happend？</h3>
+<p>总结一下，其实模型很容易就能被attack。但是这件事为什么会发生呢？我们可以这样来解释一下：</p>
+<p><img src="/images/image-20201031172840609.png" alt="image-20201031172840609" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201031172840609.png" class="lozad post-image"></p>
+<p>我们可以这样解释，你可以想象 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mn>0</mn></msup></mrow><annotation encoding="application/x-tex">x^0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span></span></span></span></span></span></span></span> 是在非常高维空间中的一个点，你把这个点随机的移动，你会发现多数情况下在这个点的附近很大一个范围内都是能正确辨识的空间，当你把这个点推到的很远的时候才会让机器识别成类似的事物，当你把它推的非常远时才会被辨识成不相关的事物。但是，有一些神奇维度，在这些神奇的维度上 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mn>0</mn></msup></mrow><annotation encoding="application/x-tex">x^0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span></span></span></span></span></span></span></span> 的正确区域只有非常狭窄的一点点，我们只要将 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mn>0</mn></msup></mrow><annotation encoding="application/x-tex">x^0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span></span></span></span></span></span></span></span> 推离原值一点点，就会让模型输出产生很大的变化。</p>
+<p>总结这个现象就是在某一些维度上正确域是很狭窄的，只要在这些维度上推离一点点就会让机器判断出错。上述说法只是在现象上解释，出现了什么样的情况，但是没能真正的弄清楚这个现象是怎么出现的，其背后的原理是什么。</p>
+<h3 id="attack-approaches"><a class="markdownIt-Anchor" href="#attack-approaches"></a> Attack Approaches</h3>
+<p>可供参考的方法：</p>
+<ul>
+<li>
+<p>FGSM (<a target="_blank" rel="noopener" href="https://arxiv.org/abs/1412.6572">https://arxiv.org/abs/1412.6572</a>)</p>
+</li>
+<li>
+<p>Basic iterative method (<a target="_blank" rel="noopener" href="https://arxiv.org/abs/1607.02533">https://arxiv.org/abs/1607.02533</a>)</p>
+</li>
+<li>
+<p>L-BFGS (<a target="_blank" rel="noopener" href="https://arxiv.org/abs/1312.6199">https://arxiv.org/abs/1312.6199</a>)</p>
+</li>
+<li>
+<p>Deepfool (<a target="_blank" rel="noopener" href="https://arxiv.org/abs/1511.04599">https://arxiv.org/abs/1511.04599</a>)</p>
+</li>
+<li>
+<p>JSMA (<a target="_blank" rel="noopener" href="https://arxiv.org/abs/1511.07528">https://arxiv.org/abs/1511.07528</a>)</p>
+</li>
+<li>
+<p>C&amp;W (<a target="_blank" rel="noopener" href="https://arxiv.org/abs/1608.04644">https://arxiv.org/abs/1608.04644</a>)</p>
+</li>
+<li>
+<p>Elastic net attack (<a target="_blank" rel="noopener" href="https://arxiv.org/abs/1709.04114">https://arxiv.org/abs/1709.04114</a>)</p>
+</li>
+<li>
+<p>Spatially Transformed (<a target="_blank" rel="noopener" href="https://arxiv.org/abs/1801.02612">https://arxiv.org/abs/1801.02612</a>)</p>
+</li>
+<li>
+<p>One Pixel Attack (<a target="_blank" rel="noopener" href="https://arxiv.org/abs/1710.08864">https://arxiv.org/abs/1710.08864</a>)</p>
+</li>
+<li>
+<p>…… only list a few</p>
+</li>
+</ul>
+<p>有很多五花八门的不同的攻击方法，但是这些攻击方法往往不同之处就在于使用不同的distance测量方法作为constraint，还有使用不同的优化Loss的方法：</p>
+<p><img src="/images/image-20201031184548861.png" alt="image-20201031184548861" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201031184548861.png" class="lozad post-image"></p>
+<p>FGSM（Fast Gradient Sign Method）可能不是一个非常好的方法，但是他确实是一个非常简单的方法。他的做法如上图蓝框框所示，我们只要把 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mn>0</mn></msup></mrow><annotation encoding="application/x-tex">x^0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span></span></span></span></span></span></span></span> 减去一个 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>ε</mi><mi mathvariant="normal">Δ</mi><mi>x</mi></mrow><annotation encoding="application/x-tex">εΔx</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault">ε</span><span class="mord">Δ</span><span class="mord mathdefault">x</span></span></span></span> 就算完了。这个 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi mathvariant="normal">Δ</mi><mi>x</mi></mrow><annotation encoding="application/x-tex">Δx</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord">Δ</span><span class="mord mathdefault">x</span></span></span></span> 就是Loss对 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> 的偏微分的正负。举例来说，如果 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi mathvariant="normal">∂</mi><mi>L</mi><mi mathvariant="normal">/</mi><mi mathvariant="normal">∂</mi><msub><mi>x</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">\partial L/\partial x_1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord" style="margin-right:0.05556em;">∂</span><span class="mord mathdefault">L</span><span class="mord">/</span><span class="mord" style="margin-right:0.05556em;">∂</span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 是正的，那我们就在 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mn>0</mn></msup></mrow><annotation encoding="application/x-tex">x^0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span></span></span></span></span></span></span></span> 的第一维减掉一个 ε ，反之则加上 ε 。这个方法就像一拳超人一样，只要攻击一次就达成目标。</p>
+<p>其实，多攻击几次在文献中的结果看来效果是更好的，这种攻击叫做 Iterative FGSM，这里不展开。</p>
+<p>我们来直观的解释一下FGSM：</p>
+<p><img src="/images/image-20201031185658812.png" alt="image-20201031185658812" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201031185658812.png" class="lozad post-image"></p>
+<p>当我们更新输入的时候，我们只要找到梯度的方向，就把输入朝向梯度的反方向更新一个ε，举例来说，在上图二维平面上，如果梯度指向左下角，不管它指向左下角具体哪个角度，我们都会将参数更新到橙色的点。而如果用原来的方法我们就会更新到梯度方向的反方向上，比如点 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mn>1</mn></msup></mrow><annotation encoding="application/x-tex">x^1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span></span></span></span></span></span></span></span> ，很可能是不会超出constraint的方框的。你可以理解成FGSM是在使用一个巨大的learning rate，大到一次update就会直接跳出constraint，我们再使用fit函数将跑出边界的点拉回到边界的角角上。</p>
+<h3 id="white-box-vs-black-box"><a class="markdownIt-Anchor" href="#white-box-vs-black-box"></a> White Box v.s. Black Box</h3>
+<p>上述的攻击方法，我们都是fix住神经网络的参数去找 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mo mathvariant="normal">′</mo></msup></mrow><annotation encoding="application/x-tex">x&#x27;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.751892em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.751892em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span></span></span></span> . 也就是说要想攻击模型，我们必须知道模型的所有参数 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>θ</mi></mrow><annotation encoding="application/x-tex">θ</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span></span></span></span> ，此类攻击我们称为白盒攻击。那如果我们不把模型泄露出去，这样就安全了吗？也不会百分百安全，因为我们还可以采取黑盒攻击。😐</p>
+<p>那黑盒攻击怎么做呢？</p>
+<h3 id="black-box-attack"><a class="markdownIt-Anchor" href="#black-box-attack"></a> Black Box Attack</h3>
+<p>现在我们有一个图片辨识模型，完全不知道这个模型的参数和内部结构，但是，<strong>我们能拿到这个模型训练使用的corpus</strong>（数据集，语料库）。</p>
+<p><img src="/images/image-20201101195159090.png" alt="image-20201101195159090" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201101195159090.png" class="lozad post-image"></p>
+<p>我们可以通过这个数据集自己训练一个模型，称为proxy network。然后，我们用上述的对抗样本的方法攻击这个代理模型，得到一个trigger（恶意样本），用这个恶意样本去攻击原模型。神奇的是，这种方法往往能够成功。</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1611.02770.pdf">https://arxiv.org/pdf/1611.02770.pdf</a></p>
+</blockquote>
+<p>我们来看看这个方法的实验结果，引用自上述论文：</p>
+<p><img src="/images/image-20201101195836274.png" alt="image-20201101195836274" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201101195836274.png" class="lozad post-image"></p>
+<p>值描述的是模型辨识正确的概率，也就是攻击失败的概率。上述五种神经网络的架构是不一样的，但是我们可以看到即使是不同架构的模型攻击成功的概率也是非常高的，而相同的架构的模型攻击成功率则明显是更高的。</p>
+<h3 id="universal-adversarial-attack"><a class="markdownIt-Anchor" href="#universal-adversarial-attack"></a> Universal Adversarial Attack</h3>
+<p>核心精神是找一个通用的攻击向量，将其叠加到任意样本上都会让模型辨识出错。</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1610.08401">https://arxiv.org/abs/1610.08401</a></p>
+</blockquote>
+<p><img src="/images/image-20201101200544587.png" alt="image-20201101200544587" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201101200544587.png" class="lozad post-image"></p>
+<p>这件事做成以后，你可以想象，只要在做辨识任务的摄像机前面贴一张噪声照片，就可以让所有结果都出错😮。另外，这个通用攻击甚至也可以做上述的黑盒攻击。</p>
+<h3 id="adversarial-reprogramming"><a class="markdownIt-Anchor" href="#adversarial-reprogramming"></a> Adversarial Reprogramming</h3>
+<p>对抗重编程攻击？不知道如何翻译合适，这个攻击的核心精神是：通过找一些噪声，让机器的行为发生改变，达到重编程实现其他功能的效果。举个栗子：</p>
+<blockquote>
+<p><em>Gamaleldin</em> <em>F.</em> <em>Elsayed</em>*, Ian Goodfellow,* <em>Jascha</em> <em>Sohl-Dickstein, “<em>Adversarial Reprogramming of Neural Networks</em>”, ICLR, 2019</em></p>
+</blockquote>
+<p><img src="/images/image-20201101201022361.png" alt="image-20201101201022361" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201101201022361.png" class="lozad post-image"></p>
+<p>本来模型在做图片辨识，我们通过攻击希望这个模型能做<strong>数方块</strong>这个任务，当我们把图片中间贴上上图中那种方块图，机器就会帮我们数出途中方块的个数，如果有一个方块会输出tench，有两个方块就输出goldfish… 这件事还挺神奇的，因为我们并没有改变机器的任何参数，我们只是用了和前述相同的方法，找了一个噪声图片，然后把要数方块的图贴在噪声上，输入模型就会让模型帮我们数出方块的个数，真实very amazing啊😃。具体方法细节参考引用文章。</p>
+<h3 id="attack-in-the-real-world"><a class="markdownIt-Anchor" href="#attack-in-the-real-world"></a> Attack in the Real World</h3>
+<p>我们想知道上述的攻击方法是否能应用在现实生活中，上述的所有方法中加入的噪声其实都非常的小，在数字世界中这些噪声会对模型的判别造成很大影响似乎是很合理的，但是在真实的世界中，机器是通过一个小相机看世界的，这样的小噪声通过相机以后可能就没有了。那我们就来看看其他人做的实验：</p>
+<p>视频连接：<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=zQ_uMenoBCk&amp;feature=youtu.be">https://www.youtube.com/watch?v=zQ_uMenoBCk&amp;feature=youtu.be</a></p>
+<p>从视频中的结果来看似乎在现实世界中攻击是非常可行的。</p>
+<p>视频中只是在打印出来的图片上加噪声，但是在人脸识别任务中，你总不可能打印出人脸再上加噪声吧，有人就提出在眼睛框上加噪声：</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://www.cs.cmu.edu/~sbhagava/papers/face-rec-ccs16.pdf">https://www.cs.cmu.edu/~sbhagava/papers/face-rec-ccs16.pdf</a></p>
+</blockquote>
+<p><img src="/images/image-20201101202627806.png" alt="image-20201101202627806" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201101202627806.png" class="lozad post-image"></p>
+<p>左侧图是在整个人脸上加噪声，但是这种方法只能在实验室做，而右侧是让一个女性带上特制的noise眼镜，就会被是被成一个男性。这个work的作者在做演讲的时候是实际做了现场实验的。总之这种攻击在三次元世界中是切实可行的，但是要做到这件事也是要做非常多的努力的，列出几个难点：</p>
+<ol>
+<li>攻击者需要找到超越单个图像的扰动。（人是会动的，所以要保证所有角度都能攻击成功）</li>
+<li>极度不同的相邻像素之间的差异不太可能被相机准确捕捉到。（因相机解析度，人物运动等因素，要保证噪声以较大的色块的方式呈现，且不能出现相邻色块的极端差异，才能被相机正确捕捉）</li>
+<li>保证颜色是设备能够辨认的。（受限于设备工艺，尽量避免超出常见颜色阈值的色彩）</li>
+</ol>
+<p>另外一个栗子：</p>
+<p>对路边交通标志进行攻击，希望下列所有表示都能被是被成限速15的标志。他们也考虑了物理世界的种种显示，考虑到不能产生非常奇怪的图案引起怀疑，考虑到不同远近和角度，所以这个攻击确实会在未来自动驾驶道路上造成阻碍。</p>
+<p><img src="/images/image-20201101203752724.png" alt="image-20201101203752724" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201101203752724.png" class="lozad post-image"></p>
+<h3 id="attack-beyond-image"><a class="markdownIt-Anchor" href="#attack-beyond-image"></a> Attack Beyond Image</h3>
+<p>攻击也不知出现在图片辨识上，其他领域也是存在的，具体不展开了，只给出reference。</p>
+<ul>
+<li>You can attack audio
+<ul>
+<li><a target="_blank" rel="noopener" href="https://nicholas.carlini.com/code/audio_adversarial_examples/">https://nicholas.carlini.com/code/audio_adversarial_examples/</a></li>
+<li><a target="_blank" rel="noopener" href="https://adversarial-attacks.net/">https://adversarial-attacks.net</a></li>
+</ul>
+</li>
+<li>You can attack text
+<ul>
+<li><a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1707.07328.pdf">https://arxiv.org/pdf/1707.07328.pdf</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="defense"><a class="markdownIt-Anchor" href="#defense"></a> Defense</h2>
+<p>有人觉得这种攻击能够成功，就是因为它对训练数据过拟合了，但这并不完全正确，因为就算你对model作regularization，作dropout，作model的ensemble，你也不能抗住攻击。可能你会觉得作ensemble尤其可能抵御住攻击，你攻击成功一个模型，我还有其他模型，但是这种想法是不行的，因为上面我们看到了attack是可以跨模型的，只要攻击成功ensemble中的一个模型，对其他模型也往往效果显著。</p>
+<p>现在的防御手段主要分成两大类：</p>
+<ul>
+<li>Passive defense：在不修改model的情况下，识别出被污染的输入。类似于在model外面加一层护盾</li>
+<li>Proactive defense：在训练模型时考虑对抗攻击的防御，让模型变得robust起来</li>
+</ul>
+<h3 id="passive-defense"><a class="markdownIt-Anchor" href="#passive-defense"></a> Passive Defense</h3>
+<blockquote>
+<p>可参考：<a target="_blank" rel="noopener" href="https://evademl.org/">https://evademl.org/</a></p>
+</blockquote>
+<p>怎么做被动攻击呢？我们来举个几个栗子：</p>
+<h4 id="filter"><a class="markdownIt-Anchor" href="#filter"></a> Filter</h4>
+<p><img src="/images/image-20201102090028036.png" alt="image-20201102090028036" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201102090028036.png" class="lozad post-image"></p>
+<p>我们在模型前加一个Filter，让有噪声的数据输入到Filter中做一个变换（比如，Smoothing），以尽可能消除噪声的影响。一张被加了对抗噪声的猫🐱片被识别为键盘，我们希望通过filter的处理以后能够减轻noise的伤害，而其他的正常图片经过filter处理后对辨识结果的影响尽可能小。</p>
+<p>那什么样的filter可以做到这件事呢，其实不需要太复杂的filter就可以做到这件事，比如作平滑化smoothing。来看看实验结果：</p>
+<p><img src="/images/image-20201102090532523.png" alt="image-20201102090532523" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201102090532523.png" class="lozad post-image"></p>
+<p>为什么这件事会成功抵御攻击呢，我们可以想象攻击噪声只有在某些特殊的维度上才能造成显著的攻击效果，我们现在一旦加上filter，把那些特殊维度的值改变了，攻击效果就显著下降了，而这样的行为对正常的样本影响并不大。</p>
+<p>基于这样的思想我们再看一种方法，特征压缩。</p>
+<h4 id="feature-squeeze"><a class="markdownIt-Anchor" href="#feature-squeeze"></a> Feature Squeeze</h4>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://evademl.org/docs/featuresqueezing.pdf">https://evademl.org/docs/featuresqueezing.pdf</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/uvasrg/FeatureSqueezing">https://github.com/uvasrg/FeatureSqueezing</a></p>
+</blockquote>
+<p><img src="/images/image-20201102091445038.png" alt="image-20201102091445038" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201102091445038.png" class="lozad post-image"></p>
+<p>核心思想是对输入样本的特征通过不同方式进行压缩简化，输入到model中得出预测结果和原样本的预测结果进行对别，如果差别较大，就判定为样本是恶意的对抗样本。更多细节可以阅读上述论文。</p>
+<h4 id="randomization-at-inference-phase"><a class="markdownIt-Anchor" href="#randomization-at-inference-phase"></a> Randomization at Inference Phase</h4>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1711.01991">https://arxiv.org/abs/1711.01991</a></p>
+</blockquote>
+<p><img src="/images/image-20201102092946298.png" alt="image-20201102092946298" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201102092946298.png" class="lozad post-image"></p>
+<p>如上图所示，我们将土图片做一些小小的缩放，在旁边加上小小的padding，将padded image输入模型，这样的方法再防御上也是效果显著的。</p>
+<p>上述的三个方法都是在模型前面加一层护盾的形式，类似这种方法的弱点就是，当防御方法被泄露的时候，攻击者就能比较容易的攻破护盾。比如，加Filter的方法，攻击者可以将这个filter想象成模型的一个layer，用传统的攻击方法进行攻击就可以了，从而设计出加了filter护盾的模型的恶意对抗样本；又或者说加上random缩放这个方法，如果你random作padding的方法被泄露出去，攻击有可能是成功的，可能可以做到universal的attack，也就是说针对所有的random padding都通用的attack的noise。</p>
+<h3 id="proactive-denfense"><a class="markdownIt-Anchor" href="#proactive-denfense"></a> Proactive Denfense</h3>
+<p>核心精神：找出漏洞，补漏洞</p>
+<p>过程如下：</p>
+<p><img src="/images/image-20201102094345526.png" alt="image-20201102094345526" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201102094345526.png" class="lozad post-image"></p>
+<p>我们训练network的方法就是给出训练数据，然后用这个数据集train出你的model。接下来就是对模型进行修补：</p>
+<p>你要再训练T次迭代，每次迭代过程中，要用对每个样本 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>x</mi><mi>n</mi></msup></mrow><annotation encoding="application/x-tex">x^n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.664392em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.664392em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">n</span></span></span></span></span></span></span></span></span></span></span> 根据攻击算法找出其可以attack的对抗样本，记作 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mover accent="true"><mi>x</mi><mo stretchy="true">~</mo></mover><mi>n</mi></msup></mrow><annotation encoding="application/x-tex">\widetilde{x}^n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6905600000000001em;vertical-align:0em;"></span><span class="mord"><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6905600000000001em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">x</span></span></span><span class="svg-align" style="width:calc(100% - 0.05556em);margin-left:0.05556em;top:-3.43056em;"><span class="pstrut" style="height:3em;"></span><span style="height:0.26em;"><svg width='100%' height='0.26em' viewBox='0 0 600 260' preserveAspectRatio='none'><path d='M200 55.538c-77 0-168 73.953-177 73.953-3 0-7
+-2.175-9-5.437L2 97c-1-2-2-4-2-6 0-4 2-7 5-9l20-12C116 12 171 0 207 0c86 0
+ 114 68 191 68 78 0 168-68 177-68 4 0 7 2 9 5l12 19c1 2.175 2 4.35 2 6.525 0
+ 4.35-2 7.613-5 9.788l-19 13.05c-92 63.077-116.937 75.308-183 76.128
+-68.267.847-113-73.952-191-73.952z'/></svg></span></span></span></span></span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.664392em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">n</span></span></span></span></span></span></span></span></span></span></span> ，将这些对抗样本加入数据集重训练model。</p>
+<p>这个增加训练数据的方法有点像Data Augmentation。为什么要作T次迭代呢，因为每次我们重训练以后model的参数就变了，就可能产生新的漏洞所以我们要不断的迭代多次，尽可能修补所有漏洞，实际上是不可能修补所有漏洞的。</p>
+<p>还有一件事，我们要注意在这个过程中找漏洞的algorithm，比如我们使用不同的算法，最后得到的是抗不同算法攻击的model，所以或许我么需要用不同算法，做多次这种防御攻击的重训练。</p>
+<h2 id="to-learn-more"><a class="markdownIt-Anchor" href="#to-learn-more"></a> To Learn More</h2>
+<ul>
+<li>Reference
+<ul>
+<li><a target="_blank" rel="noopener" href="https://adversarial-ml-tutorial.org/">https://adversarial-ml-tutorial.org/</a> (Zico Kolter and Aleksander Madry)</li>
+</ul>
+</li>
+<li>Adversarial Attack Toolbox:
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/bethgelab/foolbox">https://github.com/bethgelab/foolbox</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/IBM/adversarial-robustness-toolbox">https://github.com/IBM/adversarial-robustness-toolbox</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/tensorflow/cleverhans">https://github.com/tensorflow/cleverhans</a></li>
+</ul>
+</li>
+</ul>
+<p><strong>★推荐综述</strong>：<a target="_blank" rel="noopener" href="http://crad.ict.ac.cn/EN/abstract/abstract4023.shtml">人工智能系统安全与隐私风险</a></p>
+<blockquote>
+<p>更多的参考：</p>
+<p>Adversarial Attack Reference:</p>
+<p>Intriguing properties of neural networks<br />
+<a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1312.6199?fbclid=IwAR28sk7LH7qQ1D56s4I8z5HX99ycW4hrb6oPVwUTv0-cIvZSEA7Xe9NO4IQ">https://arxiv.org/pdf/1312.6199</a></p>
+<p>Explaining and Harnessing Adversarial Examples<br />
+<a target="_blank" rel="noopener" href="https://l.facebook.com/l.php?u=https%3A%2F%2Farxiv.org%2Fabs%2F1412.6572%3Ffbclid%3DIwAR28sk7LH7qQ1D56s4I8z5HX99ycW4hrb6oPVwUTv0-cIvZSEA7Xe9NO4IQ&amp;h=AT1IgeLGzPrSZg73vqbMfYFE4N_qJQzq_jFwMDt7AkHw3Gio-dHLeWRDTlUh2eGcjE_sTeD0qbFYUh0k6YY7EJBNxeqOrqf2LdHMfzZvETwRvKyGXKGjIi2C_8BWbNw92T_hcoEXXbKprQB4W4KnbQ">https://arxiv.org/abs/1412.6572</a></p>
+<p>Towards Evaluating the Robustness of Neural Networks<br />
+<a target="_blank" rel="noopener" href="https://l.facebook.com/l.php?u=https%3A%2F%2Farxiv.org%2Fpdf%2F1608.04644.pdf%3Ffbclid%3DIwAR3xzQ_rqpl1uqPvEwTCdBtxEse6NPlQZf6IBB43Fi4P4nRM_u_TU76IsjU&amp;h=AT1IgeLGzPrSZg73vqbMfYFE4N_qJQzq_jFwMDt7AkHw3Gio-dHLeWRDTlUh2eGcjE_sTeD0qbFYUh0k6YY7EJBNxeqOrqf2LdHMfzZvETwRvKyGXKGjIi2C_8BWbNw92T_hcoEXXbKprQB4W4KnbQ">https://arxiv.org/pdf/1608.04644.pdf</a></p>
+<p>ADVERSARIAL REPROGRAMMING OF NEURAL NETWORKS<br />
+<a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1810.00069.pdf">https://arxiv.org/pdf/1810.00069.pdf</a></p>
+<p>Audio Adversarial Examples: Targeted Attacks on Speech-to-Text<br />
+<a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1801.01944.pdf">https://arxiv.org/pdf/1801.01944.pdf</a></p>
+<p>Towards Deep Learning Models Resistant to Adversarial Attacks<br />
+<a target="_blank" rel="noopener" href="https://l.facebook.com/l.php?u=https%3A%2F%2Farxiv.org%2Fabs%2F1706.06083%3Ffbclid%3DIwAR1G9HBl0913uy4I-MEeJynGo9mOkow2QglIwQo7qKbnB6gqlPza40NPUKY&amp;h=AT1IgeLGzPrSZg73vqbMfYFE4N_qJQzq_jFwMDt7AkHw3Gio-dHLeWRDTlUh2eGcjE_sTeD0qbFYUh0k6YY7EJBNxeqOrqf2LdHMfzZvETwRvKyGXKGjIi2C_8BWbNw92T_hcoEXXbKprQB4W4KnbQ">https://arxiv.org/abs/1706.06083</a></p>
+<p>Obfuscated Gradients Give a False Sense of Security: Circumventing Defenses to Adversarial Examples<br />
+<a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1802.00420.pdf?fbclid=IwAR1XMush-GGz1oBKRt694di5GDaCRTMX1RfXfSxNEoN0sa_OwDrToJTcSmE">https://arxiv.org/pdf/1802.00420.pdf</a></p>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1710.08864">One pixel attack for fooling deep neural networks</a></p>
+<hr />
+<p>Slide :<a target="_blank" rel="noopener" href="https://media.neurips.cc/Conferences/NIPS2018/Slides/adversarial_ml_slides_parts_1_4.pdf">https://media.neurips.cc/Conferences/NIPS2018/Slides/adversarial_ml_slides_parts_1_4.pdf</a></p>
+<p>Two hour tutorial: <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=TwP-gKBQyic">https://www.youtube.com/watch?v=TwP-gKBQyic</a> (good one, with web page)</p>
+<p>Good fellow</p>
+<p><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=CIfsB_EYsVI">https://www.youtube.com/watch?v=CIfsB_EYsVI</a></p>
+<p>More videos (I am not sure about the quality)</p>
+<p><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=r8cW1p8VBOU">https://www.youtube.com/watch?v=r8cW1p8VBOU</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=sh6OS6Lssv4">https://www.youtube.com/watch?v=sh6OS6Lssv4</a></p>
+<p>Tutorial which is too long: <a target="_blank" rel="noopener" href="http://pralab.diee.unica.it/en/wild-patterns">http://pralab.diee.unica.it/en/wild-patterns</a></p>
+<p>科普</p>
+<p>Video: <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=oZYgaD004Dw">https://www.youtube.com/watch?v=oZYgaD004Dw</a></p>
+<p>Video: <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=SA4YEAWVpbk">https://www.youtube.com/watch?v=SA4YEAWVpbk</a></p>
+<hr />
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/37922148">https://zhuanlan.zhihu.com/p/37922148</a></p>
+<p>Slide :<a target="_blank" rel="noopener" href="https://media.neurips.cc/Conferences/NIPS2018/Slides/adversarial_ml_slides_parts_1_4.pdf">https://media.neurips.cc/Conferences/NIPS2018/Slides/adversarial_ml_slides_parts_1_4.pdf</a></p>
+<p>Two hour tutorial: <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=TwP-gKBQyic">https://www.youtube.com/watch?v=TwP-gKBQyic</a> (good one, with web page)</p>
+<p>Good fellow<br />
+<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=CIfsB_EYsVI">https://www.youtube.com/watch?v=CIfsB_EYsVI</a></p>
+<p>More videos (I am not sure about the quality)<br />
+<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=r8cW1p8VBOU">https://www.youtube.com/watch?v=r8cW1p8VBOU</a><br />
+<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=sh6OS6Lssv4">https://www.youtube.com/watch?v=sh6OS6Lssv4</a></p>
+<p>Tutorial which is too long: <a target="_blank" rel="noopener" href="http://pralab.diee.unica.it/en/wild-patterns">http://pralab.diee.unica.it/en/wild-patterns</a></p>
+<p>科普<br />
+Video: <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=oZYgaD004Dw">https://www.youtube.com/watch?v=oZYgaD004Dw</a><br />
+Video: <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=SA4YEAWVpbk">https://www.youtube.com/watch?v=SA4YEAWVpbk</a></p>
+</blockquote>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-info copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/about">Ch3nYe</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/Attack-and-Defense/">https://ch3nye.top/Attack-and-Defense/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/Explainable-ML/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一篇</div>
+        
+        <div class="nav-title">Explainable ML </div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+  <div class="nav-item-next">
+    <a href="/The-Next-Step-for-Machine-Learning/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">The Next Step for Machine Learning </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="lv-container" data-id="city" data-uid="MTAyMC80NjQ0Ny8yMjk1OA==">
+    <script>
+      (function (d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') {
+          return;
+        }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.defer = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  </div>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#attack-and-defense"><span class="toc-text"> Attack and Defense</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#motivation"><span class="toc-text"> Motivation</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#attack"><span class="toc-text"> Attack</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#what-do-we-want-to-do"><span class="toc-text"> What do we want to do?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#loss-function-for-attack"><span class="toc-text"> Loss Function for Attack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#non-targeted-attack"><span class="toc-text"> Non-targeted Attack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#targeted-attack"><span class="toc-text"> Targeted-Attack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#constraint"><span class="toc-text"> Constraint</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#l2-norm"><span class="toc-text"> L2-norm</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#l-infinity"><span class="toc-text"> L-infinity</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#how-to-attack"><span class="toc-text"> How to Attack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#example-%E5%AE%9E%E8%B7%B5"><span class="toc-text"> Example-实践</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#what-happend"><span class="toc-text"> What happend？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#attack-approaches"><span class="toc-text"> Attack Approaches</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#white-box-vs-black-box"><span class="toc-text"> White Box v.s. Black Box</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#black-box-attack"><span class="toc-text"> Black Box Attack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#universal-adversarial-attack"><span class="toc-text"> Universal Adversarial Attack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#adversarial-reprogramming"><span class="toc-text"> Adversarial Reprogramming</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#attack-in-the-real-world"><span class="toc-text"> Attack in the Real World</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#attack-beyond-image"><span class="toc-text"> Attack Beyond Image</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#defense"><span class="toc-text"> Defense</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#passive-defense"><span class="toc-text"> Passive Defense</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#filter"><span class="toc-text"> Filter</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#feature-squeeze"><span class="toc-text"> Feature Squeeze</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#randomization-at-inference-phase"><span class="toc-text"> Randomization at Inference Phase</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#proactive-denfense"><span class="toc-text"> Proactive Denfense</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#to-learn-more"><span class="toc-text"> To Learn More</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/images/logo.png" class="author-img">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>20</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>4</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>19</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:sud0su@163.com">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#attack-and-defense"><span class="toc-text"> Attack and Defense</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#motivation"><span class="toc-text"> Motivation</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#attack"><span class="toc-text"> Attack</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#what-do-we-want-to-do"><span class="toc-text"> What do we want to do?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#loss-function-for-attack"><span class="toc-text"> Loss Function for Attack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#non-targeted-attack"><span class="toc-text"> Non-targeted Attack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#targeted-attack"><span class="toc-text"> Targeted-Attack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#constraint"><span class="toc-text"> Constraint</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#l2-norm"><span class="toc-text"> L2-norm</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#l-infinity"><span class="toc-text"> L-infinity</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#how-to-attack"><span class="toc-text"> How to Attack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#example-%E5%AE%9E%E8%B7%B5"><span class="toc-text"> Example-实践</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#what-happend"><span class="toc-text"> What happend？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#attack-approaches"><span class="toc-text"> Attack Approaches</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#white-box-vs-black-box"><span class="toc-text"> White Box v.s. Black Box</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#black-box-attack"><span class="toc-text"> Black Box Attack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#universal-adversarial-attack"><span class="toc-text"> Universal Adversarial Attack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#adversarial-reprogramming"><span class="toc-text"> Adversarial Reprogramming</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#attack-in-the-real-world"><span class="toc-text"> Attack in the Real World</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#attack-beyond-image"><span class="toc-text"> Attack Beyond Image</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#defense"><span class="toc-text"> Defense</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#passive-defense"><span class="toc-text"> Passive Defense</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#filter"><span class="toc-text"> Filter</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#feature-squeeze"><span class="toc-text"> Feature Squeeze</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#randomization-at-inference-phase"><span class="toc-text"> Randomization at Inference Phase</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#proactive-denfense"><span class="toc-text"> Proactive Denfense</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#to-learn-more"><span class="toc-text"> To Learn More</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/备忘">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/李宏毅机器学习笔记">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">14</span>
+        </div>
+      </a>
+    
+      <a href="/categories/论文阅读">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/笔记">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
+    
+    <a href="\tags\note" title="note"><div class="tags-list-item">note</div></a>
+    
+    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
+    
+    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="\tags\学习" title="学习"><div class="tags-list-item">学习</div></a>
+    
+    <a href="\tags\总结" title="总结"><div class="tags-list-item">总结</div></a>
+    
+    <a href="\tags\笔记" title="笔记"><div class="tags-list-item">笔记</div></a>
+    
+    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
+    
+    <a href="\tags\污点分析" title="污点分析"><div class="tags-list-item">污点分析</div></a>
+    
+    <a href="\tags\比特币" title="比特币"><div class="tags-list-item">比特币</div></a>
+    
+    <a href="\tags\区块链" title="区块链"><div class="tags-list-item">区块链</div></a>
+    
+    <a href="\tags\符号执行" title="符号执行"><div class="tags-list-item">符号执行</div></a>
+    
+    <a href="\tags\Adversarial-Attack" title="Adversarial-Attack"><div class="tags-list-item">Adversarial-Attack</div></a>
+    
+    <a href="\tags\漏洞挖掘" title="漏洞挖掘"><div class="tags-list-item">漏洞挖掘</div></a>
+    
+    <a href="\tags\System-Service" title="System-Service"><div class="tags-list-item">System-Service</div></a>
+    
+    <a href="\tags\Fuzzing" title="Fuzzing"><div class="tags-list-item">Fuzzing</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#attack-and-defense"><span class="toc-text"> Attack and Defense</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#motivation"><span class="toc-text"> Motivation</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#attack"><span class="toc-text"> Attack</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#what-do-we-want-to-do"><span class="toc-text"> What do we want to do?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#loss-function-for-attack"><span class="toc-text"> Loss Function for Attack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#non-targeted-attack"><span class="toc-text"> Non-targeted Attack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#targeted-attack"><span class="toc-text"> Targeted-Attack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#constraint"><span class="toc-text"> Constraint</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#l2-norm"><span class="toc-text"> L2-norm</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#l-infinity"><span class="toc-text"> L-infinity</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#how-to-attack"><span class="toc-text"> How to Attack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#example-%E5%AE%9E%E8%B7%B5"><span class="toc-text"> Example-实践</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#what-happend"><span class="toc-text"> What happend？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#attack-approaches"><span class="toc-text"> Attack Approaches</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#white-box-vs-black-box"><span class="toc-text"> White Box v.s. Black Box</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#black-box-attack"><span class="toc-text"> Black Box Attack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#universal-adversarial-attack"><span class="toc-text"> Universal Adversarial Attack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#adversarial-reprogramming"><span class="toc-text"> Adversarial Reprogramming</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#attack-in-the-real-world"><span class="toc-text"> Attack in the Real World</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#attack-beyond-image"><span class="toc-text"> Attack Beyond Image</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#defense"><span class="toc-text"> Defense</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#passive-defense"><span class="toc-text"> Passive Defense</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#filter"><span class="toc-text"> Filter</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#feature-squeeze"><span class="toc-text"> Feature Squeeze</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#randomization-at-inference-phase"><span class="toc-text"> Randomization at Inference Phase</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#proactive-denfense"><span class="toc-text"> Proactive Denfense</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#to-learn-more"><span class="toc-text"> To Learn More</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-20</div>
+        <a href="/Note-FANS-Fuzzing-Android-Native-System-Services/"><div class="recent-posts-item-content">Note《FANS Fuzzing Android Native System Services via Automated Interface Analysis》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-16</div>
+        <a href="/ELMO-BERT-GPT/"><div class="recent-posts-item-content">ELMO, BERT, GPT</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-15</div>
+        <a href="/Note-FIRMSCOPE-Automatic-Uncovering-of-Privilege-Escala/"><div class="recent-posts-item-content">Note《FIRMSCOPE Automatic Uncovering of Privilege-Escala Vulnerabilities in Pre-Installed Apps in Android Firmware》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-14</div>
+        <a href="/Android流量抓包环境配置/"><div class="recent-posts-item-content">Android流量抓包环境配置</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2021
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">ch3nye's blog </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('data-fslightbox', 'gallery');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+    }
+    refreshFsLightbox();
+  }
+</script>
+<script>loadScript("//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-WHGL11014T');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "G-WHGL11014T", googleAnalytics)</script>
+  
+</body>
+
+</html>

@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="网络安全 Android ML CTF">
+  <link rel="icon" href="/images/logo.png">
+  <title>污点分析技术笔记</title>
+  
+  
+  <meta property="og:title" content="污点分析技术笔记">
+  
+  
+  <meta property="og:url" content="https://ch3nye.top/%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/index.html">
+  
+  
+  <meta property="og:img" content="/images/logo.png">
+  
+  
+  <meta property="og:img" content="网络安全 Android ML CTF">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2020-12-22">
+  <meta property="og:article:modified_time" content="2021-01-22">
+  <meta property="og:article:author" content="Ch3nYe">
+  
+  
+  <meta property="og:article:tag" content="总结">
+  
+  <meta property="og:article:tag" content="学习">
+  
+  <meta property="og:article:tag" content="污点分析">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js" as="script">
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn-city.livere.com/js/embed.dist.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+  
+  
+  
+  <link href="/js/lib/prism/prism-tomorrow.min.css" rel="stylesheet" data-prism="prism-tomorrow">
+  
+  
+  
+<link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+
+  
+  
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/images/logo.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/links" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      污点分析技术笔记
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2020-12-21T16:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2020-12-22</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/笔记/" class="post-meta-link">笔记</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>15.9k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/总结/" class="post-meta-link">总结</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/学习/" class="post-meta-link">学习</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/污点分析/" class="post-meta-link">污点分析</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="污点分析技术"><a class="markdownIt-Anchor" href="#污点分析技术"></a> 污点分析技术</h1>
+<p>同符号执行一样,污点分析也是我们分析代码漏洞,检测攻击方式的重要手段,在漏洞自动化扫描或者检测工具中有着十分广泛的应用,本文主要参考(copy)王蕾等人2016年的<a target="_blank" rel="noopener" href="http://netinfo-security.org/CN/10.3969/j.issn.1671-1122.2016.03.013">二进制程序动态污点分析技术研究综述</a>[1]和<a target="_blank" rel="noopener" href="https://www.k0rz3n.com/">K0rz3n</a>大佬的<a target="_blank" rel="noopener" href="https://www.k0rz3n.com/2019/03/01/%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF">简单理解污点分析技术</a>这篇文章做一些个人学习总结,文末附上参考的论文和文章链接.</p>
+<h2 id="0x1-污点分析基本原理"><a class="markdownIt-Anchor" href="#0x1-污点分析基本原理"></a> 0x1 污点分析基本原理</h2>
+<h3 id="1污点分析定义"><a class="markdownIt-Anchor" href="#1污点分析定义"></a> 1.污点分析定义</h3>
+<p>污点分析可以抽象成一个三元组<code>&lt;sources,sinks,sanitizers&gt;</code>的形式,其中,<code>source</code> 即污点源,代表直接引入不受信任的数据或者机密数据到系统中;<code>sink</code> 即污点汇聚点,代表直接产生安全敏感操作(违反数据完整性)或者泄露隐私数据到外界(违反数据保密性);<code>sanitizer</code> 即无害处理,代表通过数据加密或者移除危害操作等手段使数据传播不再对软件系统的信息安全产生危害.污点分析就是分析程序中由污点源引入的数据是否能够不经无害处理,而直接传播到污点汇聚点.如果不能,说明系统是信息流安全的;否则,说明系统产生了隐私数据泄露或危险数据操作等安全问题.</p>
+<p>在漏洞分析中,使用污点分析技术将所感兴趣的数据(通常来自程序的外部输入,假定所有输入都是危险的)标记为污点数据,然后通过跟踪和污点数据相关的信息的流向,可以知道它们是否会影响某些关键的程序操作,进而挖掘程序漏洞.即将程序是否存在某种漏洞的问题转化为污点信息是否会被 Sink 点上的操作所使用的问题.</p>
+<p><strong>污点分析的处理过程可以分成 3 个阶段(如图 2 所示):</strong></p>
+<p>(1) 识别污点源和汇聚点;(根据所分析的系统的不同使用定制的识别策略)<br />
+(2) 污点传播分析;(利用特定的规则跟踪分析污点信息在程序中的传播过程)<br />
+(3) 漏洞检测、无害处理</p>
+<p><img src="/images/%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF1.png" alt="此处输入图片的描述" / srcset="/images/LoadingImage.gif" data-src="/images/%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF1.png" class="lozad post-image"></p>
+<h3 id="2识别污点源和汇聚点"><a class="markdownIt-Anchor" href="#2识别污点源和汇聚点"></a> <strong>2.识别污点源和汇聚点</strong></h3>
+<p>识别污点源和污点汇聚点是污点分析的前提.目前,在不同的应用程序中识别污点源和汇聚点的方法各不相同.缺乏通用方法的原因一方面来自系统模型、编程语言之间的差异.另一方面,污点分析关注的安全漏洞类型不同,也会导致对污点源和污点汇聚点的收集方法迥异.表 1 所示为在 Web 应用程序漏洞检测中的污点源示例[29],它们是 Web 框架中关键对象的属性.</p>
+<p><img src="/images/%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF2.png" alt="此处输入图片的描述" / srcset="/images/LoadingImage.gif" data-src="/images/%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF2.png" class="lozad post-image"></p>
+<p><strong>现有的识别污点源和汇聚点的方法可以大致分成 3 类:</strong></p>
+<p>(1)使用启发式的策略进行标记,例如把来自程序外部输入的数据统称为“污点”数据,保守地认为这些数据有可能包含恶意的攻击数据(如 PHP Aspis);<br />
+(2)根据具体应用程序调用的 API 或者重要的数据类型,手工标记源和汇聚点(如 DroidSafe[12]);<br />
+(3)使用统计或机器学习技术自动地识别和标记污点源及汇聚点.[11]</p>
+<h3 id="3污点传播分析"><a class="markdownIt-Anchor" href="#3污点传播分析"></a> <strong>3.污点传播分析</strong></h3>
+<p>污点传播分析就是分析污点标记数据在程序中的传播途径.按照分析过程中关注的程序依赖关系的不同, 可以将污点传播分析分为显式流分析和隐式流分析.</p>
+<h4 id="1显示流分析"><a class="markdownIt-Anchor" href="#1显示流分析"></a> <strong>(1)显示流分析</strong></h4>
+<p><strong>污点传播分析中的显式流分析就是分析污点标记如何随程序中变量之间的数据依赖关系传播</strong>.</p>
+<p><img src="/images/%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF3.png" alt="此处输入图片的描述" / srcset="/images/LoadingImage.gif" data-src="/images/%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF3.png" class="lozad post-image"></p>
+<p>以图 3 所 示的程序为例,变量 a 和 b 被预定义的污点源函数 source 标记为污点源.假设 a 和 b 被赋予的污点标记分别为taint_a 和 taint_b.由于第 5 行的变量 x 直接数据依赖于变量 a,第 6 行的变量 y 直接数据依赖于变量 b,显式流分析会分别将污点标记 taint_a 和 taint_b 传播给第 5 行的变量 x 和第 6 行的变量 y.又由于 x 和 y 分别可以到达第 7 行和第 8 行的污点汇聚点(用预定义的污点汇聚点函数 sink 标识),图 3 所示的代码存在信息泄漏的问题.我们将在后面具体介绍目前污点传播分析中显式流分析面临的主要挑战和解决方法.</p>
+<h4 id="2隐式流分析"><a class="markdownIt-Anchor" href="#2隐式流分析"></a> <strong>(2)隐式流分析</strong></h4>
+<p><strong>污点传播分析中的隐式流分析是分析污点标记如何随程序中变量之间的控制依赖关系传播,也就是分析污点标记如何从条件指令传播到其所控制的语句.</strong></p>
+<p><img src="/images/%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF4.png" alt="此处输入图片的描述" / srcset="/images/LoadingImage.gif" data-src="/images/%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF4.png" class="lozad post-image"></p>
+<p>在图 4 所示的程序中,变量 X 是被污点标记的字符串类型变量,变量 Y 和变量 X 之间并<strong>没有直接或间接的数据依赖关系(显式流关系),但 X 上的污点标记可以经过控制依赖隐式地传播到 Y.</strong></p>
+<p>具体来说,由第 4 行的循环条件控制的外层循环顺序地取出 X 中的每一个字符,转化成整型后赋给变量 x,再由第 7 行的循环条件控制的内层循环以累加的方式将 x 的值赋给 y,最后由外层循环将 y 逐一传给 Y.最终,第 12 行的 Y 值和 X 值相同,程序存在信息泄漏问题.但是,如果不进行隐式流污点传播分析,第 12 行 的变量 Y 将不会被赋予污点标记,程序的信息泄漏问题被掩盖.</p>
+<p>隐式流污点传播一直以来都是一个重要的问题,和显式流一样,如果不被正确处理,会使污点分析的结果不精确.由于对隐式流污点传播处理不当导致本应被标记的变量没有被标记的问题称为欠污染(under-taint)问题.相反地,由于污点标记的数量过多而导致污点变量大量扩散的问题称为过污染(over-taint)问题.目前,针对隐式流问题的研究重点是尽量减少欠污染和过污染的情况.我们将在后面具体介绍现有技术是如何解决上述问题的.</p>
+<h3 id="4无害处理"><a class="markdownIt-Anchor" href="#4无害处理"></a> <strong>4.无害处理</strong></h3>
+<p>污点数据在传播的过程中可能会经过无害处理模块,<strong>无害处理模块是指污点数据经过该模块的处理后,数据本身不再携带敏感信息或者针对该数据的操作不会再对系统产生危害</strong>.换言之,带污点标记的数据在经过无害处理模块后,污点标记可以被移除.<strong>正确地使用无害处理可以降低系统中污点标记的数量,提高污点分析的效率,并且避免由于污点扩散导致的分析结果不精确的问题</strong>.</p>
+<p>在应用过程中,为了防止敏感数据被泄露(保护保密性),通常会对敏感数据进行加密处理.此时,<strong>加密库函数应该被识别成无害处理模块</strong>.这一方面是由于库函数中使用了大量的加密算法,导致攻击者很难有效地计算出密码的可能范围;另一方面是加密后的数据不再具有威胁性,继续传播污点标记没有意义.</p>
+<p>此外,为了防止外界数据因为携带危险操作而对系统关键区域产生危害(保护完整性),通常会对输入的数据进行验证.此时,<strong>输入验证(input validation)模块应当被识别成无害处理模块</strong>.例如,为了防止代码注入漏洞,PHP 提供的 htmlentities 函数可以将特殊含义的 HTML 字符串转化成HTML实体(例如,将’&lt;’转化成’&amp;lt;’).输入字符串经过上述转化后不会再携带可能产生危害的代码,可以安全地 发送给用户使用.除了语言自带的输入验证函数外,<strong>一些系统还提供了额外的输入验证工具,比如ScriptGard[50],CSAS[51],XSS Auditor[]52,Bek[53].这些工具也应被识别成无害处理模块</strong>.</p>
+<p>综上,目前对<strong>污点源、污点汇聚点以及无害处理模块的识别通常根据系统或漏洞类型使用定制的方法</strong>.由于这些方法都比较直接,本文将不再进行更深入的探讨.下一节将重点介绍污点传播中的关键技术.</p>
+<p>总结一下,使用污点分析检测程序漏洞的工作原理如下图所示：</p>
+<p><img src="/images/5.5_overview.png" alt="img" / srcset="/images/LoadingImage.gif" data-src="/images/5.5_overview.png" class="lozad post-image"></p>
+<ul>
+<li>基于数据流的污点分析(显示流分析).在不考虑隐式信息流的情况下,可以将污点分析看做针对污点数据的数据流分析.根据污点传播规则跟踪污点信息或者标记路径上的变量污染情况,进而检查污点信息是否影响敏感操作.</li>
+<li>基于依赖关系的污点分析(隐式流分析).考虑隐式信息流,在分析过程中,根据程序中的语句或者指令之间的依赖关系,检查 Sink 点处敏感操作是否依赖于 Source 点处接收污点信息的操作.</li>
+</ul>
+<h2 id="0x2-污点传播分析的关键技术"><a class="markdownIt-Anchor" href="#0x2-污点传播分析的关键技术"></a> <strong>0x2 污点传播分析的关键技术</strong></h2>
+<p>污点传播分析是当前污点分析领域的研究重点.<strong>与程序分析技术相结合,可以获得更加高效、精确的污点分析结果</strong>.根据<strong>分析过程中是否需要运行程序,可以将污点传播分析分为静态污点分析和动态污点分析</strong>.本节主要介绍如何使用动/静态程序分析技术来解决污点传播中的显式流分析和隐式流分析问题.</p>
+<p><em>笔者认为显式流分析和隐式流分析是从两种不同的角度(数据流和控制流)来观察污点传播,所以在实作的时候是应该两种分析方式同时应用的,这样才能全面的分析到污点的传播情况,静态和动态方法则可以取其一,也可以结合使用.</em></p>
+<h3 id="1污点传播中的显式流分析"><a class="markdownIt-Anchor" href="#1污点传播中的显式流分析"></a> <strong>1.污点传播中的显式流分析</strong></h3>
+<h4 id="1静态分析技术"><a class="markdownIt-Anchor" href="#1静态分析技术"></a> <strong>(1)静态分析技术</strong></h4>
+<p><strong>静态污点传播分析(简称静态污点分析)是指在不运行且不修改代码的前提下,通过分析程序变量间的数据依赖关系来检测数据能否从污点源传播到污点汇聚点</strong>.</p>
+<p>静态污点分析的对象一般是程序的源码或中间表示.可以将对污点传播中<strong>显式流的静态分析问题</strong>转化为对程序中<strong>静态数据依赖的分析</strong>:</p>
+<p>(1)首先,根据程序中的函数调用关系构建调用图(call graph,简称CG);<br />
+(2)然后,在函数内或者函数间根据不同的程序特性进行具体的数据流传播分析.常见的显式流污点传播方式包括<strong>直接赋值传播、通过函数(过程)调用传播以及通过别名(指针)传播</strong>.</p>
+<p><strong>以图 5 所示的 Java 程序为例:</strong></p>
+<p><img src="/images/%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF5.png" alt="此处输入图片的描述" / srcset="/images/LoadingImage.gif" data-src="/images/%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF5.png" class="lozad post-image"></p>
+<p>第 3 行的变量 b 为初始的污点标记变量,程序第 4 行将一个包含变量 b 的算术表达式的计算结果直接赋给变量 c.由于变量 c 和变量 b 之间具有直接的赋值关系,污点标记可直接从赋值语句右部的变量传播到左部,也就是上述 3种显式流污点传播方式中的<strong>直接赋值传播</strong>.</p>
+<p>接下来,变量 c 被作为实参传递给程序第 5 行的函数 foo,c 上的污点标记也通过<strong>函数调用传播</strong>到 foo 的形参 z,z 的污点标记又通过直接赋值传播到程序第 8 行的 x.f.由于 foo 的另外两个参数对象 x 和 y 都是对对象 a 的引用,二者之间存在别名,因此,x.f的污点标记可以通过<strong>别名传播</strong>到第 9 行的污点汇聚点,程序存在泄漏问题.</p>
+<p>目前,<strong>利用数据流分析解决显式污点传播分析中的直接赋值传播和函数调用传播已经相当成熟</strong>,研究的重点是如何为别名传播的分析提供更精确、高效的解决方案.由于精确度越高(上下文敏感、流敏感、域敏感、对象敏感等)的程序静态分析技术往往伴随着越大的时空开销,追求全敏感且高效的别名分析难度较大.又由于静态污点传播分析关注的是从污点源到污点汇聚点之间的数据流关系,分析对象并非完整的程序,而是确定的入口和出口之间的程序片段.这就意味着可<strong>以尝试采用按需(on-demand)定制的别名分析方法来解决显式流态污点分析中的别名传播问题</strong>.文献[10]使用按需的上下文敏感的别名分析的污点分析方法来检测Java应用程序漏洞.TAJ[25]工具使用了混合切片结合对象敏感的别名分析来进行 Java Web 应用上的污点分析.Andromeda[61]工具使用了按需的对象敏感别名分析技术解决对象的访问路径(access path)问题,FlowDroid[13]工具提出一种按需的别名分析,从而提供上下文敏感、流敏感、域敏感、对象敏感的污点分析,用以解决 Android的隐私泄露问题.</p>
+<h4 id="2动态分析技术"><a class="markdownIt-Anchor" href="#2动态分析技术"></a> <strong>(2)动态分析技术</strong></h4>
+<p>动态污点传播分析(简称动态污点分析)<strong>是指在程序运行过程中,通过实时监控程序的污点数据在系统程序中的传播来检测数据能否从污点源传播到污点汇聚点</strong>.动态污点传播分析首先需要为污点数据扩展一个污点标记(tainted tag)的标签并将其存储在存储单元(内存、寄存器、缓存等)中,然后根据指令类型和指令操作数设计相应的传播逻辑传播污点标记.</p>
+<p><strong>动态污点传播分析按照实现层次被分为基于硬件、基于软件以及混合型的污点传播分析这3类</strong>.</p>
+<h5 id="1硬件"><a class="markdownIt-Anchor" href="#1硬件"></a> <strong>1.硬件</strong></h5>
+<p><strong>基于硬件的污点传播分析需要定制的硬件支持</strong>,一般需要在原有体系结构上为寄存器或者内存扩展一个标记位,用来存储污点标记,代表的系统有 Minos[62],Raksha[63]等.</p>
+<h5 id="2基于软件"><a class="markdownIt-Anchor" href="#2基于软件"></a> <strong>2.基于软件</strong></h5>
+<p><strong>基于软件的污点传播分析通过修改程序的二进制代码来进行污点标记位的存储与传播</strong>,代表的系统有 TaintEraser[64],TaintDroid[19]等.</p>
+<p>基于软件的污点传播的<strong>优点在于不必更改处理器等底层的硬件,并且可以支持更高的语义逻辑的安全策略</strong>(利用其更贴近源程序层次的特点),但缺点是使用插桩(instrumentation <strong>在保证被测程序原有逻辑完整性的基础上在程序中插入一些探针</strong>)或代码重写(code rewriting)修改程序往往会给分析系统带来巨大的开销.相反地,基于硬件的污点传播分析虽然可以利用定制硬件降低开销,但通常不能支持更高的语义逻辑的安全策略,并且需要对处理器结构进行重新设计.</p>
+<h5 id="3混合型"><a class="markdownIt-Anchor" href="#3混合型"></a> <strong>3.混合型</strong></h5>
+<p>混合型的污点分析是对上述两类方法的折中,即,<strong>通过尽可能少的硬件结构改动以保证更高的语义逻辑的安全策略</strong>,代表的系统有 Flexitaint[65],PIFT[19]等.</p>
+<p>目前,针对动态污点传播分析的研究工作关注的<strong>首要问题是如何设计有效的污点传播逻辑,以确保精确的污点传播分析</strong>.</p>
+<p>TaintCheck[67]利用插桩工具Valgrind[68]对其中间表示Ucode插桩并提供移动指令、算术指令以及除移动和算术外其他指令的3类传播逻辑实现对x86程序的动态污点分析.Privacy Scope[69],Dytan[70]和Libdft[71]以插桩工具PinTool为基础,实现针对x86程序的动态污点分析,并解决了一系列x86指令污点传播逻辑的问题.TaintDroid[19]提供了一套基于Android Dalvik虚拟机的DEX格式[73]的污点传播分析方法.由于DEX的指令包含多数常用的指令和具有面向对象特性的指令,普适性高,这里以TaintDroid中污点传播方法为示例,介绍动态污点传播的逻辑.</p>
+<p>DEX支持的变量类型有5种:本地变量、方法参数、类静态域、类实例域和数组.TaintDroid用<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>υ</mi><mi>X</mi></msub></mrow><annotation encoding="application/x-tex">\upsilon_X</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">υ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.07847em;">X</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>代表本地变量和方法参数,<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>f</mi><mi>X</mi></msub></mrow><annotation encoding="application/x-tex">f_X</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.07847em;">X</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>代表类的静态域,<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>υ</mi><mi>Y</mi></msub><mo stretchy="false">(</mo><msub><mi>f</mi><mi>X</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\upsilon_Y(f_X)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">υ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.22222em;">Y</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.07847em;">X</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span>代表实例域,其中,<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>υ</mi><mi>Y</mi></msub></mrow><annotation encoding="application/x-tex">\upsilon_Y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">υ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.22222em;">Y</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>是具体实例的变量引用.<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>υ</mi><mi>X</mi></msub><mo stretchy="false">[</mo><mo>⋅</mo><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">\upsilon_X[⋅]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">υ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.07847em;">X</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">[</span><span class="mord">⋅</span><span class="mclose">]</span></span></span></span>代表数组,其中,<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>υ</mi><mi>X</mi></msub></mrow><annotation encoding="application/x-tex">\upsilon_X</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">υ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.07847em;">X</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>表示数组的对象引用.同时,TaintDroid使用虚拟污点映射函数<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>τ</mi><mo stretchy="false">(</mo><mo>⋅</mo><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\tau(⋅)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.1132em;">τ</span><span class="mopen">(</span><span class="mord">⋅</span><span class="mclose">)</span></span></span></span>来辅助污点传播,对于变量<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>υ</mi></mrow><annotation encoding="application/x-tex">\upsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.03588em;">υ</span></span></span></span>, <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>τ</mi><mo stretchy="false">(</mo><mi>υ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\tau(\upsilon)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.1132em;">τ</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.03588em;">υ</span><span class="mclose">)</span></span></span></span>返回变量的污点标记<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>t</mi></mrow><annotation encoding="application/x-tex">t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.61508em;vertical-align:0em;"></span><span class="mord mathdefault">t</span></span></span></span>. <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>τ</mi><mo stretchy="false">(</mo><mi>υ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\tau(\upsilon)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.1132em;">τ</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.03588em;">υ</span><span class="mclose">)</span></span></span></span>可以被赋值给其他的变量.符号←代表将位于符号右部的变量的污点标记传播给左部的变量.具体的污点传播逻辑规则见表2.</p>
+<p><img src="/images/%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF6.png" alt="此处输入图片的描述" / srcset="/images/LoadingImage.gif" data-src="/images/%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF6.png" class="lozad post-image"></p>
+<p>如果你上面一段没看懂,没关系,你只要知道TaintDroid使用的动态污点传播分析的传播逻辑就是上表所示.</p>
+<p>举例来说,对于指令move-op <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>υ</mi><mi>A</mi></msub></mrow><annotation encoding="application/x-tex">\upsilon_A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">υ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">A</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>υ</mi><mi>B</mi></msub></mrow><annotation encoding="application/x-tex">\upsilon_B</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">υ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.05017em;">B</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 污点传播规则就是将B的标记传播给A,也就是说如果B被标记为污点则A也应该被标记为污点.</p>
+<h3 id="2污点传播中的隐式流分析"><a class="markdownIt-Anchor" href="#2污点传播中的隐式流分析"></a> <strong>2.污点传播中的隐式流分析</strong></h3>
+<p>污点传播分析中的隐式流分析就是<strong>分析污点数据如何通过控制依赖进行传播</strong>,如果忽略了对隐式流污点传播的分析,则会导致欠污染的情况;如果对隐式流分析不当,那么除了欠污染之外,还可能出现过污染的情况.与显式流分析类似,<strong>隐式流分析技术同样也可以分为静态分析和动态分析两类</strong>.</p>
+<h4 id="1静态分析技术-2"><a class="markdownIt-Anchor" href="#1静态分析技术-2"></a> <strong>(1)静态分析技术</strong></h4>
+<p><strong>静态隐式流分析面临的核心问题是精度与效率不可兼得的问题</strong>.精确的隐式流污点传播分析需要分析每一个分支控制条件是否需要传播污点标记.<strong>路径敏感的数据流分析往往会产生路径爆炸问题</strong>,导致开销难以接受.为了降低开销,一种简单的静态传播(标记)分支语句的污点标记方法<strong>是将控制依赖于它的语句全部进行污点标记</strong>,但该方法会导致一些并不携带隐私数据的变量被标记,导致过污染情况的发生.过污染会引起污点的大量扩散,最终导致用户得到的报告中信息过多,难以使用.</p>
+<h4 id="2动态分析技术-2"><a class="markdownIt-Anchor" href="#2动态分析技术-2"></a> <strong>(2)动态分析技术</strong></h4>
+<p><strong>动态隐式流分析关注的首要问题是如何确定污点控制条件下需要标记的语句的范围</strong>.由于动态执行轨迹并不能反映出被执行的指令之间的控制依赖关系,<strong>目前的研究多采用离线的静态分析辅助判断动态污点传播中的隐式流标记范围</strong>.Clause等人[70]提出,利用离线静态分析得到的控制流图节点间的后支配(post-dominate)关系来解决动态污点传播中的隐式流标记问题.</p>
+<p><strong>例如,如图 6(a)所示</strong>,程序第 3 行的分支语句被标记为污点源,当document.cookie 的值为 abc 时,会发生污点数据泄露.根据基于后支配关系的标记算法,会对该示例第 4 行语句的指令目的地,即 x 的值进行污点标记.(ps:因为根据该分支控制下的语句的执行结果可以判定污染源document.cookie的值,造成污点数据泄露)</p>
+<p><img src="/images/%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF7.png" alt="此处输入图片的描述" / srcset="/images/LoadingImage.gif" data-src="/images/%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF7.png" class="lozad post-image"></p>
+<p><strong>动态分析面临的第 2 个问题是由于部分泄漏(partially leaked)导致的漏报</strong>.部分泄漏是指污点信息通过<strong>动态未执行部分进行传播并泄漏</strong>.Vogt等人[29]发现,只动态地标记分支条件下的语句会发生这种情况.</p>
+<p><strong>仍以图 6(a)中的程序为例</strong>:当第 3 行的控制条件被执行时,对应的 x 会被标记.此时,x 的值为 true,而 y 值没有变化,仍然为 false.在后续执行过程中,由于第 9行的污点汇聚点不可达,而第 12 行的汇聚点可达,动态分析没有检测到污点数据泄漏.但攻击者由第 11 行 y 等于 false 的条件能够反推出程序执行了第 3 行的分支条件,程序实际上存在信息泄漏的问题.这个信息泄露是由第 6 行未被执行到的 y 的赋值语句所触发的.因此,y 应该被动态污点传播分析所标记.为了解决部分泄漏问题,Vogt等人在传统的动态污点分析基础上增加了离线的静态分析,以跟踪动态执行过程中的控制依赖关系,<strong>对污点分支控制范围内的所有赋值语句中的变量都进行标记</strong>.具体到图 6(a)所示的例子,就是第 4 行和第 6 行中的变量均会被污点标记.但是,Vogt 等人的方法仍然会产生过污染的情况.</p>
+<p><strong>动态分析需要解决的第 3 个问题是如何选择合适的污点标记分支进行污点传播</strong>.鉴于单纯地将所有包含污点标记的分支进行传播会导致过污染的情况,可以根据信息泄漏范围的不同,定量地设计污点标记分支的选择策略.</p>
+<p><strong>以图 6(b)所示的程序为例</strong>,第 2 行的变量 a 为初始的污点标记变量.第 5 行、第 7 行、第 9 行均为以 a作为源操作数的污点标记的分支.如果传播策略为只要分支指令中包含污点标记就对其进行传播,那么第 5 行、第 7 行、第 9 行将分别被传播给第 6 行、第 8 行、第 10 行,并最终传播到第 12 行的污点汇聚点.如果对这段程序进行深入分析会发现,3个分支条件所提供的信息值(所能泄露的信息范围)并不相同,分别是 a 等于 10、a大于 10 且小于或等于 13(将 w 值代入计算)以及 a 小于 10.对于 a 等于 10 的情况,攻击者可以根据第 12 行泄漏的 x 的值直接还原出污点源处 a 的值(<strong>这类分支也被称为能够保存完整信息的分支</strong>);对于 a 大于 10 且小于或等于 13 的情况,攻击者也只需要尝试 3 次就可以还原信息;而对于 a 小于 10 的情况,攻击者所获得的不确定性较大,成功还原信息的几率显著低于前两种,对该分支进行污点传播的实际意义不大.</p>
+<p>Bao等人[76]<strong>只将严格控制依赖(strict control dependence)识别成需要污点传播的分支</strong>,其中,<strong>严格控制依赖即分支条件表达式的两端具有常数差异的分支</strong>.但是,Bao 的方法只适用于能够在编译阶段计算出常数差异的分支.</p>
+<p>Kang 等人[77]提出的 DTA++ 工具使用基于离线执行踪迹(trace)的符号执行的方法来寻找进行污点传播的分支,但该方法只关注信息被完整保存的分支,即图 6(b)中第 5 行的 a==10 会被选择污点传播,但是信息仍然能够通过另一个范围(第 7 行的分支)而泄露.</p>
+<p>Cox 等人[78]提出的 SpanDex 的主要思想是:动态地获得控制分支中污点数据的范围,根据数据的更改以及数据间的依赖关系构建一个基于操作的有向无环图(OP-DAG),再结合一个在线的约束求解器(CSP solver)确定隐式流中传播的隐私数据值的范围,通过预先设定的阈值,选择是否对数据进行污点传播.该方法对图 6(b)所示例子中的第 5 行、第 7行的分支进行污点传播.但是目前,该方法只能求解密码字符的范围,暂不支持对复杂操作(位、除法、数组等操作)的求解.</p>
+<h2 id="0x3-污点分析方法实现"><a class="markdownIt-Anchor" href="#0x3-污点分析方法实现"></a> <strong>0x3 污点分析方法实现</strong></h2>
+<p>为了更进一步理解污点分析技术的实现,加入这一节,主要摘录自CTF-All-In-One[2]</p>
+<h3 id="1静态污点分析技术"><a class="markdownIt-Anchor" href="#1静态污点分析技术"></a> 1.静态污点分析技术</h3>
+<p>静态污点分析系统首先对程序代码进行解析,获得程序代码的中间表示,然后在中间表示的基础上对程序代码进行控制流分析等辅助分析,以获得需要的控制流图、调用图等.在辅助分析的过程中,系统可以利用污点分析规则在中间表示上识别程序中的 Source 点和 Sink 点.最后检测系统根据污点分析规则,利用静态污点分析检查程序是否存在污点类型的漏洞.</p>
+<h4 id="1基于数据流的污点分析"><a class="markdownIt-Anchor" href="#1基于数据流的污点分析"></a> <strong>(1)基于数据流的污点分析</strong></h4>
+<p>在基于数据流的污点分析中,常常需要一些辅助分析技术,例如别名分析、取值分析等,来提高分析精度.辅助分析和污点分析交替进行,通常沿着程序路径的方向分析污点信息的流向,检查 Source 点处程序接收的污点信息是否会影响到 Sink 点处的敏感操作.</p>
+<p><strong>过程内的分析</strong>中,按照一定的顺序分析过程内的每一条语句或者指令,进而分析污点信息的流向.</p>
+<ul>
+<li>记录污点信息.在静态分析层面,程序变量的污染情况为主要关注对象.为记录污染信息,通常为变量添加一个污染标签.最简单的就是一个布尔型变量,表示变量是否被污染.更复杂的标签还可以记录变量的污染信息来自哪些 Source 点,甚至精确到 Source 点接收数据的哪一部分.当然也可以不使用污染标签,这时我们通过对变量进行跟踪的方式达到分析污点信息流向的目的.例如使用栈或者队列来记录被污染的变量.</li>
+<li>程序语句的分析.在确定如何记录污染信息后,将对程序语句进行静态分析.通常我们主要关注赋值语句、控制转移语句以及过程调用语句三类.
+<ul>
+<li>赋值语句.
+<ul>
+<li>对于简单的赋值语句,形如 <code>a = b</code> 这样的,记录语句左端的变量和右端的变量具有相同的污染状态.程序中的常量通常认为是未污染的,如果一个变量被赋值为常量,在不考虑隐式信息流的情况下,认为变量的状态在赋值后是未污染的.</li>
+<li>对于形如 <code>a = b + c</code> 这样带有二元操作的赋值语句,通常规定如果右端的操作数只要有一个是被污染的,则左端的变量是污染的(除非右端计算结果为常量).</li>
+<li>对于和数组元素相关的赋值,如果可以通过静态分析确定数组下标的取值或者取值范围,那么就可以精确地判断数组中哪个或哪些元素是污染的.但通常静态分析不能确定一个变量是污染的,那么就简单地认为整个数组都是污染的.</li>
+<li>对于包含字段或者包含指针操作的赋值语句,常常需要用到指向分析的分析结果.</li>
+</ul>
+</li>
+<li>控制转移语句.
+<ul>
+<li>在分析条件控制转移语句时,首先考虑语句中的路径条件可能是包含对污点数据的限制,在实际分析中常常需要识别这种限制污点数据的条件,以判断这些限制条件是否足够包含程序不会受到攻击.如果得出路径条件的限制是足够的,那么可以将相应的变量标记为未污染的.</li>
+<li>对于循环语句,通常规定循环变量的取值范围不能受到输入的影响.例如在语句 <code>for (i = 1; i &lt; k; i++)&#123;&#125;</code> 中,可以规定循环的上界 k 不能是污染的.</li>
+</ul>
+</li>
+<li>过程调用语句.
+<ul>
+<li>可以使用过程间的分析或者直接应用过程摘要进行分析.污点分析所使用的过程摘要主要描述怎样改变与该过程相关的变量的污染状态,以及对哪些变量的污染状态进行检测.这些变量可以是过程使用的参数、参数的字段或者过程的返回值等.例如在语句 <code>flag = obj.method(str);</code> 中,str 是污染的,那么通过过程间的分析,将变量 obj 的字段 str 标记为污染的,而记录方法的返回值的变量 flag 标记为未污染的.</li>
+<li>在实际的过程间分析中,可以对已经分析过的过程构建过程摘要.例如前面的语句,其过程摘要描述为：方法 method 的参数污染状态决定其接收对象的实例域 str 的污染状态,并且它的返回值是未受污染的.那么下一次分析需要时,就可以直接应用摘要进行分析.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>代码的遍历.一般情况下,常常使用流敏感的方式或者路径敏感的方式进行遍历,并分析过程中的代码.如果使用流敏感的方式,可以通过对不同路径上的分析结果进行汇集,以发现程序中的数据净化规则.如果使用路径敏感的分析方式,则需要关注路径条件,如果路径条件中涉及对污染变量取值的限制,可认为路径条件对污染数据进行了净化,还可以将分析路径条件对污染数据的限制进行记录,如果在一条程序路径上,这些限制足够保证数据不会被攻击者利用,就可以将相应的变量标记为未污染的.</li>
+</ul>
+<p><strong>过程间的分析</strong>与数据流过程间分析类似,使用自底向上的分析方法,分析调用图中的每一个过程,进而对程序进行整体的分析.</p>
+<h4 id="2基于依赖关系的污点分析"><a class="markdownIt-Anchor" href="#2基于依赖关系的污点分析"></a> (2)基于依赖关系的污点分析</h4>
+<p>在基于依赖关系的污点分析中,首先利用程序的中间表示、控制流图和过程调用图构造程序完整的或者局部的程序的依赖关系.在分析程序依赖关系后,根据污点分析规则,检测 Sink 点处敏感操作是否依赖于 Source 点.</p>
+<p>分析程序依赖关系的过程可以看做是构建程序依赖图的过程.程序依赖图是一个有向图.它的节点是程序语句,它的有向边表示程序语句之间的依赖关系.程序依赖图的有向边常常包括数据依赖边和控制依赖边.在构建有一定规模的程序的依赖图时,需要按需地构建程序依赖关系,并且优先考虑和污点信息相关的程序代码.</p>
+<h4 id="静态污点分析实例分析"><a class="markdownIt-Anchor" href="#静态污点分析实例分析"></a> 静态污点分析实例分析</h4>
+<p>在使用污点分析方法检测程序漏洞时,污点数据相关的程序漏洞是主要关注对象,如 SQL 注入漏洞、命令注入漏洞和跨站脚本漏洞等.</p>
+<p>下面是一个存在 SQL 注入漏洞 ASP 程序的例子：</p>
+<pre class="line-numbers language-asp" data-language="asp"><code class="language-asp">&lt;%
+    Set pwd &#x3D; &quot;bar&quot;
+    Set sql1 &#x3D; &quot;SELECT companyname FROM &quot; &amp; Request.Cookies(&quot;hello&quot;)
+    Set sql2 &#x3D; Request.QueryString(&quot;foo&quot;)
+    MySqlStuff pwd, sql1, sql2
+    Sub MySqlStuff(password, cmd1, cmd2)
+    Set conn &#x3D; Server.CreateObject(&quot;ADODB.Connection&quot;)
+    conn.Provider &#x3D; &quot;Microsoft.Jet.OLEDB.4.0&quot;
+    conn.Open &quot;c:&#x2F;webdata&#x2F;foo.mdb&quot;, &quot;foo&quot;, password
+    Set rs &#x3D; conn.Execute(cmd2)
+    Set rs &#x3D; Server.CreateObject(&quot;ADODB.recordset&quot;)
+    rs.Open cmd1, conn
+    End Sub
+%&gt;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>首先对这段代码表示为一种三地址码的形式,例如第 3 行可以表示为：</p>
+<pre class="line-numbers language-none"><code class="language-none">a &#x3D; &quot;SELECT companyname FROM &quot;
+b &#x3D; &quot;hello&quot;
+param0 Request
+param1 b
+callCookies
+return c
+sql1 &#x3D; a &amp; c<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>解析完毕后,需要对程序代码进行控制流分析,这里只包含了一个调用关系(第 5 行).</p>
+<p>具体的分析过程如下:</p>
+<ul>
+<li>调用 Request.Cookies(“hello”) 的返回结果是污染的,所以变量 sql1 也是污染的.</li>
+<li>调用 Request.QueryString(“foo”) 的返回结果 sql2 是污染的.</li>
+<li>函数 MySqlStuff 被调用,它的参数 sql1,sql2 都是污染的.分了分析函数的处理过程,根据第 6 行函数的声明,标记其参数 cmd1,cmd2 是污染的.</li>
+<li>第 10 行是程序的 Sink 点,函数 conn.Execute 执行 SQL 操作,其参数 cmd2 是污染的,进而发现污染数据从 Source 点传播到 Sink 点.因此,认为程序存在 SQL 注入漏洞</li>
+</ul>
+<h3 id="2动态污点分析"><a class="markdownIt-Anchor" href="#2动态污点分析"></a> <strong>2.动态污点分析</strong></h3>
+<p>动态污点分析是在程序运行的基础上,对数据流或控制流进行监控,从而实现对数据在内存中的显式传播、数据误用等进行跟踪和检测.动态污点分析与静态污点分析的唯一区别在于静态污点分析技术在检测时并不真正运行程序,而是通过模拟程序的执行过程来传播污点标记,而动态污点分析技术需要运行程序,同时实时传播并检测污点标记.</p>
+<p>动态污点分析技术可分为三个部分：</p>
+<ul>
+<li>污点数据标记：程序攻击面是程序接受输入数据的接口集,一般由程序入口点和外部函数调用组成.在污点分析中,来自外部的输入数据会被标记为污点数据.根据输入数据来源的不同,可分为三类：网络输入、文件输入和输入设备输入.</li>
+<li>污点动态跟踪：在污点数据标记的基础上,对进程进行指令粒度的动态跟踪分析,分析每一条指令的效果,直至覆盖整个程序的运行过程,跟踪数据流的传播.
+<ul>
+<li>动态污点跟踪通常基于以下三种机制
+<ul>
+<li>动态代码插桩：可以跟踪单个进程的污点数据流动,通过在被分析程序中插入分析代码,跟踪污点信息流在进程中的流动方向.</li>
+<li>全系统模拟：利用全系统模拟技术,分析模拟系统中每条指令的污点信息扩散路径,可以跟踪污点数据在操作系统内的流动.</li>
+<li>虚拟机监视器：通过在虚拟机监视器中增加分析污点信息流的功能,跟踪污点数据在整个客户机中各个虚拟机之间的流动.</li>
+</ul>
+</li>
+<li>污点动态跟踪通常需要影子内存(shadow memory)来映射实际内存的污染情况,从而记录内存区域和寄存器是否是被污染的.对每条语句进行分析的过程中,污点跟踪攻击根据影子内存判断是否存在污点信息的传播,从而对污点信息进行传播并将传播结果保存于影子内存中,进而追踪污点数据的流向.</li>
+<li>一般情况下,数据移动类和算数类指令都将造成显示的信息流传播.为了跟踪污点数据的显示传播,需要在每个数据移动指令和算数指令执行前做监控,当指令的结果被其中一个操作数污染后,把结果数据对应的影子内存设置为一个指针,指向源污染点操作数指向的数据结构.</li>
+</ul>
+</li>
+<li>污点误用检查：在正确标记污点数据并对污点数据的传播进行实时跟踪后,就需要对攻击做出正确的检测即检测污点数据是否有非法使用的情况.</li>
+</ul>
+<p>动态污点分析的优缺点：</p>
+<ul>
+<li>优点：误报率较低,检测结果的可信度较高.</li>
+<li>缺点：
+<ul>
+<li>漏报率较高：由于程序动态运行时的代码覆盖率决定的.</li>
+<li>平台相关性较高：特定的动态污点分析工具只能够解决在特定平台上运行的程序.</li>
+<li>资源消耗大：包括空间上和时间上.</li>
+</ul>
+</li>
+</ul>
+<h4 id="动态污点分析的方法实现"><a class="markdownIt-Anchor" href="#动态污点分析的方法实现"></a> 动态污点分析的方法实现</h4>
+<h5 id="1污点数据标记"><a class="markdownIt-Anchor" href="#1污点数据标记"></a> (1)污点数据标记</h5>
+<p>污点数据通常主要是指软件系统所接受的外部输入数据,在计算机中,这些数据可能以内存临时数据的形式存储,也可能以文件的形式存储.当程序需要使用这些数据时,一般通过函数或系统调用来进行数据访问和处理,因此只需要对这些关键函数进行监控,即可得到程序读取或输出了什么污点信息.另外对于网络输入,也需要对网络操作函数进行监控.</p>
+<p>识别出污点数据后,需要对污点进行标记.污点生命周期是指在该生命周期的时间范围内,污点被定义为有效.污点生命周期开始于污点创建时刻,生成污点标记,结束于污点删除时刻,清除污点标记.</p>
+<ul>
+<li>污点创建
+<ul>
+<li>将来自于非可靠来源的数据分配给某寄存器或内存操作数时</li>
+<li>将已经标记为污点的数据通过运算分配给某寄存器或内存操作数时</li>
+</ul>
+</li>
+<li>污点删除
+<ul>
+<li>将非污点数据指派给存放污点的寄存器或内存操作数时</li>
+<li>将污点数据指派给存放污点的寄存器或内存地址时,此时会删除原污点,并创建新污点</li>
+<li>一些会清除污点痕迹的算数运算或逻辑运算操作时</li>
+</ul>
+</li>
+</ul>
+<h5 id="2污点动态跟踪"><a class="markdownIt-Anchor" href="#2污点动态跟踪"></a> (2)污点动态跟踪</h5>
+<p>当污点数据从一个位置传递到另一个位置时,则认为产生了污点传播.污点传播规则：</p>
+<table>
+<thead>
+<tr>
+<th>指令类型</th>
+<th>传播规则</th>
+<th>举例说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>拷贝或移动指令</td>
+<td>T(a)&lt;-T(b)</td>
+<td>mov a, b</td>
+</tr>
+<tr>
+<td>算数运算指令</td>
+<td>T(a)&lt;-T(b)</td>
+<td>add a, b</td>
+</tr>
+<tr>
+<td>堆栈操作指令</td>
+<td>T(esp)&lt;-T(a)</td>
+<td>push a</td>
+</tr>
+<tr>
+<td>拷贝或移动类函数调用指令</td>
+<td>T(dst)&lt;-T(src)</td>
+<td>call memcpy</td>
+</tr>
+<tr>
+<td>清零指令</td>
+<td>T(a)&lt;-false</td>
+<td>xor a, a</td>
+</tr>
+</tbody>
+</table>
+<p>注：T(x) 的取值分为 true 和 false 两种,取值为 true 时表示 x 为污点,否则 x 不是污点.</p>
+<p>对于污点信息流,通过污点跟踪和函数监控,已经能够进行污点信息流流动方向的分析.但由于缺少对象级的信息,仅靠指令级的信息流动并不能完全给出要分析的软件的确切行为.因此,需要在函数监控的基础上进行视图重建,如获取文件对象和套接字对象的详细信息,以方便进一步的分析工作.</p>
+<p>污点动态跟踪的实现通常使用：</p>
+<ul>
+<li>影子内存：真实内存中污点数据的镜像,用于存放程序执行的当前时刻所有的有效污点.</li>
+<li>污点传播树：用于表示污点的传播关系.</li>
+<li>污点处理指令链：用于按时间顺序存储与污点数据处理相关的所有指令.</li>
+</ul>
+<p>当遇到会引起污点传播的指令时,首先对指令中的每个操作数都通过污点快速映射查找影子内存中是否存在与之对应的影子污点从而确定其是否为污点数据,然后根据污点传播规则得到该指令引起的污点传播结果,并将传播产生的新污点添加到影子内存和污点传播树中,同时将失效污点对应的影子污点删除.同时由于一条指令是否涉及污点数据的处理,需要在污点分析过程中动态确定,因此需要在污点处理指令链中记录污点数据的指令信息.</p>
+<h5 id="3污点误用检查"><a class="markdownIt-Anchor" href="#3污点误用检查"></a> (3)污点误用检查</h5>
+<p>污点敏感点,即 Sink 点,是污点数据有可能被误用的指令或系统调用点,主要分为：</p>
+<ul>
+<li>跳转地址：检查污点数据是否用于跳转对象,如返回地址、函数指针、函数指针偏移等.具体操作是在每个跳转类指令(如call、ret、jmp等)执行前进行监控分析,保证跳转对象不是污点数据所在的内存地址.</li>
+<li>格式化字符串：检查污点数据是否用作printf系列函数的格式化字符串参数.</li>
+<li>系统调用参数：检查特殊系统调用的特殊参数是否为污点数据.</li>
+<li>标志位：跟踪标志位是否被感染,及被感染的标志位是否用于改变程序控制流.</li>
+<li>地址：检查数据移动类指令的地址是否被感染.</li>
+</ul>
+<p>根据sink 出现的误用情况,确定污点的漏洞类型.即在进行污点误用检查时,通常需要根据一些漏洞模式来进行检查,首先需要明确常见漏洞在二进制代码上的表现形式,然后将其提炼成漏洞模式,以更有效地指导自动化的安全分析.</p>
+<h5 id="动态污点分析的实例分析"><a class="markdownIt-Anchor" href="#动态污点分析的实例分析"></a> 动态污点分析的实例分析</h5>
+<p>下面我们来看一个使用动态污点分析的方法检测缓冲区溢出漏洞的例子.</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">void</span> <span class="token function">fun</span><span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span>str<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">char</span> temp<span class="token punctuation">[</span><span class="token number">15</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"in strncpy, source: %s\n"</span><span class="token punctuation">,</span> str<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">strncpy</span><span class="token punctuation">(</span>temp<span class="token punctuation">,</span> str<span class="token punctuation">,</span> <span class="token function">strlen</span><span class="token punctuation">(</span>str<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>        <span class="token comment">// Sink 点</span>
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">int</span> argc<span class="token punctuation">,</span> <span class="token keyword">char</span> <span class="token operator">*</span>argv<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">char</span> source<span class="token punctuation">[</span><span class="token number">30</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token function">gets</span><span class="token punctuation">(</span>source<span class="token punctuation">)</span><span class="token punctuation">;</span>                           <span class="token comment">// Source 点</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">strlen</span><span class="token punctuation">(</span>source<span class="token punctuation">)</span> <span class="token operator">&lt;</span> <span class="token number">30</span><span class="token punctuation">)</span>
+        <span class="token function">fun</span><span class="token punctuation">(</span>source<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">else</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"too long string, %s\n"</span><span class="token punctuation">,</span> source<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>漏洞很明显, 调用 strncpy 函数存在缓冲区溢出.</p>
+<p>程序接受外部输入字符串的二进制代码如下：</p>
+<pre class="line-numbers language-none"><code class="language-none">0x08048609 &lt;+51&gt;:    lea    eax,[ebp-0x2a]
+0x0804860c &lt;+54&gt;:    push   eax
+0x0804860d &lt;+55&gt;:    call   0x8048400 &lt;gets@plt&gt;
+...
+0x0804862c &lt;+86&gt;:    lea    eax,[ebp-0x2a]
+0x0804862f &lt;+89&gt;:    push   eax
+0x08048630 &lt;+90&gt;:    call   0x8048566 &lt;fun&gt;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>程序调用 strncpy 函数的二进制代码如下：</p>
+<pre class="line-numbers language-none"><code class="language-none">0x080485a1 &lt;+59&gt;:    push   DWORD PTR [ebp-0x2c]
+0x080485a4 &lt;+62&gt;:    call   0x8048420 &lt;strlen@plt&gt;
+0x080485a9 &lt;+67&gt;:    add    esp,0x10
+0x080485ac &lt;+70&gt;:    sub    esp,0x4
+0x080485af &lt;+73&gt;:    push   eax
+0x080485b0 &lt;+74&gt;:    push   DWORD PTR [ebp-0x2c]
+0x080485b3 &lt;+77&gt;:    lea    eax,[ebp-0x1b]
+0x080485b6 &lt;+80&gt;:    push   eax
+0x080485b7 &lt;+81&gt;:    call   0x8048440 &lt;strncpy@plt&gt;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>首先,在扫描该程序的二进制代码时,能够扫描到 <code>call &lt;gets@plt&gt;</code>,该函数会读入外部输入,即程序的攻击面.确定了攻击面后,我们将分析污染源数据并进行标记,即将 <code>[ebp-0x2a]</code> 数组(即源程序中的source)标记为污点数据.程序继续执行,该污染标记会随着该值的传播而一直传递.在进入 <code>fun()</code> 函数时,该污染标记通过形参实参的映射传递到参数 <code>str</code> 上.然后运行到 Sink 点函数 <code>strncpy()</code>.该函数的第二个参数即 <code>str</code> 和 第三个参数 <code>strlen(str)</code> 都是污点数据.最后在执行 <code>strncpy()</code> 函数时,若设定了相应的漏洞规则(目标数组小于源数组),则漏洞规则将被触发,检测出缓冲区溢出漏洞.</p>
+<h2 id="0x4-污点分析在实际应用中的关键技术"><a class="markdownIt-Anchor" href="#0x4-污点分析在实际应用中的关键技术"></a> <strong>0x4 污点分析在实际应用中的关键技术</strong></h2>
+<p>污点分析被广泛地应用在系统隐私数据泄露、安全漏洞等问题的检测中.在实际应用过程中,由于系统框架、语言特性等方面的差异,通用的污点分析技术往往难以适用.比如:系统框架的高度模块化以及各模块之间复杂的调用关系导致污点源到汇聚点的传播路径变得复杂、庞大,采用通用的污点分析技术可能面临开销难以接受的问题;通用的污点分析技术对新的语言特性支持有限等.为此,需要针对不同的应用场景,对通用的污点分析技术进行扩展或定制.</p>
+<p>本节以两个代表性的应用场景——智能手机的隐私泄漏检测和Web应用安全漏洞检测为切入点,总结近10年来污点分析技术在上述领域的应用实践过程中所面临的问题和关键解决技术.</p>
+<h3 id="1检测智能手机隐私泄露"><a class="markdownIt-Anchor" href="#1检测智能手机隐私泄露"></a> <strong>1.检测智能手机隐私泄露</strong></h3>
+<p>针对Android的污点传播分析也围绕组件展开,按照传播可能通过的模块的不同,分为<strong>组件内污点传播、组件间污点传播、组件与库函数之间的污点传播这3类</strong>(如图7所示).接下来将分别介绍针对这3类传播问题的静态和动态污点传播分析技术.</p>
+<p><img src="/images/image-20201222115622305.png" alt="image-20201222115622305" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201222115622305.png" class="lozad post-image"></p>
+<h4 id="1静态污点分析"><a class="markdownIt-Anchor" href="#1静态污点分析"></a> <strong>1.静态污点分析</strong></h4>
+<h5 id="1组件内污点传播分析"><a class="markdownIt-Anchor" href="#1组件内污点传播分析"></a> (1)组件内污点传播分析</h5>
+<p>组件内部污点分析面临的主要问题是如何构建完整的分析模型.不同于传统的C/C++程序(有唯一的Main函数入口),Android应用程序存在有多个入口函数的情况.这个情况源于Android应用程序复杂的运行生命周期(例如onCreate,onStart,onResume,onPause等)以及程序中大量存在的回调函数和异步函数调用.由于任何的程序入口都有可能是隐私数据的来源,在静态的污点分析开始之前必须构建完整的应用程序模型,以确保程序中每一种可能的执行路径都会被静态污点传播分析覆盖到.</p>
+<p>LeakMiner[14]和CHEX[15]尝试使用增量的方法构建系统调用图.</p>
+<p>Arzt等人设计的FlowDroid[13]提出了一种更系统的构建Android程序完整分析模型的方法:首先,通过XML配置文件提取与Android生命周期相关的入口函数,将这些方法作为节点,并根据Android生命周期构建调用图(如图8所示);其次,对于生命周期内的回调函数,在该调用图的基础上增加不透明谓词节点(即图8中菱形的P节点);然后,增量式地将回调函数加入这个函数调用图;最后,将调用图上所有的执行入口连接到一个虚假的Main函数上.FlowDroid中的一次合法的执行,就是对调用图进行的一次遍历.</p>
+<p><img src="/images/image-20201222154039907.png" alt="image-20201222154039907" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201222154039907.png" class="lozad post-image"></p>
+<p>Gordon等人[12]提出的DroidSafe使用Android设备实现(Android device implementation)来构建Android的完整分析模型.Android设备实现是对Android运行环境的一个简单模拟,它使用Java语言,结合Android Open Source Porject(AOSP),实现了与原Android接口语义等价的模型,并使用精确分析存根(accurate analysis stub)将AOSP代码之外的函数加入到模型中.</p>
+<h5 id="2组件间污点传播分析"><a class="markdownIt-Anchor" href="#2组件间污点传播分析"></a> (2)组件间污点传播分析</h5>
+<p>即使正确分析了组件内的数据流关系,污点数据仍然可能通过组件间的数据流来传递,从而造成信息泄露.如上图7左侧所示,即使保证了对组件A内部污点传播的精确分析,组件A仍然可能通过调用方法startActivityforResult()将信息传递给组件B,再通过组件B产生泄露.因此,针对Android应用的污点分析还需要分析出组件间所有可能的数据流信息.组件间通信是通过组件发送Intent消息对象完成的.<strong>Intent按照参数字段是否包含目标组件名称分为显式Intent和隐式Intent</strong>.如图9所示:显式Intent对象使用一个包含目标组件名称的参数显式地指定通信的下一个组件;隐式Intent使用action,category等域隐式地让Android系统通过Intent Filter自动选择一个组件调用.目前,解决该问题的主要思想是利用Intent参数信息分析组件间的数据流.</p>
+<p><img src="/images/image-20201222154544009.png" alt="image-20201222154544009" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201222154544009.png" class="lozad post-image"></p>
+<p><strong>解决组件间数据流的前提是解析Intent的目的地</strong>,解析Intent目的地包括解析显式Intent的目的地和隐式Intent的目的地.由于显式Intent的目的地可以直接通过初始化Intent的地址字符串参数获得,目前,<strong>解析显式Intent目的地的常用方法是使用字符串分析</strong>工具(例如JSA[84])提取Intent中字符串参数的信息.</p>
+<p>解析隐式Intent目的地的主要方法是<strong>分析配置文件信息与Intent Filter注册器之间的映射关系,建立发送Intent组件和接受Intent组件之间的配对关系</strong>.在解析出Intent目的地之后,问题的重点转移到如何提高组件间数据流分析的精度上.</p>
+<p>Klieber等人[17]尝试在已经建立好的组件内污点分析的基础上,结合推导规则来分析组件间数据流.在分析之前,需要收集组件内部的污点源和汇聚点以及组件内Intent的发送目的地标签等信息.表4和表5给出了推导规则的前提定义和具体的推导规则,其中,一次完整的分析是指根据已知组件内部的信息<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>s</mi><mi>r</mi><mi>c</mi><mo>→</mo><mi>s</mi><mi>i</mi><mi>n</mi><mi>k</mi></mrow><annotation encoding="application/x-tex">src→sink</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">s</span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mord mathdefault">c</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault">s</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span></span></span></span>以及推导规则识别所有<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>s</mi><mi>r</mi><mi>c</mi><mi mathvariant="normal">′</mi><mo>→</mo><mi>s</mi><mi>i</mi><mi>n</mi><mi>k</mi><mi mathvariant="normal">′</mi></mrow><annotation encoding="application/x-tex">src′→sink′</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.55556em;vertical-align:0em;"></span><span class="mord mathdefault">s</span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mord mathdefault">c</span><span class="mord">′</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault">s</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="mord">′</span></span></span></span>的流集合.</p>
+<p>Octeau等人[18]尝试使用现有的程序分析方法提高组件间数据流分析的精度,他们将组件间数据流分析问题转化成IDE(interprocedural  distributive environment)问题[58]进行求解.DroidSafe设计了一种对象敏感的别名分析技术,在此基础上提供的精度优化方法包括:提取Intent的目的地的字符串参数、将Intent目的地的初始化函数嵌入到目的组件当中以提高别名分析的精度,同时,增加处理Android Service的支持.</p>
+<p><img src="/images/image-20201222120307884.png" alt="image-20201222120307884" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201222120307884.png" class="lozad post-image"></p>
+<p><img src="/images/image-20201222120316977.png" alt="image-20201222120316977" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201222120316977.png" class="lozad post-image"></p>
+<h5 id="3组件与库函数之间的污点传播分析"><a class="markdownIt-Anchor" href="#3组件与库函数之间的污点传播分析"></a> (3)组件与库函数之间的污点传播分析</h5>
+<p>组件与库函数之间的污点传播分析面临的<strong>主要问题</strong>包括对Android库函数自身庞大的代码量的分析以及组件和某些库函数使用的实现语言不同(Android组件通常用Java实现,而本地库则采用C/C++代码编写)这两方面.</p>
+<p>目前的<strong>一类方法是使用手动定制</strong>来解决上述问题.比如,FlowDroid[13]尝试手动地分析库函数的语义,根据参数与返回值之间的关系为其提供显式传播规则.对于没有制定规则的库函数,FlowDroid使用保守的策略,即:只要库函数的参数中包含污点数据参数,就对函数的返回值进行污点标记.DroidSafe[12]使用精确分析存根实现了3176个本地代码库,这些存根是使用Java代码手动实现的,且与原本地代码的语义等价.对本地代码的调用被传递到对应的存根代码上进行分析.此类工作需要在人工理解程序语义的基础上加以实现.</p>
+<p><strong>与之相对的是自动推导的方法</strong>.StubDroid[85]首次提出了用自动推导解决库函数传播的问题,该方法将产生供分析的摘要文件(summary file),将推导的污点数据流存储到摘要文件中,并提供了相应的部署策略.StubDroid的分析单元是一个API方法,将该方法内部的所有访问路径(包括方法参数、方法this引用和所有静态可见域)标记成源,将方法的返回值作为汇聚点.基于此,问题被转化成方法内部的污点分析问题. StubDroid利用现有的静态污点分析工具FlowDroid自动地处理库内部的污点数据流,最终得到的摘要文件包含API方法中的访问路径源是否能够传播到返回值的信息.另外,StubDroid还能够解决由于别名和访问路径带导致库函数传播中的精确度下降的问题,最后的摘要文件进一步被应用到FlowDroid框架,完成对整个app的分析.与FlowDroid类似,StudDroid同样无法对本地库函数进行自动分析.</p>
+<h4 id="2动态污点分析-2"><a class="markdownIt-Anchor" href="#2动态污点分析-2"></a> <strong>2.动态污点分析</strong></h4>
+<p><strong>Android系统中的动态污点同样需要分析组件内污点传播、组件间污点传播以及组件代码与本地库之间的污点传播</strong>.动态污点分析面临的<strong>主要挑战是系统信息除了在系统内部通过DEX指令传播以外,还会经过其他的通道,如本地库、网络、文件等</strong>.</p>
+<p>TaintDroid[19]首先提出了面向Android平台上的动态污点分析工具,之后的工具大多是基于它的优化或者应用扩展(Appsplaygroud[20],VetDroid[21],BayesDroid[22],AppFence[23]).<strong>本节重点介绍TaintDoid上的3种污点传播处理</strong>：</p>
+<p><strong>1.组件内的污点传播</strong>主要是在Dalvik虚拟机DEX指令的变量级别传播,详见第<a href="#(2)%E5%8A%A8%E6%80%81%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF">2.1.2节动态分析技术</a>中的关于TaintDroid的介绍.</p>
+<p><strong>2.组件间的污点传播</strong>利用了Binder机制.Android底层使用Binder机制完成IPC调用,数据被存储在包(parcels)对象结构中.TaintDroid的污点传播方法是对包对象的结构进行重新设计,使之附带与污点相关的信息.TaintDroid提供了两种包结构扩展方法:</p>
+<p>(a) 使用一个标签变量将污点信息存储到包中,然后通过网络进行传输.当接受者接收到这个结构时,将其中包含的标签变量提取出来并继续传输;</p>
+<p>(b) 在方法(a)的基础上进行改进,提出了基于污点标签向量的传播技术.</p>
+<p><strong>3.组件与本地库函数间的污点传播</strong>包括污点数据通过本地库代码或文件进行传播.TaintDroid通过设计后置条件对本地代码的函数进行污点传播.后置条件为:</p>
+<p>(a) 所有本地代码访问的外部变量都会被标记上污点标签;</p>
+<p>(b) 根据预定义规则将被赋值的函数返回值也标记上污点标签.</p>
+<p>TaintDroid使用了人工插桩与启发式相结合的方法来提供这些后置条件.TaintDroid解决污点数据通过文件进行传播的方法是以文件为单位添加污点标签,当文件被写入或者被读出到缓冲区时进行污点传播.如果一个被标记的数据被写入一个文件,就需要这个文件进行标记.该文件在后续的操作中将作为污点源,如果有对该文件的读取操作,那么读出的数据也需要被标记.</p>
+<h3 id="2java-web-框架上的污点分析技术"><a class="markdownIt-Anchor" href="#2java-web-框架上的污点分析技术"></a> <strong>2.Java Web 框架上的污点分析技术</strong></h3>
+<p>不记录了,有需要的话可以读[1]原文4.2节</p>
+<h2 id="0x5-总结"><a class="markdownIt-Anchor" href="#0x5-总结"></a> 0x5 总结</h2>
+<p>污点分析作为信息流分析的一种实践技术,被广泛应用于互联网及移动终端平台上应用程序的信息安全保障中.本文介绍了污点分析的基本原理和通用技术,并针对近年来污点分析在解决实际应用程序安全问题时遇到的问题和关键解决技术进行了分析综述.不同于基于安全类型系统的信息流分析技术,污点分析可以不改变程序现有的编程模型或语言特性,并提供精确信息流传播跟踪.在实际应用过程中,污点分析还需要借助传统的程序分析技术的支持,例如静态分析中的数据流分析、动态分析中的代码重写等技术.另外,结合测试用例生成技术、符号执行技术以及虚拟机技术,也会给污点分析带来更多行之有效的解决方案.</p>
+<p>如果文中有笔误，欢迎指正。😁</p>
+<h2 id="0x-1-参考"><a class="markdownIt-Anchor" href="#0x-1-参考"></a> 0x-1 参考</h2>
+<blockquote>
+<p>[1] 王蕾,李丰,李炼,冯晓兵.污点分析技术的原理和实践应用.软件学报,2017,28(4):860−882.<a target="_blank" rel="noopener" href="http://www.jos.org.cn/1000-9825/5190.htm">http://www.jos.org.cn/1000-9825/5190.htm</a></p>
+<p>[2] <a target="_blank" rel="noopener" href="https://github.com/firmianay/CTF-All-In-One/blob/master/doc/5.5_taint_analysis.md">https://github.com/firmianay/CTF-All-In-One/blob/master/doc/5.5_taint_analysis.md</a></p>
+<p>[3] 宋铮，王永剑，金波，等.二进制程序动态污点分析技术研究综述[J].信息网络安全，2016（3）：77-83.</p>
+<p>[10] Livshits  VB,  Lam  MS.  Finding  security  vulnerabilities  in  Java  applications  with  static  analysis.  In:  Proc.  of  the  Conf.  on  Usenix Security Symp. USENIX Association, 2005. 262−266. <a target="_blank" rel="noopener" href="https://www.usenix.org/legacy/event/sec05/tech/full_papers/livshits/livshits_html/">https://www.usenix.org/legacy/event/sec05/tech/full_papers/livshits/livshits_html/</a></p>
+<p>[11] Rasthofer S, Arzt S, Bodden E. A machine-learning approach for classifying and categorizing android sources and sinks. In: Proc. of the Network and Distributed System Security Symp. (NDSS). 2014. [doi: 10.14722/ndss.2014.23039]</p>
+<p>[12] Gordon MI, Kim D, Perkins JH, Gilham L, Nguyen N, Rinard MC. Information flow analysis of Android applications in DroidSafe. In: Proc. of the NDSS 2015. 2015. [doi: 10.14722/ndss.2015.23089]</p>
+<p>[13] Arzt S, Rasthofer S, Fritz C, Bodden E, Bartel A, Klein J, Le Traon Y, Octeau D, McDaniel P. Flowdroid: Precise context, flow, field,  object-sensitive  and  lifecycle-aware  taint  analysis  for  Android  apps.  ACM  SIGPLAN  Notices,  2014,49(6):259−269.  [doi:  10.1145/2594291.2594299]</p>
+<p>[14] Yang  Z,  Yang  M.  Leakminer:  Detect  information  leakage  on  Android  with  static  taint  analysis.  In:  Proc.  of  the  Software  Engineering. IEEE, 2012. 101−104. [doi: 10.1109/WCSE.2012.26]</p>
+<p>[15] Lu L, Li Z, Wu Z, Lee W, Jiang G. Chex: Statically vetting Android apps for component hijacking vulnerabilities. In: Proc. of the 2012 ACM Conf. on Computer and Communications Security. ACM Press, 2012. 229−240. [doi: 10.1145/2382196.2382223]</p>
+<p>[19] Enck  W,  Gilbert  P,  Han  S,  Tendulkar  V,  Chun  BG,  Cox  LP,  Jung  J,  McDaniel  P,  Sheth  AN.  TaintDroid:  An  information-flow  tracking  system  for  realtime  privacy  monitoring  on  smartphones.  ACM  Trans.  on  Computer  Systems,  2014,32(2):393−407.  [doi:  10.1145/2619091]</p>
+<p>[25] Tripp O, Pistoia M, Fink SJ, Sridharan M, Weisman O. TAJ: Effective taint analysis of Web applications. ACM SIGPLAN Notices, 2009,44(6):87−97. [doi: 10.1145/1542476.1542486]</p>
+<p>[26] Papagiannis I, Migliavacca M, Pietzuch P. PHP ASPIS: Using partial taint tracking to protect against injection attacks. In: Proc. of the Usenix Conf. on Web Application Development. USENIX Association, 2011. 2. <a target="_blank" rel="noopener" href="https://www.usenix.org/conference/webapps11/php-aspis-using-partial-taint-tracking-protect-against-injection-attacks">https://www.usenix.org/conference/webapps11/php-aspis-using-partial-taint-tracking-protect-against-injection-attacks</a></p>
+<p>[29] Vogt  P,  Nentwich  F,  Jovanovic  N,  Kirda  E,  Kruegel  C,  Vigna  G.  Cross  site  scripting  prevention  with  dynamic  data  tainting  and  static analysis. In: Proc. of the NDSS 2007. 2007. 12. <a target="_blank" rel="noopener" href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.72.4505">http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.72.4505</a></p>
+<p>[50] Saxena P, Molnar D, Livshits B. SCRIPTGARD: Automatic context-sensitive sanitization for large-scale legacy Web applications. In: Proc. of the 18th ACM Conf. on Computer and Communications Security. ACM Press, 2011. 601−614. [doi: 10.1145/2046707. 2046776]</p>
+<p>[51] Samuel M, Saxena P, Song D. Context-Sensitive auto-sanitization in Web templating languages using type qualifiers. In: Proc. ofthe 18th ACM Conf. on Computer and Communications Security. ACM Press, 2011. 587−600. [doi: 10.1145/2046707.2046775]</p>
+<p>[52] Bates D, Barth A, Jackson C. Regular expressions considered harmful in client-side XSS filters. In: Proc. of the 19th Int’l Conf. on World Wide Web. ACM Press, 2010. 91−100. [doi: 10.1145/1772690.1772701]</p>
+<p>[53] Hooimeijer  P,  Livshits  B,  Molnar  D,  Saxena  P,  Veanes  M.  Fast  and  precise  sanitizer  analysis  with  BEK.  In:  Proc.  of  the  20th  USENIX Conf. on Security. USENIX Association, 2011. 1−1. <a target="_blank" rel="noopener" href="http://dl.acm.org/citation.cfm?id=2028068">http://dl.acm.org/citation.cfm?id=2028068</a></p>
+<p>[61] Tripp O, Pistoia M, Cousot P, Cousot R, Guarnieri S. Andromeda: Accurate and scalable security analysis of Web applications. In: Proc. of the Int’l Conf. on Fundamental Approaches to Software Engineering. Berlin, Heidelberg: Springer-Verlag, 2013. 210−225. [doi: 10.1007/978-3-642-37057-1_15]</p>
+<p>[62] Crandall JR, Chong FT. Minos: Control data attack prevention orthogonal to memory model. In: Proc. of the 37th Int’l Symp. on Microarchitecture (MICRO-37). IEEE, 2004. 221−232. [doi: 10.1109/MICRO.2004.26]</p>
+<p>[63] Dalton  M,  Kannan  H,  Kozyrakis  C.  Raksha:  A  flexible  information  flow  architecture  for  software  security.  ACM  SIGARCH  Computer Architecture News, 2007,35(2):482−493. [doi: 10.1145/1273440.1250722]</p>
+<p>[64] Zhu DY, Jung J, Song D, Kohno T, Wetherall D. Tainteraser: Protecting sensitive data leaks using applicationlevel taint tracking. ACM SIGOPS Operating Systems Review, 2011,45(1):142−154. [doi: 10.1145/1945023.1945039]</p>
+<p>[65] Venkataramani G, Doudalis I, Solihin Y, Prvulovic M. Flexitaint: A programmable accelerator for dynamic taint propagation. In: Proc. of the 2008 IEEE 14th Int’l Symp. on High Performance Computer Architecture. IEEE, 2008. 173−184. [doi: 10.1109/HPCA. 2008.4658637]</p>
+<p>[67] Newsome J, Song D. Dynamic taint analysis for automatic detection, analysis, and signature generation of exploits on commodity software. In: Proc. of the Network and Distributed System Security Symp. 2005. 720−724.</p>
+<p>[68] Nethercote  N,  Seward  J.  Valgrind:  A  program  supervision  framework.  Electronic  Notes  in  Theoretical  Computer  Science,  2003,  89(2):44−66. [doi: 10.1016/S1571-0661(04)81042-9]</p>
+<p>[69] Zhu Y, Jung J, Song D, Kohno T, Wetherall D. Privacy scope: A precise information flow tracking system for finding application leaks. Technical Report, EECS-2009-145, Berkeley: University of California, 2009.</p>
+<p>[70] Clause  J,  Li  W,  Orso  A.  DYTAN:  A  generic  dynamic  taint  analysis  framework.  In:  Proc.  of  the  2007  Int’l  Symp.  on  Software  Testing and Analysis. ACM Press, 2007. 196−206. [doi: 10.1145/1273463.1273490]</p>
+<p>[71] Kemerlis  VP,  Portokalidis  G,  Jee  K,  Keromytis  AD.  libdft:  Practical  dynamic  data  flow  tracking  for  commodity  systems.  ACM  SIGPLAN Notices, 2012,47(7):121−132. [doi: 10.1145/2365864.2151042]</p>
+<p>[76] Bao T, Zheng Y, Lin Z, Zhang X, Xu D. Strict control dependence and its effect on dynamic information flow analyses. In: Proc. of the 19th Int’l Symp. on Software Testing and Analysis. ACM Press, 2010. 13−24. [doi: 10.1145/1831708.1831711]</p>
+<p>[77] Kang MG, McCamant S, Poosankam P, Song D. DTA++: Dynamic taint analysis with targeted control-flow propagation. In: Proc. of the Network and Distributed System Security Symp. (NDSS 2011). San Diego, 2011.</p>
+<p>[78] Cox LP, Gilbert P, Lawler G, Pistol V, Razeen A, Wu B, Cheemalapati S. Spandex: Secure password tracking for Android. In: Proc.of the 23rd USENIX Security Symp. (USENIX Security 2014). 2014. 481−494. <a target="_blank" rel="noopener" href="https://www.usenix.org/node/184402">https://www.usenix.org/node/184402</a></p>
+<p>[84] Christensen  AS,  Møller  A,  Schwartzbach  MI.  Precise  analysis  of  string  expressions.  In:  Proc.  of  the  Int’l  Static  Analysis  Symp.Berlin, Heidelberg: Springer-Verlag, 2003. 1−18. [doi: 10.1007/3-540-44898-5_1]</p>
+<p>[85] Arzt S, Bodden E. StubDroid: Automatic inference of precise data-flow summaries for the Android framework. In: Proc. of the 38th Int’l Conf. on Software Engineering. ACM Press, 2016. 725−735. [doi: 10.1145/2884781.2884816]</p>
+</blockquote>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-info copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/about">Ch3nYe</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/">https://ch3nye.top/%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/GAN(Quick-Review)/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一篇</div>
+        
+        <div class="nav-title">GAN(Quick Review) </div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+  <div class="nav-item-next">
+    <a href="/Network-Compression/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">Network Compression </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="lv-container" data-id="city" data-uid="MTAyMC80NjQ0Ny8yMjk1OA==">
+    <script>
+      (function (d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') {
+          return;
+        }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.defer = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  </div>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF"><span class="toc-text"> 污点分析技术</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86"><span class="toc-text"> 0x1 污点分析基本原理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E5%AE%9A%E4%B9%89"><span class="toc-text"> 1.污点分析定义</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E8%AF%86%E5%88%AB%E6%B1%A1%E7%82%B9%E6%BA%90%E5%92%8C%E6%B1%87%E8%81%9A%E7%82%B9"><span class="toc-text"> 2.识别污点源和汇聚点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E5%88%86%E6%9E%90"><span class="toc-text"> 3.污点传播分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E6%98%BE%E7%A4%BA%E6%B5%81%E5%88%86%E6%9E%90"><span class="toc-text"> (1)显示流分析</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E9%9A%90%E5%BC%8F%E6%B5%81%E5%88%86%E6%9E%90"><span class="toc-text"> (2)隐式流分析</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E6%97%A0%E5%AE%B3%E5%A4%84%E7%90%86"><span class="toc-text"> 4.无害处理</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E5%88%86%E6%9E%90%E7%9A%84%E5%85%B3%E9%94%AE%E6%8A%80%E6%9C%AF"><span class="toc-text"> 0x2 污点传播分析的关键技术</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E4%B8%AD%E7%9A%84%E6%98%BE%E5%BC%8F%E6%B5%81%E5%88%86%E6%9E%90"><span class="toc-text"> 1.污点传播中的显式流分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E9%9D%99%E6%80%81%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF"><span class="toc-text"> (1)静态分析技术</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E5%8A%A8%E6%80%81%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF"><span class="toc-text"> (2)动态分析技术</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1%E7%A1%AC%E4%BB%B6"><span class="toc-text"> 1.硬件</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%E5%9F%BA%E4%BA%8E%E8%BD%AF%E4%BB%B6"><span class="toc-text"> 2.基于软件</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3%E6%B7%B7%E5%90%88%E5%9E%8B"><span class="toc-text"> 3.混合型</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E4%B8%AD%E7%9A%84%E9%9A%90%E5%BC%8F%E6%B5%81%E5%88%86%E6%9E%90"><span class="toc-text"> 2.污点传播中的隐式流分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E9%9D%99%E6%80%81%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF-2"><span class="toc-text"> (1)静态分析技术</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E5%8A%A8%E6%80%81%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF-2"><span class="toc-text"> (2)动态分析技术</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x3-%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%96%B9%E6%B3%95%E5%AE%9E%E7%8E%B0"><span class="toc-text"> 0x3 污点分析方法实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E9%9D%99%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF"><span class="toc-text"> 1.静态污点分析技术</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E5%9F%BA%E4%BA%8E%E6%95%B0%E6%8D%AE%E6%B5%81%E7%9A%84%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90"><span class="toc-text"> (1)基于数据流的污点分析</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E5%9F%BA%E4%BA%8E%E4%BE%9D%E8%B5%96%E5%85%B3%E7%B3%BB%E7%9A%84%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90"><span class="toc-text"> (2)基于依赖关系的污点分析</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%9D%99%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E5%AE%9E%E4%BE%8B%E5%88%86%E6%9E%90"><span class="toc-text"> 静态污点分析实例分析</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E5%8A%A8%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90"><span class="toc-text"> 2.动态污点分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E7%9A%84%E6%96%B9%E6%B3%95%E5%AE%9E%E7%8E%B0"><span class="toc-text"> 动态污点分析的方法实现</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1%E6%B1%A1%E7%82%B9%E6%95%B0%E6%8D%AE%E6%A0%87%E8%AE%B0"><span class="toc-text"> (1)污点数据标记</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%E6%B1%A1%E7%82%B9%E5%8A%A8%E6%80%81%E8%B7%9F%E8%B8%AA"><span class="toc-text"> (2)污点动态跟踪</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3%E6%B1%A1%E7%82%B9%E8%AF%AF%E7%94%A8%E6%A3%80%E6%9F%A5"><span class="toc-text"> (3)污点误用检查</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E7%9A%84%E5%AE%9E%E4%BE%8B%E5%88%86%E6%9E%90"><span class="toc-text"> 动态污点分析的实例分析</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x4-%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E5%9C%A8%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8%E4%B8%AD%E7%9A%84%E5%85%B3%E9%94%AE%E6%8A%80%E6%9C%AF"><span class="toc-text"> 0x4 污点分析在实际应用中的关键技术</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E6%A3%80%E6%B5%8B%E6%99%BA%E8%83%BD%E6%89%8B%E6%9C%BA%E9%9A%90%E7%A7%81%E6%B3%84%E9%9C%B2"><span class="toc-text"> 1.检测智能手机隐私泄露</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E9%9D%99%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90"><span class="toc-text"> 1.静态污点分析</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1%E7%BB%84%E4%BB%B6%E5%86%85%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E5%88%86%E6%9E%90"><span class="toc-text"> (1)组件内污点传播分析</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%E7%BB%84%E4%BB%B6%E9%97%B4%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E5%88%86%E6%9E%90"><span class="toc-text"> (2)组件间污点传播分析</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3%E7%BB%84%E4%BB%B6%E4%B8%8E%E5%BA%93%E5%87%BD%E6%95%B0%E4%B9%8B%E9%97%B4%E7%9A%84%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E5%88%86%E6%9E%90"><span class="toc-text"> (3)组件与库函数之间的污点传播分析</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E5%8A%A8%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90-2"><span class="toc-text"> 2.动态污点分析</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2java-web-%E6%A1%86%E6%9E%B6%E4%B8%8A%E7%9A%84%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF"><span class="toc-text"> 2.Java Web 框架上的污点分析技术</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x5-%E6%80%BB%E7%BB%93"><span class="toc-text"> 0x5 总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x-1-%E5%8F%82%E8%80%83"><span class="toc-text"> 0x-1 参考</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/images/logo.png" class="author-img">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>20</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>4</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>19</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:sud0su@163.com">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF"><span class="toc-text"> 污点分析技术</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86"><span class="toc-text"> 0x1 污点分析基本原理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E5%AE%9A%E4%B9%89"><span class="toc-text"> 1.污点分析定义</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E8%AF%86%E5%88%AB%E6%B1%A1%E7%82%B9%E6%BA%90%E5%92%8C%E6%B1%87%E8%81%9A%E7%82%B9"><span class="toc-text"> 2.识别污点源和汇聚点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E5%88%86%E6%9E%90"><span class="toc-text"> 3.污点传播分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E6%98%BE%E7%A4%BA%E6%B5%81%E5%88%86%E6%9E%90"><span class="toc-text"> (1)显示流分析</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E9%9A%90%E5%BC%8F%E6%B5%81%E5%88%86%E6%9E%90"><span class="toc-text"> (2)隐式流分析</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E6%97%A0%E5%AE%B3%E5%A4%84%E7%90%86"><span class="toc-text"> 4.无害处理</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E5%88%86%E6%9E%90%E7%9A%84%E5%85%B3%E9%94%AE%E6%8A%80%E6%9C%AF"><span class="toc-text"> 0x2 污点传播分析的关键技术</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E4%B8%AD%E7%9A%84%E6%98%BE%E5%BC%8F%E6%B5%81%E5%88%86%E6%9E%90"><span class="toc-text"> 1.污点传播中的显式流分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E9%9D%99%E6%80%81%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF"><span class="toc-text"> (1)静态分析技术</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E5%8A%A8%E6%80%81%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF"><span class="toc-text"> (2)动态分析技术</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1%E7%A1%AC%E4%BB%B6"><span class="toc-text"> 1.硬件</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%E5%9F%BA%E4%BA%8E%E8%BD%AF%E4%BB%B6"><span class="toc-text"> 2.基于软件</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3%E6%B7%B7%E5%90%88%E5%9E%8B"><span class="toc-text"> 3.混合型</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E4%B8%AD%E7%9A%84%E9%9A%90%E5%BC%8F%E6%B5%81%E5%88%86%E6%9E%90"><span class="toc-text"> 2.污点传播中的隐式流分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E9%9D%99%E6%80%81%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF-2"><span class="toc-text"> (1)静态分析技术</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E5%8A%A8%E6%80%81%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF-2"><span class="toc-text"> (2)动态分析技术</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x3-%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%96%B9%E6%B3%95%E5%AE%9E%E7%8E%B0"><span class="toc-text"> 0x3 污点分析方法实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E9%9D%99%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF"><span class="toc-text"> 1.静态污点分析技术</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E5%9F%BA%E4%BA%8E%E6%95%B0%E6%8D%AE%E6%B5%81%E7%9A%84%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90"><span class="toc-text"> (1)基于数据流的污点分析</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E5%9F%BA%E4%BA%8E%E4%BE%9D%E8%B5%96%E5%85%B3%E7%B3%BB%E7%9A%84%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90"><span class="toc-text"> (2)基于依赖关系的污点分析</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%9D%99%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E5%AE%9E%E4%BE%8B%E5%88%86%E6%9E%90"><span class="toc-text"> 静态污点分析实例分析</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E5%8A%A8%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90"><span class="toc-text"> 2.动态污点分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E7%9A%84%E6%96%B9%E6%B3%95%E5%AE%9E%E7%8E%B0"><span class="toc-text"> 动态污点分析的方法实现</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1%E6%B1%A1%E7%82%B9%E6%95%B0%E6%8D%AE%E6%A0%87%E8%AE%B0"><span class="toc-text"> (1)污点数据标记</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%E6%B1%A1%E7%82%B9%E5%8A%A8%E6%80%81%E8%B7%9F%E8%B8%AA"><span class="toc-text"> (2)污点动态跟踪</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3%E6%B1%A1%E7%82%B9%E8%AF%AF%E7%94%A8%E6%A3%80%E6%9F%A5"><span class="toc-text"> (3)污点误用检查</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E7%9A%84%E5%AE%9E%E4%BE%8B%E5%88%86%E6%9E%90"><span class="toc-text"> 动态污点分析的实例分析</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x4-%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E5%9C%A8%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8%E4%B8%AD%E7%9A%84%E5%85%B3%E9%94%AE%E6%8A%80%E6%9C%AF"><span class="toc-text"> 0x4 污点分析在实际应用中的关键技术</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E6%A3%80%E6%B5%8B%E6%99%BA%E8%83%BD%E6%89%8B%E6%9C%BA%E9%9A%90%E7%A7%81%E6%B3%84%E9%9C%B2"><span class="toc-text"> 1.检测智能手机隐私泄露</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E9%9D%99%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90"><span class="toc-text"> 1.静态污点分析</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1%E7%BB%84%E4%BB%B6%E5%86%85%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E5%88%86%E6%9E%90"><span class="toc-text"> (1)组件内污点传播分析</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%E7%BB%84%E4%BB%B6%E9%97%B4%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E5%88%86%E6%9E%90"><span class="toc-text"> (2)组件间污点传播分析</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3%E7%BB%84%E4%BB%B6%E4%B8%8E%E5%BA%93%E5%87%BD%E6%95%B0%E4%B9%8B%E9%97%B4%E7%9A%84%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E5%88%86%E6%9E%90"><span class="toc-text"> (3)组件与库函数之间的污点传播分析</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E5%8A%A8%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90-2"><span class="toc-text"> 2.动态污点分析</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2java-web-%E6%A1%86%E6%9E%B6%E4%B8%8A%E7%9A%84%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF"><span class="toc-text"> 2.Java Web 框架上的污点分析技术</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x5-%E6%80%BB%E7%BB%93"><span class="toc-text"> 0x5 总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x-1-%E5%8F%82%E8%80%83"><span class="toc-text"> 0x-1 参考</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/备忘">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/李宏毅机器学习笔记">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">14</span>
+        </div>
+      </a>
+    
+      <a href="/categories/论文阅读">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/笔记">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
+    
+    <a href="\tags\note" title="note"><div class="tags-list-item">note</div></a>
+    
+    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
+    
+    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="\tags\学习" title="学习"><div class="tags-list-item">学习</div></a>
+    
+    <a href="\tags\总结" title="总结"><div class="tags-list-item">总结</div></a>
+    
+    <a href="\tags\笔记" title="笔记"><div class="tags-list-item">笔记</div></a>
+    
+    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
+    
+    <a href="\tags\污点分析" title="污点分析"><div class="tags-list-item">污点分析</div></a>
+    
+    <a href="\tags\比特币" title="比特币"><div class="tags-list-item">比特币</div></a>
+    
+    <a href="\tags\区块链" title="区块链"><div class="tags-list-item">区块链</div></a>
+    
+    <a href="\tags\符号执行" title="符号执行"><div class="tags-list-item">符号执行</div></a>
+    
+    <a href="\tags\Adversarial-Attack" title="Adversarial-Attack"><div class="tags-list-item">Adversarial-Attack</div></a>
+    
+    <a href="\tags\漏洞挖掘" title="漏洞挖掘"><div class="tags-list-item">漏洞挖掘</div></a>
+    
+    <a href="\tags\System-Service" title="System-Service"><div class="tags-list-item">System-Service</div></a>
+    
+    <a href="\tags\Fuzzing" title="Fuzzing"><div class="tags-list-item">Fuzzing</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF"><span class="toc-text"> 污点分析技术</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86"><span class="toc-text"> 0x1 污点分析基本原理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E5%AE%9A%E4%B9%89"><span class="toc-text"> 1.污点分析定义</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E8%AF%86%E5%88%AB%E6%B1%A1%E7%82%B9%E6%BA%90%E5%92%8C%E6%B1%87%E8%81%9A%E7%82%B9"><span class="toc-text"> 2.识别污点源和汇聚点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E5%88%86%E6%9E%90"><span class="toc-text"> 3.污点传播分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E6%98%BE%E7%A4%BA%E6%B5%81%E5%88%86%E6%9E%90"><span class="toc-text"> (1)显示流分析</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E9%9A%90%E5%BC%8F%E6%B5%81%E5%88%86%E6%9E%90"><span class="toc-text"> (2)隐式流分析</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E6%97%A0%E5%AE%B3%E5%A4%84%E7%90%86"><span class="toc-text"> 4.无害处理</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E5%88%86%E6%9E%90%E7%9A%84%E5%85%B3%E9%94%AE%E6%8A%80%E6%9C%AF"><span class="toc-text"> 0x2 污点传播分析的关键技术</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E4%B8%AD%E7%9A%84%E6%98%BE%E5%BC%8F%E6%B5%81%E5%88%86%E6%9E%90"><span class="toc-text"> 1.污点传播中的显式流分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E9%9D%99%E6%80%81%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF"><span class="toc-text"> (1)静态分析技术</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E5%8A%A8%E6%80%81%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF"><span class="toc-text"> (2)动态分析技术</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1%E7%A1%AC%E4%BB%B6"><span class="toc-text"> 1.硬件</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%E5%9F%BA%E4%BA%8E%E8%BD%AF%E4%BB%B6"><span class="toc-text"> 2.基于软件</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3%E6%B7%B7%E5%90%88%E5%9E%8B"><span class="toc-text"> 3.混合型</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E4%B8%AD%E7%9A%84%E9%9A%90%E5%BC%8F%E6%B5%81%E5%88%86%E6%9E%90"><span class="toc-text"> 2.污点传播中的隐式流分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E9%9D%99%E6%80%81%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF-2"><span class="toc-text"> (1)静态分析技术</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E5%8A%A8%E6%80%81%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF-2"><span class="toc-text"> (2)动态分析技术</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x3-%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%96%B9%E6%B3%95%E5%AE%9E%E7%8E%B0"><span class="toc-text"> 0x3 污点分析方法实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E9%9D%99%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF"><span class="toc-text"> 1.静态污点分析技术</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E5%9F%BA%E4%BA%8E%E6%95%B0%E6%8D%AE%E6%B5%81%E7%9A%84%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90"><span class="toc-text"> (1)基于数据流的污点分析</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E5%9F%BA%E4%BA%8E%E4%BE%9D%E8%B5%96%E5%85%B3%E7%B3%BB%E7%9A%84%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90"><span class="toc-text"> (2)基于依赖关系的污点分析</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%9D%99%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E5%AE%9E%E4%BE%8B%E5%88%86%E6%9E%90"><span class="toc-text"> 静态污点分析实例分析</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E5%8A%A8%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90"><span class="toc-text"> 2.动态污点分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E7%9A%84%E6%96%B9%E6%B3%95%E5%AE%9E%E7%8E%B0"><span class="toc-text"> 动态污点分析的方法实现</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1%E6%B1%A1%E7%82%B9%E6%95%B0%E6%8D%AE%E6%A0%87%E8%AE%B0"><span class="toc-text"> (1)污点数据标记</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%E6%B1%A1%E7%82%B9%E5%8A%A8%E6%80%81%E8%B7%9F%E8%B8%AA"><span class="toc-text"> (2)污点动态跟踪</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3%E6%B1%A1%E7%82%B9%E8%AF%AF%E7%94%A8%E6%A3%80%E6%9F%A5"><span class="toc-text"> (3)污点误用检查</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E7%9A%84%E5%AE%9E%E4%BE%8B%E5%88%86%E6%9E%90"><span class="toc-text"> 动态污点分析的实例分析</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x4-%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E5%9C%A8%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8%E4%B8%AD%E7%9A%84%E5%85%B3%E9%94%AE%E6%8A%80%E6%9C%AF"><span class="toc-text"> 0x4 污点分析在实际应用中的关键技术</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E6%A3%80%E6%B5%8B%E6%99%BA%E8%83%BD%E6%89%8B%E6%9C%BA%E9%9A%90%E7%A7%81%E6%B3%84%E9%9C%B2"><span class="toc-text"> 1.检测智能手机隐私泄露</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E9%9D%99%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90"><span class="toc-text"> 1.静态污点分析</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1%E7%BB%84%E4%BB%B6%E5%86%85%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E5%88%86%E6%9E%90"><span class="toc-text"> (1)组件内污点传播分析</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%E7%BB%84%E4%BB%B6%E9%97%B4%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E5%88%86%E6%9E%90"><span class="toc-text"> (2)组件间污点传播分析</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3%E7%BB%84%E4%BB%B6%E4%B8%8E%E5%BA%93%E5%87%BD%E6%95%B0%E4%B9%8B%E9%97%B4%E7%9A%84%E6%B1%A1%E7%82%B9%E4%BC%A0%E6%92%AD%E5%88%86%E6%9E%90"><span class="toc-text"> (3)组件与库函数之间的污点传播分析</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E5%8A%A8%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90-2"><span class="toc-text"> 2.动态污点分析</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2java-web-%E6%A1%86%E6%9E%B6%E4%B8%8A%E7%9A%84%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF"><span class="toc-text"> 2.Java Web 框架上的污点分析技术</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x5-%E6%80%BB%E7%BB%93"><span class="toc-text"> 0x5 总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x-1-%E5%8F%82%E8%80%83"><span class="toc-text"> 0x-1 参考</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-20</div>
+        <a href="/Note-FANS-Fuzzing-Android-Native-System-Services/"><div class="recent-posts-item-content">Note《FANS Fuzzing Android Native System Services via Automated Interface Analysis》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-16</div>
+        <a href="/ELMO-BERT-GPT/"><div class="recent-posts-item-content">ELMO, BERT, GPT</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-15</div>
+        <a href="/Note-FIRMSCOPE-Automatic-Uncovering-of-Privilege-Escala/"><div class="recent-posts-item-content">Note《FIRMSCOPE Automatic Uncovering of Privilege-Escala Vulnerabilities in Pre-Installed Apps in Android Firmware》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-14</div>
+        <a href="/Android流量抓包环境配置/"><div class="recent-posts-item-content">Android流量抓包环境配置</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2021
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">ch3nye's blog </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('data-fslightbox', 'gallery');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+    }
+    refreshFsLightbox();
+  }
+</script>
+<script>loadScript("//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-WHGL11014T');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "G-WHGL11014T", googleAnalytics)</script>
+  
+</body>
+
+</html>

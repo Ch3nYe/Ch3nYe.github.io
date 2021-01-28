@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="网络安全 Android ML CTF">
+  <link rel="icon" href="/images/logo.png">
+  <title>区块链技术原理笔记</title>
+  
+  
+  <meta property="og:title" content="区块链技术原理笔记">
+  
+  
+  <meta property="og:url" content="https://ch3nye.top/%E5%8C%BA%E5%9D%97%E9%93%BE%E6%8A%80%E6%9C%AF%E5%8E%9F%E7%90%86%E7%AC%94%E8%AE%B0/index.html">
+  
+  
+  <meta property="og:img" content="/images/image-20210113091537076.png">
+  
+  
+  <meta property="og:img" content="网络安全 Android ML CTF">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2021-01-14">
+  <meta property="og:article:modified_time" content="2021-01-23">
+  <meta property="og:article:author" content="Ch3nYe">
+  
+  
+  <meta property="og:article:tag" content="区块链">
+  
+  <meta property="og:article:tag" content="比特币">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js" as="script">
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn-city.livere.com/js/embed.dist.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+  
+  
+  
+  <link href="/js/lib/prism/prism-tomorrow.min.css" rel="stylesheet" data-prism="prism-tomorrow">
+  
+  
+  
+<link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+
+  
+  
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/images/logo.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/links" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<div class="image-wrapper">
+  <img src="/images/image-20210113091537076.png" data-src="/images/image-20210113091537076.png"
+    srcset="/images/LoadingImage.gif"
+    class="image lozad"
+    alt="thumbnail"
+  >
+</div>
+
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      区块链技术原理笔记
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2021-01-13T16:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2021-01-14</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/笔记/" class="post-meta-link">笔记</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>12.6k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/区块链/" class="post-meta-link">区块链</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/比特币/" class="post-meta-link">比特币</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="ox0-前言"><a class="markdownIt-Anchor" href="#ox0-前言"></a> ox0 前言</h1>
+<p>2008年10月31日，一个名为Satoshi Nakamoto （中本聪）的ID 在cypherpunk 论坛发布了一篇名为《Bitcoin: A Peer-to-Peer Electronic Cash System》的文章，现在此文被看作比特币的白皮书，文中提出了&quot;区块链&quot;的概念。随后在2008年11月，中本聪发布了比特币的第一版代码。2009年1月，中本聪挖出了比特币的第一个区块——创世区块，比特币网络正式开始运行。</p>
+<p>现在我们知道这个叫做中本聪的神秘人，凭借这篇文章创造了万亿人民币的比特币市场。</p>
+<p><img src="/images/image-20210113091537076.png" alt="image-20210113091537076" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210113091537076.png" class="lozad post-image"></p>
+<p>2010年12月12 日，中本聪在比特币论坛中发表了最后一篇文章，随后便不再公开露面，只通过电子邮件与比特币核心开发团队的少数人联系。2011年4月26日，在与比特币核心开发团队领导人加文·安德烈森联系过后，中本聪随即关闭了电子邮件，再也没有与任何人来往过。中本聪十分低调，在网络上可以追溯的行踪很少，他与任何人交流坚持使用PGP加密和Tor网络，而且他在论坛中的发言时间和说话方式也在刻意隐瞒自己的时区，伪装自己的表达习惯。由于他的代码逻辑十分精巧，设计区块链的具体数学细节也十分巧妙，所以有人怀疑中本聪是一个组织公用的ID。但是，时至今日也仍没有确切的证据证明某人或某组织就是中本聪。</p>
+<p>关于神秘人中本聪的故事就不过多叙述了，本文主要记述区块链的技术原理，涉及的要点有：</p>
+<ul>
+<li>区块链的技术原理</li>
+<li>p2p交易原理</li>
+<li>比特币挖矿</li>
+<li>HD钱包？</li>
+</ul>
+<p>本文是我在了解区块链技术过程中的学习笔记，如果你也希望了解其中的技术原理，本文也许会对你有帮助。本文结合比特币讲解区块链技术的原理和应用方法，比特币只是区块链技术的应用之一，文中讨论的具体方法也比较原始，但就简单理解区块链技术来说足以。</p>
+<p>主要摘录整理廖雪峰老师的文章，所有参考文章附在文末。代码以廖雪峰老师给出的javascript 代码为例，每个代码块下方以引用的格式给出运行结果。</p>
+<h1 id="0x1-区块链原理"><a class="markdownIt-Anchor" href="#0x1-区块链原理"></a> 0x1 区块链原理</h1>
+<p>区块链就是一个不断增长的全网总账本，区块链网络中的每个完全节点都拥有完整的区块链，并且，节点总是信任最长的区块链，伪造区块链需要拥有超过51%的全网算力。后面会解释为什么超过51%的全网算力就可以肆意妄为。</p>
+<p>区块链的一个重要特性就是不可篡改。为什么区块链不可篡改？我们先来看区块链的结构。</p>
+<p>区块链是由一个一个区块构成的有序链表，每一个区块都记录了一系列交易（现在一个比特币区块约记录2000~3000笔交易），并且，每个区块都指向前一个区块，从而形成一个链条：</p>
+<p><img src="/images/qukuailian1.jpg" alt="qukuailian1" / srcset="/images/LoadingImage.gif" data-src="/images/qukuailian1.jpg" class="lozad post-image"></p>
+<p>如果我们观察某一个区块，就可以看到，每个区块都有一个唯一的哈希标识，被称为区块哈希（下图中父区块哈希），同时，区块通过记录上一个区块的哈希来指向上一个区块：</p>
+<p><img src="/images/qukuailian2.png" alt="qukuailian2" / srcset="/images/LoadingImage.gif" data-src="/images/qukuailian2.png" class="lozad post-image"></p>
+<p>每一个区块还有一个Merkle哈希用来确保该区块的所有交易记录无法被篡改。</p>
+<p>区块链中的主要数据就是一系列交易，第一条交易通常是Coinbase交易，也就是矿工的挖矿奖励，后续交易都是用户的交易。</p>
+<h2 id="不可篡改性"><a class="markdownIt-Anchor" href="#不可篡改性"></a> 不可篡改性</h2>
+<p>区块链的不可篡改特性是由哈希算法保证的。</p>
+<p>常用的哈希算法以及它们的输出长度如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">哈希算法</th>
+<th style="text-align:left">输出长度(bit)</th>
+<th style="text-align:left">输出长度(字节)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">MD5</td>
+<td style="text-align:left">128 bit</td>
+<td style="text-align:left">16 bytes</td>
+</tr>
+<tr>
+<td style="text-align:left">RipeMD160</td>
+<td style="text-align:left">160 bits</td>
+<td style="text-align:left">20 bytes</td>
+</tr>
+<tr>
+<td style="text-align:left">SHA-1</td>
+<td style="text-align:left">160 bits</td>
+<td style="text-align:left">20 bytes</td>
+</tr>
+<tr>
+<td style="text-align:left">SHA-256</td>
+<td style="text-align:left">256 bits</td>
+<td style="text-align:left">32 bytes</td>
+</tr>
+<tr>
+<td style="text-align:left">SHA-512</td>
+<td style="text-align:left">512 bits</td>
+<td style="text-align:left">64 bytes</td>
+</tr>
+</tbody>
+</table>
+<p>比特币使用的哈希算法有两种：SHA-256和RipeMD160</p>
+<p>SHA-256的理论碰撞概率是：尝试 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mn>2</mn><mn>130</mn></msup></mrow><annotation encoding="application/x-tex">2^{130}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mord mtight">3</span><span class="mord mtight">0</span></span></span></span></span></span></span></span></span></span></span></span> 次随机输入，有99.8%的概率碰撞。注意 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mn>2</mn><mn>130</mn></msup></mrow><annotation encoding="application/x-tex">2^{130}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mord mtight">3</span><span class="mord mtight">0</span></span></span></span></span></span></span></span></span></span></span></span> 是一个非常大的数字，大约是1361万亿亿亿亿。以现有的计算机的计算能力，是不可能在短期内破解的。</p>
+<p>比特币使用两种哈希算法，一种是对数据进行两次SHA-256计算，这种算法在比特币协议中通常被称为hash256或者dhash。</p>
+<p>另一种算法是先计算SHA-256，再计算RipeMD160，这种算法在比特币协议中通常被称为hash160。</p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">const</span>
+    bitcoin <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'bitcoinjs-lib'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    createHash <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'create-hash'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function">standardHash</span><span class="token punctuation">(</span><span class="token parameter">name<span class="token punctuation">,</span> data</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> h <span class="token operator">=</span> <span class="token function">createHash</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> h<span class="token punctuation">.</span><span class="token function">update</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">digest</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">function</span> <span class="token function">hash160</span><span class="token punctuation">(</span><span class="token parameter">data</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> h1 <span class="token operator">=</span> <span class="token function">standardHash</span><span class="token punctuation">(</span><span class="token string">'sha256'</span><span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> h2 <span class="token operator">=</span> <span class="token function">standardHash</span><span class="token punctuation">(</span><span class="token string">'ripemd160'</span><span class="token punctuation">,</span> h1<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> h2<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">function</span> <span class="token function">hash256</span><span class="token punctuation">(</span><span class="token parameter">data</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> h1 <span class="token operator">=</span> <span class="token function">standardHash</span><span class="token punctuation">(</span><span class="token string">'sha256'</span><span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> h2 <span class="token operator">=</span> <span class="token function">standardHash</span><span class="token punctuation">(</span><span class="token string">'sha256'</span><span class="token punctuation">,</span> h1<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> h2<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">let</span> s <span class="token operator">=</span> <span class="token string">'bitcoin is awesome'</span><span class="token punctuation">;</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'ripemd160 = '</span> <span class="token operator">+</span> <span class="token function">standardHash</span><span class="token punctuation">(</span><span class="token string">'ripemd160'</span><span class="token punctuation">,</span> s<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token string">'hex'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'  hash160 = '</span> <span class="token operator">+</span> <span class="token function">hash160</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token string">'hex'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'   sha256 = '</span> <span class="token operator">+</span> <span class="token function">standardHash</span><span class="token punctuation">(</span><span class="token string">'sha256'</span><span class="token punctuation">,</span> s<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token string">'hex'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'  hash256 = '</span> <span class="token operator">+</span> <span class="token function">hash256</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token string">'hex'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>ripemd160 = 46c047bd035afb64dad2293cba29994a95b8b216<br />
+hash160 = fe56649aa4f8fdb1edf6b88d2d41f3c1f72cf431<br />
+sha256 = 23d4a09295be678b21a5f1dceae1f634a69c1b41775f680ebf8165266471401b<br />
+hash256 = 1c78f53758ac96f43b99ed080f36327d2a823c4df4fa094e59b006d945bbb84d</p>
+</blockquote>
+<p>运行上述代码，观察对一个字符串进行SHA-256、RipeMD160、hash256和hash160的结果</p>
+<h3 id="merkle-hash"><a class="markdownIt-Anchor" href="#merkle-hash"></a> Merkle Hash</h3>
+<p>在区块的头部，有一个Merkle Hash字段，它记录了本区块所有交易的Merkle Hash：</p>
+<p><img src="/images/Merkle_Hash0.png" alt="Merkle_Hash0" / srcset="/images/LoadingImage.gif" data-src="/images/Merkle_Hash0.png" class="lozad post-image"></p>
+<p>注意到哈希值也可以看做数据，所以可以把<code>a1</code>和<code>a2</code>拼起来，<code>a3</code>和<code>a4</code>拼起来，再计算出两个哈希值<code>b1</code>和<code>b2</code>：</p>
+<pre class="line-numbers language-ascii" data-language="ascii"><code class="language-ascii">       ┌───────────────┐               ┌───────────────┐
+       │b1&#x3D;dhash(a1+a2)│               │b2&#x3D;dhash(a3+a4)│
+       └───────────────┘               └───────────────┘
+               ▲                               ▲
+       ┌───────┴───────┐               ┌───────┴───────┐
+       │               │               │               │
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│a1&#x3D;dhash(tx1)│ │a2&#x3D;dhash(tx2)│ │a3&#x3D;dhash(tx3)│ │a4&#x3D;dhash(tx4)│
+└─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>最后，把<code>b1</code>和<code>b2</code>这两个哈希值拼起来，计算出最终的哈希值，这个哈希就是Merkle Hash：</p>
+<pre class="line-numbers language-ascii" data-language="ascii"><code class="language-ascii">                     ┌───────────────────┐
+                     │merkle&#x3D;dhash(b1+b2)│
+                     └───────────────────┘
+                               ▲
+               ┌───────────────┴───────────────┐
+               │                               │
+       ┌───────────────┐               ┌───────────────┐
+       │b1&#x3D;dhash(a1+a2)│               │b2&#x3D;dhash(a3+a4)│
+       └───────────────┘               └───────────────┘
+               ▲                               ▲
+       ┌───────┴───────┐               ┌───────┴───────┐
+       │               │               │               │
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│a1&#x3D;dhash(tx1)│ │a2&#x3D;dhash(tx2)│ │a3&#x3D;dhash(tx3)│ │a4&#x3D;dhash(tx4)│
+└─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>如果交易的数量不恰好是4个怎么办？例如，只有3个交易时，第一个和第二个交易的哈希<code>a1</code>和<code>a2</code>可以拼起来算出<code>b1</code>，第三个交易只能算出一个哈希<code>a3</code>，这个时候，就把a3直接复制一份，算出<code>b2</code>，这样，我们也能最终计算出Merkle Hash：</p>
+<pre class="line-numbers language-ascii" data-language="ascii"><code class="language-ascii">                     ┌───────────────────┐
+                     │merkle&#x3D;dhash(b1+b2)│
+                     └───────────────────┘
+                               ▲
+               ┌───────────────┴───────────────┐
+               │                               │
+       ┌───────────────┐               ┌───────────────┐
+       │b1&#x3D;dhash(a1+a2)│               │b2&#x3D;dhash(a3+a3)│
+       └───────────────┘               └───────────────┘
+               ▲                               ▲
+       ┌───────┴───────┐               ┌───────┴───────┐
+       │               │               │               │
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌ ─ ─ ─ ─ ─ ─ ┐
+│a1&#x3D;dhash(tx1)│ │a2&#x3D;dhash(tx2)│ │a3&#x3D;dhash(tx3)│
+└─────────────┘ └─────────────┘ └─────────────┘ └ ─ ─ ─ ─ ─ ─ ┘<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>如果有5个交易，我们可以看到，<code>a5</code>被复制了一份，以便计算出<code>b3</code>，随后<code>b3</code>也被复制了一份，以便计算出<code>c2</code>。总之，在每一层计算中，如果有单数，就把最后一份数据复制，最后一定能计算出Merkle Hash：</p>
+<pre class="line-numbers language-ascii" data-language="ascii"><code class="language-ascii">                  ┌─────────┐
+                  │ merkle  │
+                  └─────────┘
+                       ▲
+           ┌───────────┴───────────┐
+           │                       │
+         ┌───┐                   ┌───┐
+         │c1 │                   │c2 │
+         └───┘                   └───┘
+           ▲                       ▲
+     ┌─────┴─────┐           ┌─────┴─────┐
+     │           │           │           │
+   ┌───┐       ┌───┐       ┌───┐       ┌ ─ ┐
+   │b1 │       │b2 │       │b3 │        b3
+   └───┘       └───┘       └───┘       └ ─ ┘
+     ▲           ▲           ▲
+  ┌──┴──┐     ┌──┴──┐     ┌──┴──┐
+  │     │     │     │     │     │
+┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌ ─ ┐
+│a1 │ │a2 │ │a3 │ │a4 │ │a5 │  a5
+└───┘ └───┘ └───┘ └───┘ └───┘ └ ─ ┘<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>从Merkle Hash的计算方法可以得出结论：修改任意一个交易哪怕一个字节，或者交换两个交易的顺序，都会导致Merkle Hash验证失败，也就会导致这个区块本身是无效的，所以，Merkle Hash记录在区块头部，它的作用就是保证交易记录永远无法修改。</strong></p>
+<h3 id="block-hash"><a class="markdownIt-Anchor" href="#block-hash"></a> Block Hash</h3>
+<p>区块本身用Block Hash——也就是区块哈希来标识。但是，一个区块自己的区块哈希并没有记录在区块头部，而是通过计算区块头部的哈希得到的：</p>
+<p><img src="/images/Block_Hash0.png" alt="Block_Hash0" / srcset="/images/LoadingImage.gif" data-src="/images/Block_Hash0.png" class="lozad post-image"></p>
+<p>区块头部的Prev Hash记录了上一个区块的Block Hash，这样，可以通过Prev Hash追踪到上一个区块。</p>
+<p>由于下一个区块的Prev Hash又会指向当前区块，这样，每个区块的Prev Hash都指向自己的上一个区块，这些区块串起来就形成了区块链。</p>
+<p>区块链的第一个区块（又称创世区块）并没有上一个区块，因此，它的Prev Hash被设置为<code>00000000...000</code>。</p>
+<p>如果一个恶意的攻击者修改了一个区块中的某个交易，那么Merkle Hash验证就不会通过。所以，他只能重新计算Merkle Hash，然后把区块头的Merkle Hash也修改了。这时，我们就会发现，这个区块本身的Block Hash就变了，所以，下一个区块指向它的链接就断掉了。</p>
+<p><img src="/images/Block_Hash1.jpg" alt="Block_Hash1" / srcset="/images/LoadingImage.gif" data-src="/images/Block_Hash1.jpg" class="lozad post-image"></p>
+<p>由于比特币区块的哈希必须满足一个难度值，因此，攻击者必须先重新计算这个区块的Block Hash，然后，再把后续所有区块全部重新计算并且伪造出来，才能够修改整个区块链。</p>
+<p>在后面的挖矿中，我们会看到，修改一个区块的成本就已经非常非常高了，要修改后续所有区块，这个攻击者必须掌握全网51%以上的算力才行，所以，修改区块链的难度是非常非常大的，并且，由于正常的区块链在不断增长，同样一个区块，修改它的难度会随着时间的推移而不断增加。</p>
+<blockquote>
+<p>0x1 区块链原理总结：</p>
+<p>区块链依靠安全的哈希算法保证所有区块数据不可更改；</p>
+<p>交易数据依靠Merkle Hash确保无法修改，整个区块依靠Block Hash确保区块无法修改；</p>
+<p>保证修改区块链的难度非常巨大的机制：工作量证明机制（PoW-Proof of Work 即挖矿）在后面章节介绍</p>
+</blockquote>
+<h1 id="0x2-p2p交易原理"><a class="markdownIt-Anchor" href="#0x2-p2p交易原理"></a> 0x2 P2P交易原理</h1>
+<p>比特币的交易是一种无需信任中介参与的P2P（Peer-to-peer）交易。</p>
+<p>传统的电子交易，交易双方必须通过银行这样的信任机构作为中介，这样可以保证交易的安全性，因为银行记录了交易双方的账户资金，能保证在一笔交易中，要么保证成功，要么交易无效，不存在一方到账而另一方没有付款的情况。但是在比特币这种去中心化的P2P网络中，并没有一个类似银行这样的信任机构存在，要想在两个节点之间达成交易，就必须实现一种在<strong>零信任的情况下安全交易的机制</strong>。</p>
+<p>一种创建交易的方法是：小明声称他给了小红一万块钱，只要能验证这个声明确实是小明作出的，并且小明真的有1万块钱，那么这笔交易就被认为是有效的：</p>
+<p><img src="/images/jiaoyijizhi.png" alt="jiaoyijizhi" / srcset="/images/LoadingImage.gif" data-src="/images/jiaoyijizhi.png" class="lozad post-image"></p>
+<h2 id="数字签名"><a class="markdownIt-Anchor" href="#数字签名"></a> 数字签名</h2>
+<p>如何验证这个声明确实是小明作出的呢？数字签名就可以验证这个声明是否是小明做的，并且，一旦验证通过，小明是无法抵赖的。在比特币交易中，付款方就是通过数字签名来证明自己拥有某一笔比特币，并且，要把这笔比特币转移给指定的收款方。使用签名是为了验证某个声明确实是由某个人做出的。例如，在付款合同中签名，可以通过验证笔迹的方式核对身份：</p>
+<p><img src="/images/shuziqianming0.png" alt="shuziqianming0" / srcset="/images/LoadingImage.gif" data-src="/images/shuziqianming0.png" class="lozad post-image"></p>
+<p>而在计算机中，用密码学理论设计的数字签名算法比验证笔迹更加可信。使用数字签名时，每个人都可以自己生成一个秘钥对，这个秘钥对包含一个私钥和一个公钥：私钥被称为Secret Key或者Private Key，私钥必须严格保密，不能泄漏给其他人；公钥被称为Public Key，可以公开给任何人。这种使用一对公私密钥进行加密解密的方法就是非对称加密，早已经普遍应用于现实世界中，如果具备非对称加密的基础知识理解后面的内容会相当容易，推荐非对称加密算法<a target="_blank" rel="noopener" href="https://www.ruanyifeng.com/blog/2013/06/rsa_algorithm_part_one.html">RSA原理一</a>、<a target="_blank" rel="noopener" href="https://www.ruanyifeng.com/blog/2013/07/rsa_algorithm_part_two.html">RSA原理二</a>。</p>
+<p>当私钥持有人，例如，小明希望对某个消息签名的时候，他可以用自己的私钥对消息进行签名，然后，把消息、签名和自己的公钥发送出去：</p>
+<p><img src="/images/shuziqianming1.png" alt="shuziqianming1" / srcset="/images/LoadingImage.gif" data-src="/images/shuziqianming1.png" class="lozad post-image"></p>
+<p>其他任何人都可以通过小明的公钥对这个签名进行验证，如果验证通过，可以肯定，该消息是小明发出的。这里的签名和验证就是指非对称加密中的加密和解密过程。</p>
+<blockquote>
+<p>这里要解释一下非对称加密应用的时候公钥和私钥到底谁负责加密谁负责解密？</p>
+<p>第一种用法：公钥加密，私钥解密。——用于加解密<br />
+第二种用法：私钥签名，公钥验签。——用于签名</p>
+<p>有点混乱，不要去硬记，总结一下:<br />
+你只要想：<br />
+既然是加密，那肯定是不希望别人知道我的消息，所以只有我才能解密，所以可得出公钥负责加密，私钥负责解密；<br />
+既然是签名，那肯定是不希望有人冒充我发消息，只有我才能发布这个签名，所以可得出私钥负责签名，公钥负责验证。</p>
+<p>ref:<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_23167527/article/details/80614454">https://blog.csdn.net/qq_23167527/article/details/80614454</a></p>
+</blockquote>
+<p>数字签名算法在电子商务、在线支付这些领域有非常重要的作用：</p>
+<p>首先，签名不可伪造，因为私钥只有签名人自己知道，所以其他人无法伪造签名。</p>
+<p>其次，消息不可篡改，如果原始消息被人篡改了，那么对签名进行验证将失败。</p>
+<p>最后，签名不可抵赖。如果对签名进行验证通过了，那么，该消息肯定是由签名人自己发出的，他不能抵赖自己曾经发过这一条消息。</p>
+<blockquote>
+<p>简单地说来，数字签名的三个作用：防伪造，防篡改，防抵赖。</p>
+</blockquote>
+<h3 id="签名和验证过程"><a class="markdownIt-Anchor" href="#签名和验证过程"></a> 签名和验证过程</h3>
+<p>上面我们说了在p2p网络中数字签名的大致定义、作用和效果，<strong>我们来稍微具体讲一下区块链数字签名的签名过程和验证过程：</strong></p>
+<p><strong>签名</strong></p>
+<p><strong>对消息进行签名，实际上是对消息的哈希进行签名</strong>，这样可以使任意长度的消息在签名前先转换为固定长度的哈希数据。对哈希进行签名相当于保证了原始消息的不可伪造性。</p>
+<p>我们来看看使用ECDSA如何通过私钥对消息进行签名。关键代码是通过<code>sign()</code>方法签名，并获取一个<code>ECSignature</code>对象表示签名：</p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">const</span> bitcoin <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'bitcoinjs-lib'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">let</span>
+    message <span class="token operator">=</span> <span class="token string">'a secret message!'</span><span class="token punctuation">,</span> <span class="token comment">// 原始消息</span>
+    hash <span class="token operator">=</span> bitcoin<span class="token punctuation">.</span>crypto<span class="token punctuation">.</span><span class="token function">sha256</span><span class="token punctuation">(</span>message<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// 消息哈希</span>
+    wif <span class="token operator">=</span> <span class="token string">'KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617'</span><span class="token punctuation">,</span>
+    keyPair <span class="token operator">=</span> bitcoin<span class="token punctuation">.</span>ECPair<span class="token punctuation">.</span><span class="token function">fromWIF</span><span class="token punctuation">(</span>wif<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// 用私钥签名:</span>
+<span class="token keyword">let</span> signature <span class="token operator">=</span> keyPair<span class="token punctuation">.</span><span class="token function">sign</span><span class="token punctuation">(</span>hash<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toDER</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// ECSignature对象</span>
+<span class="token comment">// 打印签名:</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'signature = '</span> <span class="token operator">+</span> signature<span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token string">'hex'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// 打印公钥以便验证签名:</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'public key = '</span> <span class="token operator">+</span> keyPair<span class="token punctuation">.</span><span class="token function">getPublicKeyBuffer</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token string">'hex'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>signature = 304402205d0b6e817e01e22ba6ab19c0ab9cdbb2dbcd0612c5b8f990431dd0634f5a96530220188b989017ee7e830de581d4e0d46aa36bbe79537774d56cbe41993b3fd66686<br />
+public key = 02d0de0aaeaefad02b8bdc8a01a1b8b11c696bd3d66a2c5f10780d95b7df42645c</p>
+</blockquote>
+<p><code>ECSignature</code>对象可序列化为十六进制表示的字符串。</p>
+<p><strong>验证</strong></p>
+<p>在获得签名、原始消息和公钥的基础上，可以对签名进行验证。验证签名需要先构造一个<strong>不含</strong>私钥的<code>ECPair</code>，然后调用<code>verify()</code>方法验证签名：</p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">const</span> bitcoin <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'bitcoinjs-lib'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">let</span> signAsStr <span class="token operator">=</span> <span class="token string">'304402205d0b6e817e01e22ba6ab19c0'</span>
+              <span class="token operator">+</span> <span class="token string">'ab9cdbb2dbcd0612c5b8f990431dd063'</span>
+              <span class="token operator">+</span> <span class="token string">'4f5a96530220188b989017ee7e830de5'</span>
+              <span class="token operator">+</span> <span class="token string">'81d4e0d46aa36bbe79537774d56cbe41'</span>
+              <span class="token operator">+</span> <span class="token string">'993b3fd66686'</span>
+
+<span class="token keyword">let</span>
+    signAsBuffer <span class="token operator">=</span> Buffer<span class="token punctuation">.</span><span class="token function">from</span><span class="token punctuation">(</span>signAsStr<span class="token punctuation">,</span> <span class="token string">'hex'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    signature <span class="token operator">=</span> bitcoin<span class="token punctuation">.</span>ECSignature<span class="token punctuation">.</span><span class="token function">fromDER</span><span class="token punctuation">(</span>signAsBuffer<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// ECSignature对象</span>
+    message <span class="token operator">=</span> <span class="token string">'a secret message!'</span><span class="token punctuation">,</span> <span class="token comment">// 原始消息</span>
+    hash <span class="token operator">=</span> bitcoin<span class="token punctuation">.</span>crypto<span class="token punctuation">.</span><span class="token function">sha256</span><span class="token punctuation">(</span>message<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// 消息哈希</span>
+    pubKeyAsStr <span class="token operator">=</span> <span class="token string">'02d0de0aaeaefad02b8bdc8a01a1b8b11c696bd3d66a2c5f10780d95b7df42645c'</span><span class="token punctuation">,</span>
+    pubKeyAsBuffer <span class="token operator">=</span> Buffer<span class="token punctuation">.</span><span class="token function">from</span><span class="token punctuation">(</span>pubKeyAsStr<span class="token punctuation">,</span> <span class="token string">'hex'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    pubKeyOnly <span class="token operator">=</span> bitcoin<span class="token punctuation">.</span>ECPair<span class="token punctuation">.</span><span class="token function">fromPublicKeyBuffer</span><span class="token punctuation">(</span>pubKeyAsBuffer<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 从public key构造ECPair</span>
+
+<span class="token comment">// 验证签名:</span>
+<span class="token keyword">let</span> result <span class="token operator">=</span> pubKeyOnly<span class="token punctuation">.</span><span class="token function">verify</span><span class="token punctuation">(</span>hash<span class="token punctuation">,</span> signature<span class="token punctuation">)</span><span class="token punctuation">;</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Verify result: '</span> <span class="token operator">+</span> result<span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>Verify result: true</p>
+</blockquote>
+<p>注意上述代码只引入了公钥，并没有引入私钥。</p>
+<p>修改<code>signAsStr</code>、<code>message</code>和<code>pubKeyAsStr</code>的任意一个变量的任意一个字节，再尝试验证签名，则不能通过。</p>
+<p>数字签名的验证实际上就是非对称加密中的解密过程，如果交易创造者使用私钥加密交易数据的hash得到的签名值（密文）能顺利被网络中其他人手中对应该私钥的公钥解密，即解密值==hash(交易数据)，就算是签名验证成功。数字签名算法，私钥和公钥的生成方式以及公钥和地址的对应关系我们在下一节数字签名算法中叙述。</p>
+<p>比特币对交易数据进行签名和对消息进行签名的原理是一样的，只是格式更加复杂。通过私钥可以对消息进行签名，签名可以保证消息防伪造，防篡改，防抵赖。对交易签名确保了只有持有私钥的人才能够花费对应地址的资金。</p>
+<h3 id="数字签名算法"><a class="markdownIt-Anchor" href="#数字签名算法"></a> 数字签名算法</h3>
+<p>这一小节讲介绍比特币采用的：</p>
+<ul>
+<li>签名算法</li>
+<li>私钥和公钥的生成方式</li>
+<li>公钥和地址的对应关系。</li>
+</ul>
+<h4 id="签名算法"><a class="markdownIt-Anchor" href="#签名算法"></a> 签名算法</h4>
+<p>常用的数字签名算法有：RSA算法，DSA算法和ECDSA算法。比特币采用的签名算法是椭圆曲线签名算法：ECDSA，使用的椭圆曲线是一个已经定义好的标准曲线secp256k1：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>y</mi><mn>2</mn></msup><mo>=</mo><msup><mi>x</mi><mn>3</mn></msup><mo>+</mo><mn>7</mn></mrow><annotation encoding="application/x-tex">y^2 = x^3 + 7
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0585479999999998em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8641079999999999em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.9474379999999999em;vertical-align:-0.08333em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8641079999999999em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">7</span></span></span></span></span></p>
+<p>这条曲线的图像长这样：</p>
+<p><img src="/images/shuziqianming2.png" alt="secp256k1" / srcset="/images/LoadingImage.gif" data-src="/images/shuziqianming2.png" class="lozad post-image"></p>
+<p>比特币采用的ECDSA签名算法需要一个私钥和公钥组成的秘钥对：私钥本质上就是一个<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>1</mn><mi mathvariant="normal">～</mi><msup><mn>2</mn><mn>256</mn></msup></mrow><annotation encoding="application/x-tex">1～2^{256}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord cjk_fallback">～</span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span><span class="mord mtight">5</span><span class="mord mtight">6</span></span></span></span></span></span></span></span></span></span></span></span>的随机数，公钥是由私钥根据ECDSA算法推算出来的，通过私钥可以很容易推算出公钥，所以不必保存公钥，但是，通过公钥无法反推私钥，只能暴力破解。</p>
+<h4 id="私钥"><a class="markdownIt-Anchor" href="#私钥"></a> 私钥</h4>
+<p>比特币的私钥是一个随机的非常大的<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mn>2</mn><mn>256</mn></msup></mrow><annotation encoding="application/x-tex">2^{256}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span><span class="mord mtight">5</span><span class="mord mtight">6</span></span></span></span></span></span></span></span></span></span></span></span>位整数。它的上限，确切地说，比<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mn>2</mn><mn>256</mn></msup></mrow><annotation encoding="application/x-tex">2^{256}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span><span class="mord mtight">5</span><span class="mord mtight">6</span></span></span></span></span></span></span></span></span></span></span></span>要稍微小一点：</p>
+<blockquote>
+<p>0xFFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFE BAAE DCE6 AF48 A03B BFD2 5E8C D036 4140</p>
+</blockquote>
+<p>而比特币的公钥是根据私钥推算出的两个256位整数。</p>
+<p>如果用银行卡作比较的话，比特币的公钥相当于银行卡卡号，它是两个256位整数：</p>
+<p><img src="/images/bitconcard.png" alt="bitconcard" / srcset="/images/LoadingImage.gif" data-src="/images/bitconcard.png" class="lozad post-image"></p>
+<p>比特币的私钥相当于银行卡密码，它是一个256位整数：</p>
+<blockquote>
+<p>18E14A7B6A307F426A94F8114701E7C8E774E7F9A47E2C2035DB29A206321725</p>
+</blockquote>
+<p>银行卡的卡号由银行指定，银行卡的密码可以由用户随时修改。而比特币“卡”和银行卡的不同点在于：密码（实际上是私钥）由用户先确定下来，然后计算出“卡号”（实际上是公钥），即卡号是由密码通过ECDSA算法推导出来的，不能更换密码。</p>
+<p><strong>由于比特币账本是全网公开的，所以，任何人都可以根据公钥查询余额，但是，不知道持卡人是谁。这就是比特币的匿名特性。</strong></p>
+<blockquote>
+<p>如果丢失了私钥，就永远无法花费对应公钥的比特币！</p>
+</blockquote>
+<p>在比特币的P2P网络中不存在中央节点，私钥只有持有人自己知道，因此，丢失了私钥，对应的比特币就永远无法花费。如果私钥被盗，黑客就可以花费对应公钥的比特币，并且这是无法追回的。</p>
+<p>我们以JavaScript为例，演示如何创建比特币私钥。在JavaScript中，内置的Number类型使用56位表示整数和浮点数，最大可表示的整数最大只有<code>9007199254740991</code>。其他语言如Java一般也仅提供64位的整数类型。要表示一个256位的整数，只能使用数组来模拟。<a target="_blank" rel="noopener" href="https://github.com/bitcoinjs">bitcoinjs</a>使用<a target="_blank" rel="noopener" href="https://github.com/cryptocoinjs/bigi">bigi</a>这个库来表示任意大小的整数。</p>
+<p>下面的代码演示了使用一个随机生成的数字，通过<code>ECPair</code>创建一个新的私钥后，表示私钥的整数就是字段<code>d</code>，我们把它打印出来：</p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">const</span> bitcoin <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'bitcoinjs-lib'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">let</span> keyPair <span class="token operator">=</span> bitcoin<span class="token punctuation">.</span>ECPair<span class="token punctuation">.</span><span class="token function">makeRandom</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// 打印私钥:</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'private key = '</span> <span class="token operator">+</span> keyPair<span class="token punctuation">.</span>d<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// 以十六进制打印:</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'hex = '</span> <span class="token operator">+</span> keyPair<span class="token punctuation">.</span>d<span class="token punctuation">.</span><span class="token function">toHex</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// 补齐32位:</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'hex = '</span> <span class="token operator">+</span> keyPair<span class="token punctuation">.</span>d<span class="token punctuation">.</span><span class="token function">toHex</span><span class="token punctuation">(</span><span class="token number">32</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>private key = 81014991225650123107594446292560463009575145732738301659501234189040494639354<br />
+hex = b31cdc2d854be1d2047b0290d7b3039977bd29c036a62b63b2550c87d28cf8fa<br />
+hex = b31cdc2d854be1d2047b0290d7b3039977bd29c036a62b63b2550c87d28cf8fa</p>
+</blockquote>
+<p>想要记住一个256位的整数是非常困难的，并且，如果记错了其中某些位，这个记错的整数仍然是一个<em>有效的私钥</em>，因此，比特币有一种对私钥进行编码的方式，这种编码方式就是带校验的<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/Base58">Base58编码</a>。</p>
+<p>对私钥进行Base58编码有两种方式，一种是非压缩的私钥格式，一种是压缩的私钥格式，它们分别对应非压缩的公钥格式和压缩的公钥格式。</p>
+<p>具体地来说，非压缩的私钥格式是指在32字节的私钥前添加一个<code>0x80</code>字节前缀，得到33字节的数据，对其计算4字节的校验码，附加到最后，一共得到37字节的数据：</p>
+<pre class="line-numbers language-ascii" data-language="ascii"><code class="language-ascii">0x80           256bit             check
+┌─┬──────────────────────────────┬─────┐
+│1│              32              │  4  │
+└─┴──────────────────────────────┴─────┘<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>计算校验码非常简单，对其进行两次SHA256，取开头4字节作为校验码。</p>
+<p>对这37字节的数据进行Base58编码，得到总是以<code>5</code>开头的字符串编码，这个字符串就是我们需要非常小心地保存的私钥地址，又称为钱包导入格式：WIF（Wallet Import Format）。可以使用<a target="_blank" rel="noopener" href="https://github.com/bitcoinjs/wif">wif</a>这个库实现WIF编码：</p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">const</span> wif <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'wif'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// 十六进制表示的私钥:</span>
+<span class="token keyword">let</span> privateKey <span class="token operator">=</span> <span class="token string">'0c28fca386c7a227600b2fe50b7cae11ec86d3bf1fbe471be89827e19d72aa1d'</span><span class="token punctuation">;</span>
+<span class="token comment">// 对私钥编码:</span>
+<span class="token keyword">let</span> encoded <span class="token operator">=</span> wif<span class="token punctuation">.</span><span class="token function">encode</span><span class="token punctuation">(</span>
+        <span class="token number">0x80</span><span class="token punctuation">,</span> <span class="token comment">// 0x80前缀</span>
+        Buffer<span class="token punctuation">.</span><span class="token function">from</span><span class="token punctuation">(</span>privateKey<span class="token punctuation">,</span> <span class="token string">'hex'</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// 转换为字节</span>
+        <span class="token boolean">false</span> <span class="token comment">// 非压缩格式</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>encoded<span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ</p>
+</blockquote>
+<p>（如果你去验证了这个算法发现5HueC…解不出来0c28…，或者800c28…aa1d507a5b8d编码结果不是5HueC…，是因为你用的base58工具把你拼接的38字节数据看作字符串解析的，而实际上应该是看作16进制数值解析。私钥地址总是以5开头就是因为十六进制私钥以0x80开头base58结果总是5）</p>
+<p>另一种压缩格式的私钥编码方式，与非压缩格式不同的是，压缩的私钥格式会在32字节的私钥前后各添加一个<code>0x80</code>字节前缀和<code>0x01</code>字节后缀，共34字节的数据，对其计算4字节的校验码，附加到最后，一共得到38字节的数据：</p>
+<pre class="line-numbers language-ascii" data-language="ascii"><code class="language-ascii">0x80           256bit           0x01 check
+┌─┬──────────────────────────────┬─┬─────┐
+│1│              32              │1│  4  │
+└─┴──────────────────────────────┴─┴─────┘<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>对这38字节的数据进行Base58编码，得到总是以<code>K</code>或<code>L</code>开头的字符串编码。通过代码实现压缩格式的WIF编码如下：</p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">const</span> wif <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'wif'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// 十六进制表示的私钥:</span>
+<span class="token keyword">let</span> privateKey <span class="token operator">=</span> <span class="token string">'0c28fca386c7a227600b2fe50b7cae11ec86d3bf1fbe471be89827e19d72aa1d'</span><span class="token punctuation">;</span>
+<span class="token comment">// 对私钥编码:</span>
+<span class="token keyword">let</span> encoded <span class="token operator">=</span> wif<span class="token punctuation">.</span><span class="token function">encode</span><span class="token punctuation">(</span>
+        <span class="token number">0x80</span><span class="token punctuation">,</span> <span class="token comment">// 0x80前缀</span>
+        Buffer<span class="token punctuation">.</span><span class="token function">from</span><span class="token punctuation">(</span>privateKey<span class="token punctuation">,</span> <span class="token string">'hex'</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// 转换为字节</span>
+        <span class="token boolean">true</span> <span class="token comment">// 压缩格式</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>encoded<span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617</p>
+</blockquote>
+<p>目前，非压缩的格式几乎已经不使用了。bitcoinjs提供的<code>ECPair</code>总是使用压缩格式的私钥表示：</p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">const</span>
+    bitcoin <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'bitcoinjs-lib'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    BigInteger <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'bigi'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">let</span>
+    priv <span class="token operator">=</span> <span class="token string">'0c28fca386c7a227600b2fe50b7cae11ec86d3bf1fbe471be89827e19d72aa1d'</span><span class="token punctuation">,</span>
+    d <span class="token operator">=</span> BigInteger<span class="token punctuation">.</span><span class="token function">fromBuffer</span><span class="token punctuation">(</span>Buffer<span class="token punctuation">.</span><span class="token function">from</span><span class="token punctuation">(</span>priv<span class="token punctuation">,</span> <span class="token string">'hex'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    keyPair <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">bitcoin<span class="token punctuation">.</span>ECPair</span><span class="token punctuation">(</span>d<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// 打印WIF格式的私钥:</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>keyPair<span class="token punctuation">.</span><span class="token function">toWIF</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617</p>
+</blockquote>
+<blockquote>
+<p>私钥小结：</p>
+<p>比特币的私钥本质上就是一个256位整数，对私钥进行WIF格式编码可以得到一个带校验的字符串。</p>
+<p>使用非压缩格式的WIF是以<code>5</code>开头的字符串，使用压缩格式的WIF是以<code>K</code>或<code>L</code>开头的字符串。</p>
+</blockquote>
+<h4 id="公钥"><a class="markdownIt-Anchor" href="#公钥"></a> 公钥</h4>
+<p>比特币的公钥是根据私钥计算出来的。</p>
+<p>私钥本质上是一个256位整数，记作<code>k</code>。根据比特币采用的ECDSA算法，可以推导出两个256位整数，记作<code>(x, y)</code>，<strong>这两个256位整数即为非压缩格式的公钥</strong>。</p>
+<p>由于ECC曲线的特点，根据非压缩格式的公钥<code>(x, y)</code>的<code>x</code>实际上也可推算出<code>y</code>，但需要知道<code>y</code>的奇偶性，因此，可以根据<code>(x, y)</code>推算出<code>x'</code>，作为压缩格式的公钥。</p>
+<p>压缩格式的公钥实际上是，根据<code>y</code>的奇偶性在<code>x</code>前面添加<code>02</code>或<code>03</code>前缀，<code>y</code>为偶数时添加<code>02</code>，否则添加<code>03</code>，这样，得到一个1+32=33字节的压缩格式的公钥数据，记作<code>x'</code>，<strong>这个284位的整数作为压缩格式的公钥</strong>。</p>
+<p>注意压缩格式的公钥和非压缩格式的公钥是可以互相转换的，但均不可反向推导出私钥。</p>
+<p>非压缩格式的公钥目前已很少使用，原因是非压缩格式的公钥签名脚本数据会更长。</p>
+<p>我们来看看如何根据私钥推算出公钥：</p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">const</span> bitcoin <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'bitcoinjs-lib'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">let</span>
+    wif <span class="token operator">=</span> <span class="token string">'KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617'</span><span class="token punctuation">,</span>
+    ecPair <span class="token operator">=</span> bitcoin<span class="token punctuation">.</span>ECPair<span class="token punctuation">.</span><span class="token function">fromWIF</span><span class="token punctuation">(</span>wif<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 导入私钥</span>
+<span class="token comment">// 计算公钥:</span>
+<span class="token keyword">let</span> pubKey <span class="token operator">=</span> ecPair<span class="token punctuation">.</span><span class="token function">getPublicKeyBuffer</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 返回Buffer对象</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>pubKey<span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token string">'hex'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 02或03开头的压缩公钥</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>02d0de0aaeaefad02b8bdc8a01a1b8b11c696bd3d66a2c5f10780d95b7df42645c</p>
+</blockquote>
+<p>构造出<code>ECPair</code>对象后，即可通过<code>getPublicKeyBuffer()</code>以<code>Buffer</code>对象返回公钥数据。</p>
+<h4 id="地址"><a class="markdownIt-Anchor" href="#地址"></a> 地址</h4>
+<p>要特别注意，<strong>比特币的地址并不是公钥，而是公钥的哈希</strong>，即从公钥能推导出地址，但从地址不能反推公钥，因为哈希函数是单向函数。</p>
+<p>以压缩格式的公钥为例，从公钥计算地址的方法是，首先对1+32=33字节的公钥数据进行Hash160（即先计算SHA256，再计算RipeMD160），得到20字节的哈希。然后，添加<code>0x00</code>前缀，得到1+20=21字节数据，再计算4字节校验码，拼在一起，总计得到1+20+4=25字节数据：</p>
+<pre class="line-numbers language-ascii" data-language="ascii"><code class="language-ascii">0x00      hash160         check
+┌─┬──────────────────────┬─────┐
+│1│          20          │  4  │
+└─┴──────────────────────┴─────┘<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>对上述25字节数据进行Base58编码，得到总是以<code>1</code>开头的字符串，该字符串即为比特币地址。使用JavaScript实现公钥到地址的编码如下：</p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">const</span> bitcoin <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'bitcoinjs-lib'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">let</span>
+    publicKey <span class="token operator">=</span> <span class="token string">'02d0de0aaeaefad02b8bdc8a01a1b8b11c696bd3d66a2c5f10780d95b7df42645c'</span><span class="token punctuation">,</span>
+    ecPair <span class="token operator">=</span> bitcoin<span class="token punctuation">.</span>ECPair<span class="token punctuation">.</span><span class="token function">fromPublicKeyBuffer</span><span class="token punctuation">(</span>Buffer<span class="token punctuation">.</span><span class="token function">from</span><span class="token punctuation">(</span>publicKey<span class="token punctuation">,</span> <span class="token string">'hex'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 导入公钥</span>
+<span class="token comment">// 计算地址:</span>
+<span class="token keyword">let</span> address <span class="token operator">=</span> ecPair<span class="token punctuation">.</span><span class="token function">getAddress</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>address<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 1开头的地址</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>1LoVGDgRs9hTfTNJNuXKSpywcbdvwRXpmK</p>
+</blockquote>
+<p>计算地址的时候，不必知道私钥，可以直接从公钥计算地址，即通过<code>ECPair.fromPublicKeyBuffer</code>构造一个不带私钥的<code>ECPair</code>即可计算出地址。</p>
+<p>要注意，对非压缩格式的公钥和压缩格式的公钥进行哈希编码得到的地址，都是以<code>1</code>开头的，因此，从地址本身并无法区分出使用的是压缩格式还是非压缩格式的公钥。</p>
+<p>以<code>1</code>开头的字符串地址即为比特币收款地址，可以安全地公开给任何人。</p>
+<p>仅提供地址并不能让其他人得知公钥。通常来说，公开公钥并没有安全风险。实际上，如果某个地址上有对应的资金，要花费该资金，就需要提供公钥。如果某个地址的资金被花费过至少一次，该地址的公钥实际上就公开了。</p>
+<p>私钥、公钥以及地址的推导关系如下：</p>
+<pre class="line-numbers language-ascii" data-language="ascii"><code class="language-ascii">┌───────────┐      ┌───────────┐
+│Private Key│─────▶│Public Key │
+└───────────┘      └───────────┘
+      ▲                  │
+      │                  │
+      ▼                  ▼
+┌───────────┐      ┌───────────┐
+│    WIF    │      │  Address  │
+└───────────┘      └───────────┘<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>对数字签名这一节做一个总结：</p>
+<p>1.数字签名应用于p2p交易过程，目的是对交易发起者（付款人）进行验证。数字签名的三个作用：防伪造，防篡改，防抵赖。</p>
+<p>2.比特币使用的数字签名算法是ECDSA</p>
+<p>3.比特币私钥本质上是一个256位随机整数，对私钥进行WIF格式编码可以得到一个带校验的字符串。私钥由持有者自行保管，一旦丢失不可找回，钱包再也无法找回</p>
+<p>4.比特币公钥根据私钥计算的来，算法是ECDSA（即非对称加密私钥计算公钥），本质上是两个256位整数，公钥有压缩和非压缩两种表示方法，可互相转换</p>
+<p>5.比特币的地址是公钥哈希的编码，并不是公钥本身，通过公钥可推导出地址；通过地址不可推导出公钥，通过公钥不可推导出私钥。</p>
+</blockquote>
+<h2 id="比特币钱包"><a class="markdownIt-Anchor" href="#比特币钱包"></a> 比特币钱包</h2>
+<p>比特币钱包实际上就是帮助用户管理私钥的软件。因为比特币的钱包是给普通用户使用的，它有几种分类：</p>
+<ul>
+<li>本地钱包：是把私钥保存在本地计算机硬盘上的钱包软件，如<a target="_blank" rel="noopener" href="https://electrum.org/">Electrum</a>；</li>
+<li>手机钱包：和本地钱包类似，但可以直接在手机上运行，如<a target="_blank" rel="noopener" href="https://bitpay.com/">Bitpay</a>；</li>
+<li>在线钱包：是把私钥委托给第三方在线服务商保存；</li>
+<li>纸钱包：是指把私钥打印出来保存在纸上；</li>
+<li>脑钱包：是指把私钥记在自己脑袋里。</li>
+</ul>
+<p>对大多数普通用户来说，想要记住私钥非常困难，所以<em>强烈不建议使用脑钱包</em>。</p>
+<p>作为用户，可以生成任意数量的私钥-公钥对，公钥是接收别人转账的地址，而私钥是花费比特币的唯一手段，钱包程序可以帮助用户管理私钥-公钥对。</p>
+<h2 id="交易"><a class="markdownIt-Anchor" href="#交易"></a> 交易</h2>
+<p>我们再来看记录在区块链上的交易。每个区块都记录了至少一笔交易，一笔交易就是把一定金额的比特币从一个输入转移到一个输出：</p>
+<p><img src="/images/deal1.png" alt="deal1" / srcset="/images/LoadingImage.gif" data-src="/images/deal1.png" class="lozad post-image"></p>
+<p>例如，小明把两个比特币转移给小红，这笔交易的输入是小明，输出就是小红。<strong>实际记录的是双方的公钥地址</strong>。</p>
+<p>如果小明有50个比特币，他要转给小红两个比特币，那么剩下的48个比特币应该记录在哪？<strong>比特币协议规定一个输出必须一次性花完</strong>，所以，小明给小红的两个比特币的交易必须表示成：</p>
+<p><img src="/images/deal2.png" alt="deal2" / srcset="/images/LoadingImage.gif" data-src="/images/deal2.png" class="lozad post-image"></p>
+<p>小明给小红2个比特币，同时小明又给自己48个比特币，这48个比特币就是找零。所以，一个交易中，一个输入可以对应多个输出。</p>
+<p>当小红有两笔收入时，一笔2.0，一笔1.5，她想给小白转3.5比特币时，就不能单用一笔输出，她必须把两笔钱合起来再花掉，这种情况就是一个交易对应多个输入和1个输出：</p>
+<p><img src="/images/deal3.png" alt="deal3" / srcset="/images/LoadingImage.gif" data-src="/images/deal3.png" class="lozad post-image"></p>
+<p>果存在找零，这笔交易就既包含多个输入也包含多个输出：</p>
+<p><img src="/images/deal4.png" alt="deal4" / srcset="/images/LoadingImage.gif" data-src="/images/deal4.png" class="lozad post-image"></p>
+<p><strong>在实际的交易中，输入比输出要稍微大一点点，这个差额就是隐含的交易费用，交易费用会算入当前区块的矿工收入中作为矿工奖励的一部分</strong>：</p>
+<p><img src="/images/deal5.png" alt="deal5" / srcset="/images/LoadingImage.gif" data-src="/images/deal5.png" class="lozad post-image"></p>
+<p>计算出的交易费用：</p>
+<pre class="line-numbers language-none"><code class="language-none">交易费用 &#x3D; 输入 - 输出 &#x3D; (2.0 + 1.5) - (2.99 + 0.49) &#x3D; 3.5 - 3.48 &#x3D; 0.02<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>比特币实际的交易记录是由一系列交易构成，每一个交易都包含一个或多个输入，以及一个或多个输出。未花费的输出被称为UTXO（Unspent Transaction Ouptut）。</p>
+<p>当我们要简单验证某个交易的时候，例如，对于交易<code>f36abd</code>，它记录的输入是<code>3f96ab</code>，索引号是<code>1</code>（索引号从<code>0</code>开始，<code>0</code>表示第一个输出，<code>1</code>表示第二个输出，以此类推），我们就根据<code>3f96ab</code>找到前面已发生的交易，再根据索引号找到对应的输出是0.5个比特币，所以，交易<code>f36abd</code>的输入总计是0.5个比特币，输出分别是0.4个比特币和0.09个比特币，隐含的交易费用是0.01个比特币：</p>
+<p><img src="/images/deal6.png" alt="deal6" / srcset="/images/LoadingImage.gif" data-src="/images/deal6.png" class="lozad post-image"></p>
+<p>再来解释一下上图，防止大家看不懂。上图中每一行都是一次交易，一次交易中input 必须来自过去发生的交易的output （直到追溯到Coinbase交易，即挖矿者创建的铸币交易），UTXO 的值索引过去的某一笔交易中的某个输出地址和钱数，比如说，<code>f36abd</code>此次交易的input 是交易<code>3f96ab</code>中输出给<code>1mPvuPA</code>的0.5个比特币，此次交易输出给<code>16Gr9nB</code>和<code>1vg47TL</code>各0.4，0.09个比特币，总输出比输入少了0.01个比特币，这些钱就是交易费用，给矿工了。</p>
+<blockquote>
+<p>交易小结</p>
+<p>比特币使用数字签名保证零信任的可靠P2P交易：</p>
+<ul>
+<li>私钥是花费比特币的唯一手段；</li>
+<li>钱包软件是用来帮助用户管理私钥；</li>
+<li>所有交易被记录在区块链中，可以通过公钥查询所有交易信息。</li>
+</ul>
+</blockquote>
+<h1 id="0x3-挖矿原理"><a class="markdownIt-Anchor" href="#0x3-挖矿原理"></a> 0x3 挖矿原理</h1>
+<p>在比特币的P2P网络中，有一类节点，它们时刻不停地进行计算，试图把新的交易打包成新的区块并附加到区块链上，这类节点就是矿工。因为每打包一个新的区块，打包该区块的矿工就可以获得一笔比特币作为奖励。所以，<strong>打包新区块就被称为挖矿</strong>。</p>
+<p>比特币的挖矿原理就是一种工作量证明机制。工作量证明POW是英文Proof of Work的缩写。</p>
+<p>在讨论POW之前，我们先思考一个问题：在一个新区块中，凭什么是小明得到50个币的奖励，而不是小红或者小军？</p>
+<p><img src="/images/pow1.jpg" alt="pow1" / srcset="/images/LoadingImage.gif" data-src="/images/pow1.jpg" class="lozad post-image"></p>
+<p><strong>当小明成功地打包了一个区块后，除了用户的交易，小明会在第一笔交易记录里写上一笔“挖矿”奖励的交易</strong>，从而给自己的地址添加50个比特币。为什么比特币的P2P网络会承认小明打包的区块，并且认可小明得到的区块奖励呢？</p>
+<p>因为比特币的挖矿使用了工作量证明机制，小明的区块被认可，是因为他在打包区块的时候，做了一定的工作，而P2P网络的其他节点可以验证小明的工作量。</p>
+<h2 id="工作量证明"><a class="markdownIt-Anchor" href="#工作量证明"></a> 工作量证明</h2>
+<p>比特币的工作量证明需要归结为计算机计算，也就是数学问题。工作量证明问题转为如何构造一个数学问题来实现工作量证明。</p>
+<p>在比特币网络中，矿工的挖矿也是一种工作量证明，要让计算机实现工作量证明，必须找到一种工作量算法，让计算机无法在短时间内算出来。这种算法就是哈希算法。</p>
+<p>通过改变区块头部的一个<code>nonce</code>字段的值，计算机可以计算出不同的区块哈希值：</p>
+<p><img src="/images/pow5.png" alt="pow5" / srcset="/images/LoadingImage.gif" data-src="/images/pow5.png" class="lozad post-image"></p>
+<p>直到计算出某个特定的哈希值的时候，计算结束。<strong>这个哈希和其他的哈希相比，它的特点是前面有好几个0</strong>：</p>
+<pre class="line-numbers language-none"><code class="language-none">hash256(block data, nonce&#x3D;0) &#x3D; 291656f37cdcf493c4bb7b926e46fee5c14f9b76aff28f9d00f5cca0e54f376f
+hash256(block data, nonce&#x3D;1) &#x3D; f7b2c15c4de7f482edee9e8db7287a6c5def1c99354108ef33947f34d891ea8d
+hash256(block data, nonce&#x3D;2) &#x3D; b6eebc5faa4c44d9f5232631f39ddf4211443d819208da110229b644d2a99e12
+hash256(block data, nonce&#x3D;3) &#x3D; 00aeaaf01166a93a2217fe01021395b066dd3a81daffcd16626c308c644c5246
+hash256(block data, nonce&#x3D;4) &#x3D; 26d33671119c9180594a91a2f1f0eb08bdd0b595e3724050acb68703dc99f9b5
+hash256(block data, nonce&#x3D;5) &#x3D; 4e8a3dcab619a7ce5c68e8f4abdc49f98de1a71e58f0ce9a0d95e024cce7c81a
+hash256(block data, nonce&#x3D;6) &#x3D; 185f634d50b17eba93b260a911ba6dbe9427b72f74f8248774930c0d8588c193
+hash256(block data, nonce&#x3D;7) &#x3D; 09b19f3d32e3e5771bddc5f0e1ee3c1bac1ba4a85e7b2cc30833a120e41272ed
+...
+hash256(block data, nonce&#x3D;124709132) &#x3D; 00000000fba7277ef31c8ecd1f3fef071cf993485fe5eab08e4f7647f47be95c<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>比特币挖矿的工作量证明原理就是，不断尝试计算区块的哈希，直到计算出一个特定的哈希值，它比难度值要小</strong>。这里的小是说哈希值看作数值比目标小，举例来说如果目标的是前5位是零，那你找到的哈希值需要小于0x00000fffffff…这就是比特币挖矿的工作量证明方法。</p>
+<p>比特币使用的SHA-256算法可以看作对随机输入产生<strong>随机输出</strong>，这个随机很重要，就是说hash值的每一位都是随机的。例如，我们对字符串<code>Hello</code>再加上一个数字计算两次SHA-256，根据数字的不同，得到的哈希是完全无规律的256位随机数：</p>
+<pre class="line-numbers language-none"><code class="language-none">hash256(&quot;Hello?&quot;) &#x3D; ????????????????????????????????????????????????????????????????<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>大约计算16次，我们可以在得到的哈希中找到首位是<code>0</code>的哈希值，因为首位是0出现的概率是1/16：</p>
+<pre class="line-numbers language-none"><code class="language-none">hash256(&quot;Hello1&quot;) &#x3D; ffb7a43d629d363026b3309586233ab7ffc1054c4f56f43a92f0054870e7ddc9
+hash256(&quot;Hello2&quot;) &#x3D; e085bf19353eb3bd1021661a17cee97181b0b369d8e16c10ffb7b01287a77173
+...
+hash256(&quot;Hello15&quot;) &#x3D; 0442e1c38b810f5d3c022fc2820b1d7999149460b83dc680abdebc9c7bd65cae<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>如果我们要找出前两位是<code>0</code>的哈希值，理论上需要计算256次，因为<code>00</code>出现的概率是16^2=256，实际计算44次：</p>
+<pre class="line-numbers language-none"><code class="language-none">hash256(&quot;Hello44&quot;) &#x3D; 00e477f95283a544ffac7a8efc7decb887f5c073e0f3b43b3797b5dafabb49b5<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>如果我们要找出前6位是<code>0</code>的哈希值，理论上需要计算16^6=1677万次，实际计算1558万次：</p>
+<pre class="line-numbers language-none"><code class="language-none">hash256(&quot;Hello15583041&quot;) &#x3D; 0000009becc5cf8c9e6ba81b1968575a1d15a93112d3bd67f4546f6172ef7e76<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>每增加一个0，理论计算量将增加16倍。</p>
+<p><strong>对于比特币挖矿来说，就是先给定一个难度值，然后不断变换<code>nonce</code>，计算Block Hash，直到找到一个比给定难度值低的Block Hash，就算成功挖矿。</strong></p>
+<p>我们用简化的方法来说明难度，例如，必须计算出连续17个<code>0</code>开头的哈希值，矿工先确定Prev Hash，Merkle Hash，Timestamp，bits，然后，不断变化<code>nonce</code>来计算哈希，直到找出连续17个<code>0</code>开头的哈希值。我们可以大致推算一下，17个十六进制的<code>0</code>相当于计算了1617次，大约需要计算2.9万亿亿次。</p>
+<pre class="line-numbers language-none"><code class="language-none">17个0 &#x3D; 16^17 &#x3D; 295147905179352825856 &#x3D; 2.9万亿亿次<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>实际的难度是根据<code>bits</code>由一个公式计算出来，比特币协议要求计算出的区块的哈希值比难度值要小，这个区块才算有效。例如：</p>
+<pre class="line-numbers language-none"><code class="language-none">Difficulty &#x3D; 402937298
+           &#x3D; 0x180455d2
+           &#x3D; 0x0455d2 * 2^(8 * (0x18 - 3))
+           &#x3D; 106299667504289830835845558415962632664710558339861315584
+           &#x3D; 0x00000000000000000455d2000000000000000000000000000000000000000000<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>上述计算过程，0x180455d2是压缩的难度标记，末3字节作为底，前面0x18作为幂，做上述运算得到难度值。</p>
+<p>注意，难度值越小，说明哈希值前面的<code>0</code>越多，计算难度越大。</p>
+<h3 id="难度调整"><a class="markdownIt-Anchor" href="#难度调整"></a> 难度调整</h3>
+<p><strong>比特币网络的难度值是不断变化的</strong>，它的难度值保证大约每10分钟产生一个区块，而难度值在每2015个区块调整一次：如果区块平均生成时间小于10分钟，说明全网算力增加，难度值也会增加，如果区块平均生成时间大于10分钟，说明全网算力减少，难度值也会减少。因此，难度值随着全网算力的增减会动态调整。</p>
+<p>关于比特币挖矿难度与收益计算可以参考：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/28805231">https://zhuanlan.zhihu.com/p/28805231</a></p>
+<blockquote>
+<p>比特币设计时本来打算每2016个区块调整一次难度，也就是两周一次，但是由于第一版代码的一个bug，实际调整周期是2015个区块。</p>
+</blockquote>
+<p>根据比特币每个区块的难度值和产出时间，就可以推算出整个比特币网络的全网算力。</p>
+<p>比特币网络的全网算力一直在迅速增加。目前，全网算力已经超过了100EH/每秒，也就是大约每秒钟计算1万亿亿次哈希：</p>
+<p><img src="/images/wakuang.jpg" alt="wakuang" / srcset="/images/LoadingImage.gif" data-src="/images/wakuang.jpg" class="lozad post-image"></p>
+<p>所以比特币的工作量证明被通俗地称之为挖矿。在同一时间，所有矿工都在努力计算下一个区块的哈希。而挖矿难度取决于全网总算力的百分比。举个例子，假设小明拥有全网总算力的百分之一，那么他挖到下一个区块的可能性就是1%，或者说，每挖出100个区块，大约有1个就是小明挖的。</p>
+<p>由于目前全网算力超过了100EH/s，而单机CPU算力不过几M，GPU算力也不过1G，所以，单机挖矿的成功率几乎等于0。比特币挖矿已经从早期的CPU、GPU发展到专用的ASIC芯片构建的矿池挖矿。</p>
+<p><img src="/images/wakuang1.png" alt="wakuang1" / srcset="/images/LoadingImage.gif" data-src="/images/wakuang1.png" class="lozad post-image"></p>
+<p>当某个矿工成功找到特定哈希的新区块后，他会立刻向全网广播该区块。其他矿工在收到新区块后，会对新区块进行验证，如果有效，就把它添加到区块链的尾部。同时说明，在本轮工作量证明的竞争中，这个矿工胜出，而其他矿工都失败了。失败的矿工会抛弃自己当前正在计算还没有算完的区块，转而开始计算下一个区块，进行下一轮工作量证明的竞争。</p>
+<p><strong>为什么区块可以安全广播？因为Merkle Hash锁定了该区块的所有交易，而该区块的第一个Coinbase交易输出地址是该矿工地址</strong>。每个矿工在挖矿时产生的区块数据都是不同的，所以无法窃取别人的工作量。</p>
+<p><strong>比特币总量被限制为约2100万个比特币，初始挖矿奖励为每个区块50个比特币，以后每4年减半</strong>。</p>
+<h2 id="共识算法"><a class="markdownIt-Anchor" href="#共识算法"></a> 共识算法</h2>
+<p>如果两个矿工在同一时间各自找到了有效区块，注意，这两个区块是不同的，因为coinbase交易不同，所以Merkle Hash不同，区块哈希也不同。但它们只要符合难度值，就都是有效的。这个时候，网络上的其他矿工应该接收哪个区块并添加到区块链的末尾呢？答案是，都有可能。</p>
+<p>通常，矿工接收先收到的有效区块，由于P2P网络广播的顺序是不确定的，不同的矿工先收到的区块是有可能的不同的。这个时候，我们说区块发生了分叉：</p>
+<p><img src="/images/gongshisuanfa1.png" alt="gongshisuanfa1" / srcset="/images/LoadingImage.gif" data-src="/images/gongshisuanfa1.png" class="lozad post-image"></p>
+<p>在分叉的情况下，有的矿工在绿色的分叉上继续挖矿，有的矿工在蓝色的分叉上继续挖矿：</p>
+<p><img src="/images/gongshisuanfa2.png" alt="gongshisuanfa2" / srcset="/images/LoadingImage.gif" data-src="/images/gongshisuanfa2.png" class="lozad post-image"></p>
+<p>但是最终，总有一个分叉首先挖到后续区块，这个时候，<strong>由于比特币网络采用最长分叉的共识算法</strong>，绿色分叉胜出，蓝色分叉被废弃，整个网络上的所有矿工又会继续在最长的链上继续挖矿。</p>
+<p>由于区块链虽然最终会保持数据一致，但是，一个交易可能被打包到一个后续被孤立的区块中。所以，要确认一个交易被永久记录到区块链中，需要对交易进行确认。如果后续的区块被追加到区块链上，实际上就会对原有的交易进行确认，因为链越长，修改的难度越大。一般来说，经过6个区块确认的交易几乎是不可能被修改的。</p>
+<p><img src="/images/gongshisuanfa3.png" alt="gongshisuanfa2" / srcset="/images/LoadingImage.gif" data-src="/images/gongshisuanfa3.png" class="lozad post-image"></p>
+<blockquote>
+<p>0x3 挖矿原理小结</p>
+<p>比特币挖矿是一种带经济激励的工作量证明机制</p>
+<p>工作量证明保证了修改区块链需要极高的成本，从而使得区块链的不可篡改特性得到保护</p>
+<p>比特币的网络安全实际上就是依靠强大的算力保障的</p>
+<p>比特币网络的难度值是不断变化的，它的难度值保证大约每10分钟产生一个区块</p>
+<p>最长分叉共识算法保证了区块链网络中只有一条合法链存在</p>
+</blockquote>
+<h1 id="0x4-更多细节"><a class="markdownIt-Anchor" href="#0x4-更多细节"></a> 0x4 更多细节</h1>
+<p>通过上面的叙述，相信你已经理解了区块链的基本原理和比特币的交易方式。本节讲笼统的叙述一些细节上的概念和原理，不再展开感兴趣的话可以去廖雪峰老师的网站上了解细节。</p>
+<h2 id="可编程支付原理"><a class="markdownIt-Anchor" href="#可编程支付原理"></a> 可编程支付原理</h2>
+<p>比特币的所有交易的信息都被记录在比特币的区块链中，任何用户都可以通过公钥查询到某个交易的输入和输出金额。当某个用户希望花费一个输出时，例如，小明想要把某个公钥地址的输出支付给小红，他就需要使用自己的私钥对这笔交易进行签名，而矿工验证这笔交易的签名是有效的之后，就会把这笔交易打包到区块中，从而使得这笔交易被确认。</p>
+<p>但比特币的支付实际上并不是直接支付到对方的地址，而是一个脚本，这个脚本的意思是：谁能够提供另外一个脚本，让这两个脚本能顺利执行通过，谁就能花掉这笔钱。</p>
+<p>比特币的脚本通过不同的指令还可以实现更灵活的功能。例如，多重签名可以让一笔交易只有在多数人同意的情况下才能够进行。最常见的多重签名脚本可以提供3个签名，只要任意两个签名被验证成功，这笔交易就可以成功。</p>
+<p><strong>支付的本质</strong></p>
+<p>从比特币支付的脚本可以看出，比特币支付的本质是由程序触发的数字资产转移。这种支付方式无需信任中介的参与，可以在零信任的基础上完成数字资产的交易，这也是为什么数字货币又被称为可编程的货币。</p>
+<p>由此催生出了智能合约：当一个预先编好的条件被触发时，智能合约可以自动执行相应的程序，自动完成数字资产的转移。保险、贷款等金融活动在将来都可以以智能合约的形式执行。智能合约以程序来替代传统的纸质文件条款，并由计算机强制执行，将具有更高的更低的信任成本和运营成本。</p>
+<h2 id="多重签名"><a class="markdownIt-Anchor" href="#多重签名"></a> 多重签名</h2>
+<p>由比特币的签名机制可知，如果丢失了私钥，没有任何办法可以花费对应地址的资金。</p>
+<p>这样就使得因为丢失私钥导致资金丢失的风险会很高。为了避免一个私钥的丢失导致地址的资金丢失，比特币引入了多重签名机制，可以实现分散风险的功能。</p>
+<p>具体来说，就是假设N个人分别持有N个私钥，只要其中M个人同意签名就可以动用某个“联合地址”的资金。</p>
+<blockquote>
+<p>以3开头的地址就是比特币的多重签名地址，但从地址本身无法得知签名所需的M/N。</p>
+</blockquote>
+<h2 id="utxo模型"><a class="markdownIt-Anchor" href="#utxo模型"></a> UTXO模型</h2>
+<p>比特币的区块链由一个个区块串联构成，而每个区块又包含一个或多个交易。</p>
+<p>如果我们观察任何一个交易，它总是由若干个输入（Input）和若干个输出（Output）构成，一个Input指向的是前面区块的某个Output，只有Coinbase交易（矿工奖励的铸币交易）没有输入，只有凭空输出。所以，任何交易，总是可以由Input溯源到Coinbase交易。</p>
+<p>还没有被下一个交易花费的Output被称为UTXO：Unspent TX Output，即未花费交易输出。给定任何一个区块，计算当前所有的UXTO金额之和，等同于自创世区块到给定区块的挖矿奖励之和。</p>
+<p>钱包的当前余额总是钱包地址关联的所有UTXO金额之和。</p>
+<p>如果刚装了一个新钱包，导入了一组私钥，在钱包扫描完整个比特币区块之前，是无法得知当前管理的地址余额的。</p>
+<p>那么，给定一个地址，要查询该地址的余额，难道要从头扫描几百GB的区块链数据？</p>
+<p>当然不是。</p>
+<p>要做到瞬时查询，我们知道，使用关系数据库的主键进行查询，由于用了索引，速度极快。</p>
+<p>因此，对区块链进行查询之前，首先要扫描整个区块链，重建一个类似关系数据库的地址-余额映射表。这个表的结构如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">address</th>
+<th style="text-align:left">balance</th>
+<th style="text-align:left">lastUpdatedAtBlock</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">address-1</td>
+<td style="text-align:left">50.0</td>
+<td style="text-align:left">0</td>
+</tr>
+</tbody>
+</table>
+<p>一开始，这是一个空表。每当扫描一个区块的所有交易后，某些地址的余额增加，另一些地址的余额减少，两者之差恰好为区块奖励：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">address</th>
+<th style="text-align:left">balance</th>
+<th style="text-align:left">lastUpdatedAtBlock</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">address-1</td>
+<td style="text-align:left">50.0</td>
+<td style="text-align:left">0</td>
+</tr>
+<tr>
+<td style="text-align:left">address-2</td>
+<td style="text-align:left">40.0</td>
+<td style="text-align:left">3</td>
+</tr>
+<tr>
+<td style="text-align:left">address-3</td>
+<td style="text-align:left">50.0</td>
+<td style="text-align:left">3</td>
+</tr>
+<tr>
+<td style="text-align:left">address-4</td>
+<td style="text-align:left">10.0</td>
+<td style="text-align:left">3</td>
+</tr>
+</tbody>
+</table>
+<p>这样，扫描完所有区块后，我们就得到了整个区块链所有地址的完整余额记录，查询的时候，并不是从区块链查询，而是从本地数据库查询。大多数钱包程序使用<a target="_blank" rel="noopener" href="https://github.com/google/leveldb">LevelDB</a>来存储这些信息，手机钱包程序则是请求服务器，由服务器查询数据库后返回结果。</p>
+<p>总而言之，重建整个地址-余额数据库需要扫描整个区块链，并按每个交易依次更新记录，即可得到当前状态，每当新的块加入区块链，数据库也同时更新。此后，查询余额只需要从数据库查询即可。</p>
+<h1 id="0x5-qa"><a class="markdownIt-Anchor" href="#0x5-qa"></a> 0x5 Q&amp;A</h1>
+<ul>
+<li>
+<p><strong>Q：区块链的安全性由哪些因素决定？</strong></p>
+<p>我认为区块链的安全性主要由以下几部分决定：</p>
+<p>数字签名安全性：采取的ECDSA或其他非对称加密算法的安全性</p>
+<p>工作量证明机制安全性：比如比特币网络中，hash算法的防止碰撞的强度</p>
+<p>区块链网络安全性：存在足够多的“矿工”节点，保证区块不断更新</p>
+</li>
+<li>
+<p><strong>Q：区块链中每个区块都包含那些元素，这些元素是怎么得来的，作用分别是什么？</strong></p>
+<p>以比特币网络为例<strong>主要</strong>包括：</p>
+<p>父区块hash：=hash(父区块)</p>
+<p>Merkle根：按序hash区块体中的记录</p>
+<p>难度目标：工作量证明机制的目标，计算方法参考0x3-工作量证明</p>
+<p>时间戳：做工作量证明之前估计一个值就可以，要比上一个区块大</p>
+<p>nonce：需要不断变化，计算区块hash，以证明工作量</p>
+<p>区块大小：如名</p>
+<p>区块体：交易记录</p>
+</li>
+<li>
+<p><strong>Q：p2p交易如比特币交易，每个块能存储多少笔交易？</strong></p>
+<p>目前一个比特币区块中约有2000-3000笔交易。我的理解是：具体多少是由比特币网络规定的保证约10分钟打包一个区块，这10分钟产生的交易数量决定的。</p>
+</li>
+<li>
+<p><strong>Q：挖矿的工作量整明，实际上是怎么做的？</strong></p>
+<p>实际上就是通过变换区块头中的nonce的值，计算整个区块的hash值，要求hash值前n位是0，如果计算出来了，你就获得了这个区块的打包权力，就可以向区块链网络发出广播，你挖了一个新区块，这个区块中有一笔交易是给你的钱包添加一笔挖矿奖励，来源就是是挖矿。</p>
+<p>n是难度的象征，比特币网络每挖出2015个区块进行一次难度调整，维持10分钟一个区块的难度。</p>
+</li>
+</ul>
+<p>参考文章：</p>
+<blockquote>
+<p>廖雪峰区块链教程：<a target="_blank" rel="noopener" href="https://www.liaoxuefeng.com/wiki/1207298049439968">https://www.liaoxuefeng.com/wiki/1207298049439968</a></p>
+<p>Satoshi Nakamoto：Bitcoin: A Peer-to-Peer Electronic Cash System <a target="_blank" rel="noopener" href="https://bitcoin.org/bitcoin.pdf">https://bitcoin.org/bitcoin.pdf</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.bitmain.com/">https://www.bitmain.com/</a></p>
+<p>阮一峰数字签名是什么：<a target="_blank" rel="noopener" href="http://www.ruanyifeng.com/blog/2011/08/what_is_a_digital_signature.html">http://www.ruanyifeng.com/blog/2011/08/what_is_a_digital_signature.html</a></p>
+<p>比特币挖矿难度与收益计算：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/28805231">https://zhuanlan.zhihu.com/p/28805231</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.528btc.com/college/58842.html">https://www.528btc.com/college/58842.html</a></p>
+</blockquote>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-info copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/about">Ch3nYe</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/%E5%8C%BA%E5%9D%97%E9%93%BE%E6%8A%80%E6%9C%AF%E5%8E%9F%E7%90%86%E7%AC%94%E8%AE%B0/">https://ch3nye.top/%E5%8C%BA%E5%9D%97%E9%93%BE%E6%8A%80%E6%9C%AF%E5%8E%9F%E7%90%86%E7%AC%94%E8%AE%B0/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/Android流量抓包环境配置/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一篇</div>
+        
+        <div class="nav-title">Android流量抓包环境配置 </div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+  <div class="nav-item-next">
+    <a href="/Transformer/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">Transformer </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="lv-container" data-id="city" data-uid="MTAyMC80NjQ0Ny8yMjk1OA==">
+    <script>
+      (function (d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') {
+          return;
+        }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.defer = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  </div>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#ox0-%E5%89%8D%E8%A8%80"><span class="toc-text"> ox0 前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x1-%E5%8C%BA%E5%9D%97%E9%93%BE%E5%8E%9F%E7%90%86"><span class="toc-text"> 0x1 区块链原理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E5%8F%AF%E7%AF%A1%E6%94%B9%E6%80%A7"><span class="toc-text"> 不可篡改性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#merkle-hash"><span class="toc-text"> Merkle Hash</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#block-hash"><span class="toc-text"> Block Hash</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x2-p2p%E4%BA%A4%E6%98%93%E5%8E%9F%E7%90%86"><span class="toc-text"> 0x2 P2P交易原理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E5%AD%97%E7%AD%BE%E5%90%8D"><span class="toc-text"> 数字签名</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AD%BE%E5%90%8D%E5%92%8C%E9%AA%8C%E8%AF%81%E8%BF%87%E7%A8%8B"><span class="toc-text"> 签名和验证过程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E5%AD%97%E7%AD%BE%E5%90%8D%E7%AE%97%E6%B3%95"><span class="toc-text"> 数字签名算法</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%AD%BE%E5%90%8D%E7%AE%97%E6%B3%95"><span class="toc-text"> 签名算法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A7%81%E9%92%A5"><span class="toc-text"> 私钥</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%AC%E9%92%A5"><span class="toc-text"> 公钥</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%B0%E5%9D%80"><span class="toc-text"> 地址</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%AF%94%E7%89%B9%E5%B8%81%E9%92%B1%E5%8C%85"><span class="toc-text"> 比特币钱包</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%A4%E6%98%93"><span class="toc-text"> 交易</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x3-%E6%8C%96%E7%9F%BF%E5%8E%9F%E7%90%86"><span class="toc-text"> 0x3 挖矿原理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B7%A5%E4%BD%9C%E9%87%8F%E8%AF%81%E6%98%8E"><span class="toc-text"> 工作量证明</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9A%BE%E5%BA%A6%E8%B0%83%E6%95%B4"><span class="toc-text"> 难度调整</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B1%E8%AF%86%E7%AE%97%E6%B3%95"><span class="toc-text"> 共识算法</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x4-%E6%9B%B4%E5%A4%9A%E7%BB%86%E8%8A%82"><span class="toc-text"> 0x4 更多细节</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E7%BC%96%E7%A8%8B%E6%94%AF%E4%BB%98%E5%8E%9F%E7%90%86"><span class="toc-text"> 可编程支付原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E9%87%8D%E7%AD%BE%E5%90%8D"><span class="toc-text"> 多重签名</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#utxo%E6%A8%A1%E5%9E%8B"><span class="toc-text"> UTXO模型</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x5-qa"><span class="toc-text"> 0x5 Q&amp;A</span></a></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/images/logo.png" class="author-img">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>20</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>4</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>19</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:sud0su@163.com">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#ox0-%E5%89%8D%E8%A8%80"><span class="toc-text"> ox0 前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x1-%E5%8C%BA%E5%9D%97%E9%93%BE%E5%8E%9F%E7%90%86"><span class="toc-text"> 0x1 区块链原理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E5%8F%AF%E7%AF%A1%E6%94%B9%E6%80%A7"><span class="toc-text"> 不可篡改性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#merkle-hash"><span class="toc-text"> Merkle Hash</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#block-hash"><span class="toc-text"> Block Hash</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x2-p2p%E4%BA%A4%E6%98%93%E5%8E%9F%E7%90%86"><span class="toc-text"> 0x2 P2P交易原理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E5%AD%97%E7%AD%BE%E5%90%8D"><span class="toc-text"> 数字签名</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AD%BE%E5%90%8D%E5%92%8C%E9%AA%8C%E8%AF%81%E8%BF%87%E7%A8%8B"><span class="toc-text"> 签名和验证过程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E5%AD%97%E7%AD%BE%E5%90%8D%E7%AE%97%E6%B3%95"><span class="toc-text"> 数字签名算法</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%AD%BE%E5%90%8D%E7%AE%97%E6%B3%95"><span class="toc-text"> 签名算法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A7%81%E9%92%A5"><span class="toc-text"> 私钥</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%AC%E9%92%A5"><span class="toc-text"> 公钥</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%B0%E5%9D%80"><span class="toc-text"> 地址</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%AF%94%E7%89%B9%E5%B8%81%E9%92%B1%E5%8C%85"><span class="toc-text"> 比特币钱包</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%A4%E6%98%93"><span class="toc-text"> 交易</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x3-%E6%8C%96%E7%9F%BF%E5%8E%9F%E7%90%86"><span class="toc-text"> 0x3 挖矿原理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B7%A5%E4%BD%9C%E9%87%8F%E8%AF%81%E6%98%8E"><span class="toc-text"> 工作量证明</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9A%BE%E5%BA%A6%E8%B0%83%E6%95%B4"><span class="toc-text"> 难度调整</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B1%E8%AF%86%E7%AE%97%E6%B3%95"><span class="toc-text"> 共识算法</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x4-%E6%9B%B4%E5%A4%9A%E7%BB%86%E8%8A%82"><span class="toc-text"> 0x4 更多细节</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E7%BC%96%E7%A8%8B%E6%94%AF%E4%BB%98%E5%8E%9F%E7%90%86"><span class="toc-text"> 可编程支付原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E9%87%8D%E7%AD%BE%E5%90%8D"><span class="toc-text"> 多重签名</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#utxo%E6%A8%A1%E5%9E%8B"><span class="toc-text"> UTXO模型</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x5-qa"><span class="toc-text"> 0x5 Q&amp;A</span></a></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/备忘">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/李宏毅机器学习笔记">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">14</span>
+        </div>
+      </a>
+    
+      <a href="/categories/论文阅读">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/笔记">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
+    
+    <a href="\tags\note" title="note"><div class="tags-list-item">note</div></a>
+    
+    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
+    
+    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="\tags\学习" title="学习"><div class="tags-list-item">学习</div></a>
+    
+    <a href="\tags\总结" title="总结"><div class="tags-list-item">总结</div></a>
+    
+    <a href="\tags\笔记" title="笔记"><div class="tags-list-item">笔记</div></a>
+    
+    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
+    
+    <a href="\tags\污点分析" title="污点分析"><div class="tags-list-item">污点分析</div></a>
+    
+    <a href="\tags\比特币" title="比特币"><div class="tags-list-item">比特币</div></a>
+    
+    <a href="\tags\区块链" title="区块链"><div class="tags-list-item">区块链</div></a>
+    
+    <a href="\tags\符号执行" title="符号执行"><div class="tags-list-item">符号执行</div></a>
+    
+    <a href="\tags\Adversarial-Attack" title="Adversarial-Attack"><div class="tags-list-item">Adversarial-Attack</div></a>
+    
+    <a href="\tags\漏洞挖掘" title="漏洞挖掘"><div class="tags-list-item">漏洞挖掘</div></a>
+    
+    <a href="\tags\System-Service" title="System-Service"><div class="tags-list-item">System-Service</div></a>
+    
+    <a href="\tags\Fuzzing" title="Fuzzing"><div class="tags-list-item">Fuzzing</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#ox0-%E5%89%8D%E8%A8%80"><span class="toc-text"> ox0 前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x1-%E5%8C%BA%E5%9D%97%E9%93%BE%E5%8E%9F%E7%90%86"><span class="toc-text"> 0x1 区块链原理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E5%8F%AF%E7%AF%A1%E6%94%B9%E6%80%A7"><span class="toc-text"> 不可篡改性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#merkle-hash"><span class="toc-text"> Merkle Hash</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#block-hash"><span class="toc-text"> Block Hash</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x2-p2p%E4%BA%A4%E6%98%93%E5%8E%9F%E7%90%86"><span class="toc-text"> 0x2 P2P交易原理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E5%AD%97%E7%AD%BE%E5%90%8D"><span class="toc-text"> 数字签名</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AD%BE%E5%90%8D%E5%92%8C%E9%AA%8C%E8%AF%81%E8%BF%87%E7%A8%8B"><span class="toc-text"> 签名和验证过程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E5%AD%97%E7%AD%BE%E5%90%8D%E7%AE%97%E6%B3%95"><span class="toc-text"> 数字签名算法</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%AD%BE%E5%90%8D%E7%AE%97%E6%B3%95"><span class="toc-text"> 签名算法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A7%81%E9%92%A5"><span class="toc-text"> 私钥</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%AC%E9%92%A5"><span class="toc-text"> 公钥</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%B0%E5%9D%80"><span class="toc-text"> 地址</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%AF%94%E7%89%B9%E5%B8%81%E9%92%B1%E5%8C%85"><span class="toc-text"> 比特币钱包</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%A4%E6%98%93"><span class="toc-text"> 交易</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x3-%E6%8C%96%E7%9F%BF%E5%8E%9F%E7%90%86"><span class="toc-text"> 0x3 挖矿原理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B7%A5%E4%BD%9C%E9%87%8F%E8%AF%81%E6%98%8E"><span class="toc-text"> 工作量证明</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9A%BE%E5%BA%A6%E8%B0%83%E6%95%B4"><span class="toc-text"> 难度调整</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B1%E8%AF%86%E7%AE%97%E6%B3%95"><span class="toc-text"> 共识算法</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x4-%E6%9B%B4%E5%A4%9A%E7%BB%86%E8%8A%82"><span class="toc-text"> 0x4 更多细节</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E7%BC%96%E7%A8%8B%E6%94%AF%E4%BB%98%E5%8E%9F%E7%90%86"><span class="toc-text"> 可编程支付原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E9%87%8D%E7%AD%BE%E5%90%8D"><span class="toc-text"> 多重签名</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#utxo%E6%A8%A1%E5%9E%8B"><span class="toc-text"> UTXO模型</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x5-qa"><span class="toc-text"> 0x5 Q&amp;A</span></a></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-20</div>
+        <a href="/Note-FANS-Fuzzing-Android-Native-System-Services/"><div class="recent-posts-item-content">Note《FANS Fuzzing Android Native System Services via Automated Interface Analysis》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-16</div>
+        <a href="/ELMO-BERT-GPT/"><div class="recent-posts-item-content">ELMO, BERT, GPT</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-15</div>
+        <a href="/Note-FIRMSCOPE-Automatic-Uncovering-of-Privilege-Escala/"><div class="recent-posts-item-content">Note《FIRMSCOPE Automatic Uncovering of Privilege-Escala Vulnerabilities in Pre-Installed Apps in Android Firmware》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-14</div>
+        <a href="/Android流量抓包环境配置/"><div class="recent-posts-item-content">Android流量抓包环境配置</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2021
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">ch3nye's blog </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('data-fslightbox', 'gallery');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+    }
+    refreshFsLightbox();
+  }
+</script>
+<script>loadScript("//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-WHGL11014T');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "G-WHGL11014T", googleAnalytics)</script>
+  
+</body>
+
+</html>

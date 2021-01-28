@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="网络安全 Android ML CTF">
+  <link rel="icon" href="/images/logo.png">
+  <title>Transformer</title>
+  
+  
+  <meta property="og:title" content="Transformer">
+  
+  
+  <meta property="og:url" content="https://ch3nye.top/Transformer/index.html">
+  
+  
+  <meta property="og:img" content="/images/image-20210109200323912.png">
+  
+  
+  <meta property="og:img" content="网络安全 Android ML CTF">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2021-01-11">
+  <meta property="og:article:modified_time" content="2021-01-16">
+  <meta property="og:article:author" content="Ch3nYe">
+  
+  
+  <meta property="og:article:tag" content="ML">
+  
+  <meta property="og:article:tag" content="note">
+  
+  <meta property="og:article:tag" content="Next-Step-of-ML">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js" as="script">
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn-city.livere.com/js/embed.dist.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+  
+  
+  
+  <link href="/js/lib/prism/prism-tomorrow.min.css" rel="stylesheet" data-prism="prism-tomorrow">
+  
+  
+  
+<link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+
+  
+  
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/images/logo.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/links" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<div class="image-wrapper">
+  <img src="/images/image-20210109200323912.png" data-src="/images/image-20210109200323912.png"
+    srcset="/images/LoadingImage.gif"
+    class="image lozad"
+    alt="thumbnail"
+  >
+</div>
+
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      Transformer
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2021-01-10T16:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2021-01-11</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/李宏毅机器学习笔记/" class="post-meta-link">李宏毅机器学习笔记</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>3.7k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/ML/" class="post-meta-link">ML</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/note/" class="post-meta-link">note</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Next-Step-of-ML/" class="post-meta-link">Next-Step-of-ML</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <p><img src="/images/image-20210109200319738.png" alt="image-20210109200319738" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210109200319738.png" class="lozad post-image"></p>
+<h1 id="transformer"><a class="markdownIt-Anchor" href="#transformer"></a> Transformer</h1>
+<p><img src="/images/image-20210109200323912.png" alt="image-20210109200323912" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210109200323912.png" class="lozad post-image"></p>
+<p>Transformer 现在有一个非常有名的应用就是BERT，这一节还不会讲到BERT，我们先讲Transformer。BERT就是无监督train 的Transformer。Transformer是一个seq2seq model，之前讲的课程中教过seq2seq model 所以这里就假设大家都懂这个东西。Transformer它特别的地方就是在seq2seq model中大量使用了&quot;self attention&quot;这种layer。接下来我们要讲的就是&quot;self attention&quot;这种layer 它具体是在做什么。</p>
+<h2 id="sequence"><a class="markdownIt-Anchor" href="#sequence"></a> Sequence</h2>
+<p>一般遇到处理sequence 的问题最常想到的model 就是RNN，无论是单向还是双向总之RNN就是比较适合处理输入是sequence 的问题。</p>
+<p><img src="/images/image-20210109205758751.png" alt="image-20210109205758751" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210109205758751.png" class="lozad post-image"></p>
+<p>RNN的架构就如上图左侧所示（BiDirectional），它的输入和输出都是一个vector 。在单向RNN中在输出b4的时候a1-a4它都看过了，在输出b3的时候a1-a3它都看过了，在双向RNN中，在输出任意一个b的时候，所有输入它都要看过，所以它的问题是不好做平行运算的，因为他计算后一个输入的时候要依赖前一个输入。</p>
+<p>为了解决这个问题，有人提出了用CNN替代RNN的想法，如上图右侧所示。每个三角形代表一个filter，它就吃输入的一小段，输出一个数值，filter扫过输入产生一排输出，即上图一排红色的点，还会有其他的filter 扫过输入产生一排输出，即上图黄色的点…<strong>这些filter 可以平行计算</strong>。那你就会说了，CNN它没有考虑所有输入，RNN是看过所有输入才计算出输出，而CNN只看了一部分呀。只看一层的话确实是这样，但是我们可以叠很多层CNN（如蓝色三角示例），这样上层的CNN就会看到更多的输入。</p>
+<p>总而言之，CNN确实可以平行计算了，但是它需要叠很多层才能看到全部输入的信息，那有没有更好的办法呢，接下来就介绍<strong>Self Attention</strong> 。</p>
+<h2 id="self-attention"><a class="markdownIt-Anchor" href="#self-attention"></a> Self Attention</h2>
+<p>Self Attention 就是想要取代RNN 做的事情，并且能克服RNN不能平行计算的缺点。下面的内容如果你看不下去，你就只要记得Self Attention 能做到和RNN 一摸一样的事情，它也是吃一个sequence 吐出一个sequence ，输出sequence 的每个元素都是看过所有输入计算出来的，而且是平行计算出来的。</p>
+<p><img src="/images/image-20210109210725413.png" alt="image-20210109210725413" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210109210725413.png" class="lozad post-image"></p>
+<p><strong>关键就是你可以在你要做的事情上用Self Attention 取代RNN 。</strong></p>
+<p><img src="/images/image-20210109211235540.png" alt="image-20210109211235540" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210109211235540.png" class="lozad post-image"></p>
+<blockquote>
+<p>最早提出self-attention 替换RNN 的paper（by google）：Attention Is All You Need</p>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1706.03762">https://arxiv.org/abs/1706.03762</a></p>
+</blockquote>
+<p>输入是 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>x</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">x_1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>x</mi><mn>4</mn></msub></mrow><annotation encoding="application/x-tex">x_4</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">4</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 的sequence ，输入x通过一个matrix W 做embedding 得到sequence a 。（<strong>注意 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>x</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">x_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 和 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>a</mi><mi>i</mi></msup></mrow><annotation encoding="application/x-tex">a^i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.824664em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">a</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span></span></span></span></span></span></span> 应该都是vector，列向量</strong>） 然后每个 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>a</mi><mi>i</mi></msup></mrow><annotation encoding="application/x-tex">a^i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.824664em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">a</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span></span></span></span></span></span></span> 都乘上三个不同的matrix 得到三个输出向量q k v （列向量）。</p>
+<p>q代表query 它是要去match 别人的</p>
+<p>k代表key 它是要被match的</p>
+<p>v代表information 就是要被抽取出来的信息</p>
+<p>接下来我们就拿每个q对每个k做attention ：</p>
+<p><img src="/images/image-20210110174053012.png" alt="image-20210110174053012" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110174053012.png" class="lozad post-image"></p>
+<p>attention 怎么做呢？（根据google论文中所述这里讲解的attention function是类似于dot-proudct attention）self-attention layer 它要做的就是拿 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>q</mi><mn>1</mn></msup></mrow><annotation encoding="application/x-tex">q^1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.008548em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span></span></span></span></span></span></span></span> 和 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>k</mi><mn>1</mn></msup></mrow><annotation encoding="application/x-tex">k^1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span></span></span></span></span></span></span></span> 做attention，得到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>α</mi><mrow><mn>1</mn><mo separator="true">,</mo><mn>1</mn></mrow></msub></mrow><annotation encoding="application/x-tex">\alpha_{1,1}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.716668em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.301108em;"><span style="top:-2.5500000000000003em;margin-left:-0.0037em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mpunct mtight">,</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span> ，如上图所示同样的做法得到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>α</mi><mrow><mn>1</mn><mo separator="true">,</mo><mn>2</mn></mrow></msub></mrow><annotation encoding="application/x-tex">\alpha_{1,2}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.716668em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.301108em;"><span style="top:-2.5500000000000003em;margin-left:-0.0037em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mpunct mtight">,</span><span class="mord mtight">2</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span> ，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>α</mi><mrow><mn>1</mn><mo separator="true">,</mo><mn>3</mn></mrow></msub></mrow><annotation encoding="application/x-tex">\alpha_{1,3}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.716668em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.301108em;"><span style="top:-2.5500000000000003em;margin-left:-0.0037em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mpunct mtight">,</span><span class="mord mtight">3</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span> ，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>α</mi><mrow><mn>1</mn><mo separator="true">,</mo><mn>4</mn></mrow></msub></mrow><annotation encoding="application/x-tex">\alpha_{1,4}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.716668em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.301108em;"><span style="top:-2.5500000000000003em;margin-left:-0.0037em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mpunct mtight">,</span><span class="mord mtight">4</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span> 。<strong>attention 的具体公式就是上图所示的，对于 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>α</mi><mrow><mn>1</mn><mo separator="true">,</mo><mi>i</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\alpha_{1,i}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.716668em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-left:-0.0037em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mpunct mtight">,</span><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span> attention就是指把 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>q</mi><mn>1</mn></msup></mrow><annotation encoding="application/x-tex">q^1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.008548em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span></span></span></span></span></span></span></span> 点积 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>k</mi><mi>i</mi></msup></mrow><annotation encoding="application/x-tex">k^i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.824664em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span></span></span></span></span></span></span> 然后除以根号d，d是q和k的维度</strong>。（<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.0037em;">α</span></span></span></span> 是数值）</p>
+<p>为什么除以根号d，而不是除以其他东西呢？在google 的Self-attention 的paper 中3.2.1节attention公式下有解释，你可以自己去看看，大意好像就是为了避免dot-product attention将softmax函数推入梯度极小的区域，我也解释不太好😥。老师也没有实践这个除以根号d对结果有多大影响。</p>
+<p>另外，你还需要知道attention function显然不止一种，paper中另外有提到addictive attention，不过没有实践替换attention function 会对结果有多大影响。</p>
+<p><img src="/images/image-20210110183215985.png" alt="image-20210110183215985" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110183215985.png" class="lozad post-image"></p>
+<p>然后，你要把上述得到的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.0037em;">α</span></span></span></span> 通过一个softmax layer 得到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mover accent="true"><mi>α</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathdefault" style="margin-right:0.0037em;">α</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.22222em;">^</span></span></span></span></span></span></span></span></span> ，softmax layer做的事情就是上图公式所示，相当于做一个normalization 。</p>
+<p><img src="/images/image-20210110183345603.png" alt="image-20210110183345603" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110183345603.png" class="lozad post-image"></p>
+<p>得到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mover accent="true"><mi>α</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathdefault" style="margin-right:0.0037em;">α</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.22222em;">^</span></span></span></span></span></span></span></span></span> 以后要把每个 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mover accent="true"><mi>α</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathdefault" style="margin-right:0.0037em;">α</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.22222em;">^</span></span></span></span></span></span></span></span></span> 和对应的v 相乘，再求和就得到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>b</mi><mn>1</mn></msup></mrow><annotation encoding="application/x-tex">b^1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span></span></span></span></span></span></span></span> 。我们上面说self-attention 也是输入一个sequence 输出一个sequence，这个 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>b</mi><mn>1</mn></msup></mrow><annotation encoding="application/x-tex">b^1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span></span></span></span></span></span></span></span> 就是输出的第一个element 。之后我们只要用同样的办法求出 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>b</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">b^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span> ， <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>b</mi><mn>3</mn></msup></mrow><annotation encoding="application/x-tex">b^3</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span></span></span></span></span></span></span></span> ， <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>b</mi><mn>4</mn></msup></mrow><annotation encoding="application/x-tex">b^4</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">4</span></span></span></span></span></span></span></span></span></span></span>  就结束了。这个过程中每个output element 的计算都是独立的，都不依赖其他的output element 所以可以并行计算。</p>
+<p>我们再看一下上图中self-attention layer 的结构，对于 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>b</mi><mn>1</mn></msup></mrow><annotation encoding="application/x-tex">b^1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span></span></span></span></span></span></span></span> 来说它看过了整个input sequence ，而且我们也可以让它看部分的input sequence，只要把不希望它看的部分产生的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.0037em;">α</span></span></span></span> 的值设为0就可以了。所以使用self-attention layer 对于output sequence 中的element 来说它可以看任意多个任意位置的input sequence 中的element 。</p>
+<p><img src="/images/image-20210110185323289.png" alt="image-20210110185323289" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110185323289.png" class="lozad post-image"></p>
+<p><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>b</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">b^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span> 的计算也是一样的，如上图所示，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>q</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">q^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.008548em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span> 和 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>k</mi><mi>i</mi></msup></mrow><annotation encoding="application/x-tex">k^i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.824664em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span></span></span></span></span></span></span> 做attention 得到对应的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>α</mi><mrow><mn>2</mn><mo separator="true">,</mo><mi>i</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\alpha_{2,i}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.716668em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-left:-0.0037em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span><span class="mpunct mtight">,</span><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span> 然后做softmax 得到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mover accent="true"><mi>α</mi><mo>^</mo></mover><mrow><mn>2</mn><mo separator="true">,</mo><mi>i</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\hat\alpha_{2,i}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.980548em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathdefault" style="margin-right:0.0037em;">α</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.22222em;">^</span></span></span></span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-left:-0.0037em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span><span class="mpunct mtight">,</span><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span> 再乘 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>v</mi><mi>i</mi></msup></mrow><annotation encoding="application/x-tex">v^i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.824664em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">v</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span></span></span></span></span></span></span> 做summation 就得到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>b</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">b^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span> 。以此类推平行计算所有b：</p>
+<p><img src="/images/image-20210110185603312.png" alt="image-20210110185603312" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110185603312.png" class="lozad post-image"></p>
+<p>如果你觉得上面的讲解比较乱，看不懂，你可以只记住self-attention layer 的输入输出就好。</p>
+<p>接下来我们要具体讲解一下attention 中的一连串矩阵运算，为什么是容易被平行计算，为什么是容易被加速的。</p>
+<h3 id="why-could-speed-up"><a class="markdownIt-Anchor" href="#why-could-speed-up"></a> Why Could Speed Up</h3>
+<p><img src="/images/image-20210110191112233.png" alt="image-20210110191112233" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110191112233.png" class="lozad post-image"></p>
+<p>首先来看列向量q、k、v的计算方法，根据上面说过的，如上图右上角所示，我们可以把列向量 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>a</mi><mi>i</mi></msup></mrow><annotation encoding="application/x-tex">a^i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.824664em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">a</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span></span></span></span></span></span></span> 排在一起，形成一个矩阵 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>I</mi></mrow><annotation encoding="application/x-tex">I</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.07847em;">I</span></span></span></span> 。将四个q、k、v的计算转换成矩阵运算。</p>
+<p><img src="/images/image-20210110192510519.png" alt="image-20210110192510519" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110192510519.png" class="lozad post-image"></p>
+<p>再来看数值 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.0037em;">α</span></span></span></span> 的计算，以 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>α</mi><mrow><mn>1</mn><mo separator="true">,</mo><mi>i</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\alpha_{1,i}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.716668em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-left:-0.0037em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mpunct mtight">,</span><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span> 为例，我们可以把k和q的内积转换为 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>k</mi><mi>T</mi></msup></mrow><annotation encoding="application/x-tex">k^T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8413309999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413309999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span></span></span></span> 与 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>q</mi></mrow><annotation encoding="application/x-tex">q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathdefault" style="margin-right:0.03588em;">q</span></span></span></span> 的积，进一步可以把四个 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>α</mi><mrow><mn>1</mn><mo separator="true">,</mo><mi>i</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\alpha_{1,i}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.716668em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-left:-0.0037em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mpunct mtight">,</span><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span> 的运算转换为上图右下角的矩阵乘向量。更进一步，对于 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>α</mi><mrow><mn>2</mn><mo separator="true">,</mo><mi>i</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\alpha_{2,i}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.716668em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-left:-0.0037em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span><span class="mpunct mtight">,</span><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span> 也是一样的，所以得到了下述公式：</p>
+<p><img src="/images/image-20210110192808741.png" alt="image-20210110192808741" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110192808741.png" class="lozad post-image"></p>
+<p>matrix A 中每个元素都是我们要求的值，A可以转换为matrix 乘积 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>K</mi><mi>T</mi></msup><mi>Q</mi></mrow><annotation encoding="application/x-tex">K^T Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.035771em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413309999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span><span class="mord mathdefault">Q</span></span></span></span> 。再把A中每一列元素做一下softmax 就能得到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mover accent="true"><mi>A</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9467699999999999em;vertical-align:0em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9467699999999999em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathdefault">A</span></span><span style="top:-3.25233em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.11110999999999999em;">^</span></span></span></span></span></span></span></span></span> 。</p>
+<p><img src="/images/image-20210110193054035.png" alt="image-20210110193054035" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110193054035.png" class="lozad post-image"></p>
+<p>接着，把列向量 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>v</mi><mn>1</mn></msup><mo separator="true">,</mo><msup><mi>v</mi><mn>2</mn></msup><mo separator="true">,</mo><msup><mi>v</mi><mn>3</mn></msup><mo separator="true">,</mo><msup><mi>v</mi><mn>4</mn></msup></mrow><annotation encoding="application/x-tex">v^1,v^2,v^3,v^4</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.008548em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">v</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">v</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">v</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">v</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">4</span></span></span></span></span></span></span></span></span></span></span> 分别乘以 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mover accent="true"><msub><mi>α</mi><mrow><mn>1</mn><mo separator="true">,</mo><mn>1</mn></mrow></msub><mo>^</mo></mover><mo separator="true">,</mo><mover accent="true"><msub><mi>α</mi><mrow><mn>1</mn><mo separator="true">,</mo><mn>2</mn></mrow></msub><mo>^</mo></mover><mo separator="true">,</mo><mover accent="true"><msub><mi>α</mi><mrow><mn>1</mn><mo separator="true">,</mo><mn>3</mn></mrow></msub><mo>^</mo></mover><mo separator="true">,</mo><mover accent="true"><msub><mi>α</mi><mrow><mn>1</mn><mo separator="true">,</mo><mn>4</mn></mrow></msub><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat{\alpha_{1,1}},\hat{\alpha_{1,2}},\hat{\alpha_{1,3}},\hat{\alpha_{1,4}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.980548em;vertical-align:-0.286108em;"></span><span class="mord accent"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.301108em;"><span style="top:-2.5500000000000003em;margin-left:-0.0037em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mpunct mtight">,</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;">^</span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord accent"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.301108em;"><span style="top:-2.5500000000000003em;margin-left:-0.0037em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mpunct mtight">,</span><span class="mord mtight">2</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;">^</span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord accent"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.301108em;"><span style="top:-2.5500000000000003em;margin-left:-0.0037em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mpunct mtight">,</span><span class="mord mtight">3</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;">^</span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord accent"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.301108em;"><span style="top:-2.5500000000000003em;margin-left:-0.0037em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mpunct mtight">,</span><span class="mord mtight">4</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;">^</span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span> 再加起来就得到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>b</mi><mn>1</mn></msup></mrow><annotation encoding="application/x-tex">b^1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span></span></span></span></span></span></span></span> ，对于其他的b也是一样的，就这样结束。</p>
+<p>我们再来总的看一下从input <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>I</mi></mrow><annotation encoding="application/x-tex">I</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.07847em;">I</span></span></span></span> 到output <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>O</mi></mrow><annotation encoding="application/x-tex">O</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">O</span></span></span></span> 经历了哪些步骤：</p>
+<p><img src="/images/image-20210110193838829.png" alt="image-20210110193838829" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110193838829.png" class="lozad post-image"></p>
+<h2 id="multi-head-self-attention"><a class="markdownIt-Anchor" href="#multi-head-self-attention"></a> Multi-head Self-attention</h2>
+<p>接下来讲一个Self-attention 的变形 (2 heads as example)</p>
+<p><img src="/images/image-20210110194109441.png" alt="image-20210110194109441" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110194109441.png" class="lozad post-image"></p>
+<p>在这种方法中q、k、v都会有多个，生乘的输出也会有多组，这里以2 head 举例所以画了两个，具体的做法可以是你把 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>q</mi><mi>i</mi></msup></mrow><annotation encoding="application/x-tex">q^i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.019104em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span></span></span></span></span></span></span> 乘一个matrix <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>W</mi><mrow><mi>q</mi><mo separator="true">,</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">W^{q,1}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03588em;">q</span><span class="mpunct mtight">,</span><span class="mord mtight">1</span></span></span></span></span></span></span></span></span></span></span></span> 得到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>q</mi><mrow><mi>i</mi><mo separator="true">,</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">q^{i,1}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.019104em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span><span class="mpunct mtight">,</span><span class="mord mtight">1</span></span></span></span></span></span></span></span></span></span></span></span> ，乘一个matrix <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>W</mi><mrow><mi>q</mi><mo separator="true">,</mo><mn>2</mn></mrow></msup></mrow><annotation encoding="application/x-tex">W^{q,2}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03588em;">q</span><span class="mpunct mtight">,</span><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span></span> 得到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>q</mi><mrow><mi>i</mi><mo separator="true">,</mo><mn>2</mn></mrow></msup></mrow><annotation encoding="application/x-tex">q^{i,2}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.019104em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span><span class="mpunct mtight">,</span><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span></span> 。然后你在做attention 的时候就是每个head 生乘的q、k、v只在本组内做运算，举例来说如上图所示，如果你要计算head 1组的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>b</mi><mrow><mi>i</mi><mo separator="true">,</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">b^{i,1}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.824664em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span><span class="mpunct mtight">,</span><span class="mord mtight">1</span></span></span></span></span></span></span></span></span></span></span></span> 你就用  <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>a</mi><mi>i</mi></msup></mrow><annotation encoding="application/x-tex">a^i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.824664em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">a</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span></span></span></span></span></span></span> 生成的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>q</mi><mrow><mi>i</mi><mo separator="true">,</mo><mn>1</mn></mrow></msup><mo separator="true">,</mo><msup><mi>k</mi><mrow><mi>i</mi><mo separator="true">,</mo><mn>1</mn></mrow></msup><mo separator="true">,</mo><msup><mi>v</mi><mrow><mi>i</mi><mo separator="true">,</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">q^{i,1},k^{i,1},v^{i,1}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.019104em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span><span class="mpunct mtight">,</span><span class="mord mtight">1</span></span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span><span class="mpunct mtight">,</span><span class="mord mtight">1</span></span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">v</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span><span class="mpunct mtight">,</span><span class="mord mtight">1</span></span></span></span></span></span></span></span></span></span></span></span> 和 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>a</mi><mi>j</mi></msup></mrow><annotation encoding="application/x-tex">a^j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.824664em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">a</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.05724em;">j</span></span></span></span></span></span></span></span></span></span></span> 生成的同head组的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>q</mi><mrow><mi>j</mi><mo separator="true">,</mo><mn>1</mn></mrow></msup><mo separator="true">,</mo><msup><mi>k</mi><mrow><mi>j</mi><mo separator="true">,</mo><mn>1</mn></mrow></msup><mo separator="true">,</mo><msup><mi>v</mi><mrow><mi>j</mi><mo separator="true">,</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">q^{j,1},k^{j,1},v^{j,1}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.019104em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.05724em;">j</span><span class="mpunct mtight">,</span><span class="mord mtight">1</span></span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.05724em;">j</span><span class="mpunct mtight">,</span><span class="mord mtight">1</span></span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">v</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.05724em;">j</span><span class="mpunct mtight">,</span><span class="mord mtight">1</span></span></span></span></span></span></span></span></span></span></span></span> 做计算。对于head 2组的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>b</mi><mrow><mi>i</mi><mo separator="true">,</mo><mn>2</mn></mrow></msup></mrow><annotation encoding="application/x-tex">b^{i,2}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.824664em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span><span class="mpunct mtight">,</span><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span></span>：</p>
+<p><img src="/images/image-20210110195617004.png" alt="image-20210110195617004" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110195617004.png" class="lozad post-image"></p>
+<p>输出的两组b会concatenate 起来，如果你不希望b的维度增加，你可以用下图所示的方法做一下降维：</p>
+<p><img src="/images/image-20210110195757986.png" alt="image-20210110195757986" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110195757986.png" class="lozad post-image"></p>
+<p>multi-head的好处是，不同的head 可以考虑不同的事情。比如说有的head 只需要近期的信息，所以只看local 的信息，有的head 需要长时间以前的信息，看global 的信息。</p>
+<h2 id="positional-encoding"><a class="markdownIt-Anchor" href="#positional-encoding"></a> Positional Encoding</h2>
+<p><img src="/images/image-20210110200011111.png" alt="image-20210110200011111" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110200011111.png" class="lozad post-image"></p>
+<p>self-attention layer 它没有考虑input sequence 的顺序，上面我们说了，对于self-attention 的输出可以看任意数量任意位置的input，所以对它来说没有顺序的概念，也就是说你今天输入&quot;我吃饭了&quot;和&quot;饭吃我了&quot;对它来说可能是完全一样的，我们显然不希望是这样。</p>
+<p>Positional Encoding就是要解决这个问题，做法就是在列向量 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>a</mi><mi>i</mi></msup></mrow><annotation encoding="application/x-tex">a^i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.824664em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">a</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span></span></span></span></span></span></span> 上加上一个标识位置的列向量 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>e</mi><mi>i</mi></msup></mrow><annotation encoding="application/x-tex">e^i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.824664em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span></span></span></span></span></span></span> 这个 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>e</mi><mi>i</mi></msup></mrow><annotation encoding="application/x-tex">e^i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.824664em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span></span></span></span></span></span></span> 在原始paper 中是人设定的，位置1就是 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>e</mi><mn>1</mn></msup></mrow><annotation encoding="application/x-tex">e^1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span></span></span></span></span></span></span></span> 位置2就是 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>e</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">e^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span>… 你可能会问为什么是加，为什么不concatenate起来，你把一个向量加上去那原来的信息不就变了吗，concatenate不是会更好吗。</p>
+<p>为了让你理解这个做法，这里老师用另一种方式来讲解，假如说我们在x都后面concatenate 一个表示位置的one-hot向量p，然后再做本来做的那个乘矩阵W转换为a的步骤，如果我们把W拆分成 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>W</mi><mi>I</mi></msup><mo separator="true">,</mo><msup><mi>W</mi><mi>P</mi></msup></mrow><annotation encoding="application/x-tex">W^I,W^P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.035771em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413309999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.07847em;">I</span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413309999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.13889em;">P</span></span></span></span></span></span></span></span></span></span></span> 来看待，根据线性代数的知识，这个公式就可以拆分成上图所示的两两相乘再相加样子， <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>W</mi><mi>I</mi></msup><msup><mi>x</mi><mi>i</mi></msup></mrow><annotation encoding="application/x-tex">W^I x^i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8413309999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413309999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.07847em;">I</span></span></span></span></span></span></span></span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span></span></span></span></span></span></span> 就是 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>a</mi><mi>i</mi></msup></mrow><annotation encoding="application/x-tex">a^i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.824664em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">a</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span></span></span></span></span></span></span> ， <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>W</mi><mi>P</mi></msup><msup><mi>p</mi><mi>i</mi></msup></mrow><annotation encoding="application/x-tex">W^P p^i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.035771em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413309999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.13889em;">P</span></span></span></span></span></span></span></span><span class="mord"><span class="mord mathdefault">p</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span></span></span></span></span></span></span> 就是 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>e</mi><mi>i</mi></msup></mrow><annotation encoding="application/x-tex">e^i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.824664em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span></span></span></span></span></span></span> 。这样是不是就好理解了。</p>
+<p>让人难以理解的是你当然可以learn <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>W</mi><mi>P</mi></msup></mrow><annotation encoding="application/x-tex">W^P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8413309999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413309999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.13889em;">P</span></span></span></span></span></span></span></span></span></span></span> ，在self-attention 的paper 中有提到以前用CNN做seq2seq model 的时候就有人试过learn <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>W</mi><mi>P</mi></msup></mrow><annotation encoding="application/x-tex">W^P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8413309999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413309999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.13889em;">P</span></span></span></span></span></span></span></span></span></span></span> 了，结果没有更好，他们的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>W</mi><mi>P</mi></msup></mrow><annotation encoding="application/x-tex">W^P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8413309999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413309999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.13889em;">P</span></span></span></span></span></span></span></span></span></span></span> 是用一个奇怪的公式产生出来的，它就长这个样子：</p>
+<p><img src="/images/image-20210110202053669.png" alt="image-20210110202053669" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110202053669.png" class="lozad post-image"></p>
+<h2 id="seq2seq-with-attention"><a class="markdownIt-Anchor" href="#seq2seq-with-attention"></a> Seq2seq with Attention</h2>
+<p>上面讲的是在Seq2seq model 中我们可以用self-attention 取代RNN ，接下来我们就来讲在Seq2seq model 中self-attention 是怎么应用的。</p>
+<p><img src="/images/image-20210110202135717.png" alt="image-20210110202135717" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110202135717.png" class="lozad post-image"></p>
+<blockquote>
+<p>Review: <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=ZjfjPzXw6og&amp;feature=youtu.be">https://www.youtube.com/watch?v=ZjfjPzXw6og&amp;feature=youtu.be</a></p>
+</blockquote>
+<p><img src="/images/transform20fps.gif" alt="transform20fps.gif" / srcset="/images/LoadingImage.gif" data-src="/images/transform20fps.gif" class="lozad post-image"></p>
+<blockquote>
+<p>source:<a target="_blank" rel="noopener" href="https://ai.googleblog.com/2017/08/transformer-novel-neural-network.html">https://ai.googleblog.com/2017/08/transformer-novel-neural-network.html</a></p>
+</blockquote>
+<p>这是google 用self-attention 做的翻译模型的gif演示。首先每个step 会把input sequence 两两之间做attention，然后弹出一排一排的小点是告诉你这些step 是平行运算的，每一层都做self-attention，接着做Decoding ，会对input 的encoder做attention，在decode 第二个word 的时候它就不只对input 做attention 还会对之前产生的东西做attention 。</p>
+<h2 id="transformer-2"><a class="markdownIt-Anchor" href="#transformer-2"></a> Transformer</h2>
+<p><img src="/images/image-20210110203153830.png" alt="image-20210110203153830" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110203153830.png" class="lozad post-image"></p>
+<p>上图是一个seq2seq model ，做的任务是中英互译，左半部是encoder 右半部是decoder，我们以中翻英为例，输入&quot;机器学习&quot;，encoder 进行encoding 然后输入给deocder ，decoder 吃进去产生输出，machine 然后把machine 当作输入再吃进去，在产生learning ，如此运行知道输出句末标志结束。</p>
+<p>下面来介绍一下self-attention 在这个模型中的具体运作方式：</p>
+<p><img src="/images/image-20210110204322830.png" alt="image-20210110204322830" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110204322830.png" class="lozad post-image"></p>
+<blockquote>
+<p>Layer Norm: <a target="_blank" rel="noopener" href="https://arxiv.org/abs/1607.06450">https://arxiv.org/abs/1607.06450</a></p>
+<p>Batch Norm: <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=BZh1ltr5Rkg">https://www.youtube.com/watch?v=BZh1ltr5Rkg</a></p>
+</blockquote>
+<p>先看encoder，input 经过embedding 和 positional encoding 以后进入灰色的block，这部分会重复N次。在这个灰色的block中，先是一个multi-head attention layer；下一个layer是Add&amp;Norm，意思是说把multi-head attention layer的input和output加起来，再把得到的<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>b</mi><mo mathvariant="normal">′</mo></msup></mrow><annotation encoding="application/x-tex">b&#x27;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.751892em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.751892em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span></span></span></span>做Layer Normalization；（如果要进一步了解Layer Norm可以参考上述文献）</p>
+<p>我们之前讲过Batch Norm，Batch Norm是说我们希望一个Batch的data中每个维度的mean=0，variance=1；Layer Norm是不需要考虑Batch 的，举例来说给一笔Data 我们希望它所有维度的mean=0，variance=1。Layer Norm一般会搭配RNN使用，transformer 很像RNN，这可能就是Layer Norm用在这里的原因。</p>
+<p>回到decoder，再往后，就如图说是，进入一个前馈神经网络，然后在跟一个Add&amp;Norm。</p>
+<p>再看Deocder，Deocder的输入是前一个step 产生的output，前面的处理都是一样的，灰色的block会重复N次，其中上来就是一个Masked Multi-head Attention，这个Masked意思是在做self-attention的时候decoder 只会attend已经产生的sequence，这也是很合理嘛，毕竟还没有产生出来的东西你怎么做self-attention。接着是一个Multi-head Attention 这个layer attend之前encoder 的输出，接着还有一个Add&amp;Norm，再后面的东西也是和encoder 一样的不再赘述。</p>
+<h2 id="attention-visualization"><a class="markdownIt-Anchor" href="#attention-visualization"></a> Attention Visualization</h2>
+<p><img src="/images/image-20210110210115664.png" alt="image-20210110210115664" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110210115664.png" class="lozad post-image"></p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1706.03762">https://arxiv.org/abs/1706.03762</a></p>
+</blockquote>
+<p>这是google的paper中最终版本得到的结果，所有单词两两之间都会有attention，颜色越深表示attention的weight越大。</p>
+<p><img src="/images/image-20210110210129940.png" alt="image-20210110210129940" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110210129940.png" class="lozad post-image"></p>
+<blockquote>
+<p>The encoder self-attention distribution for the word “it” from the 5th to the 6th layer of a Transformer trained on English to French translation (one of eight attention heads).</p>
+<p><a target="_blank" rel="noopener" href="https://ai.googleblog.com/2017/08/transformer-novel-neural-network.html">https://ai.googleblog.com/2017/08/transformer-novel-neural-network.html</a></p>
+</blockquote>
+<p>上图是这个意思，左边输入的句子是这只动物没走过街道，因为它太累了，机器学到了it指代的是animal，这两个词之间的attention很深，而当我们把之后的tired换成wide，句子变成这只动物没走过街道，因为它太宽了，机器就学到it是指代街道。amazing</p>
+<h3 id="multi-head-attention"><a class="markdownIt-Anchor" href="#multi-head-attention"></a> Multi-head Attention</h3>
+<p><img src="/images/image-20210110210212066.png" alt="image-20210110210212066" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110210212066.png" class="lozad post-image"></p>
+<p>上如图所示是两组q、k、v，也就是两个head 做出的结果，显然上面就偏向于attend全局信息，下面就偏向于attend局部信息。</p>
+<h2 id="example-appplication"><a class="markdownIt-Anchor" href="#example-appplication"></a> Example Appplication</h2>
+<p><img src="/images/image-20210110211103100.png" alt="image-20210110211103100" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110211103100.png" class="lozad post-image"></p>
+<p>Transformer 可以用在哪里呢？基本上原来用seq2seq model 做的任务都可以换成transformer，现在这些任务基本上已经被洗过一轮了，都被做干了。</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1801.10198">https://arxiv.org/abs/1801.10198</a></p>
+</blockquote>
+<p>比较惊人的是做Summarizer，这篇文章是google 做的，他们的input是一堆文章，然后写出这堆文章的总结和摘要，要求有wiki的风格，所以输出也是一篇文章。比如说你搜索台湾大学，把google出来的文章都作为input，机器就会写一个台湾大学的wiki。这个任务的训练资料是很多的，出现transformer之前，大概是做不起来的。</p>
+<h3 id="universal-transformer"><a class="markdownIt-Anchor" href="#universal-transformer"></a> Universal Transformer</h3>
+<p><img src="/images/image-20210110211555314.png" alt="image-20210110211555314" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110211555314.png" class="lozad post-image"></p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://ai.googleblog.com/2018/08/moving-beyond-translation-with.html">https://ai.googleblog.com/2018/08/moving-beyond-translation-with.html</a></p>
+</blockquote>
+<p>出现Transformer后提出的，时间上换成transformer，纵向深度上仍然用RNN，具体细节可以参考上述链接。</p>
+<h3 id="self-attention-gan"><a class="markdownIt-Anchor" href="#self-attention-gan"></a> Self-Attention GAN</h3>
+<p><img src="/images/image-20210110211717181.png" alt="image-20210110211717181" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210110211717181.png" class="lozad post-image"></p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1805.08318">https://arxiv.org/abs/1805.08318</a></p>
+</blockquote>
+<p>transformer 最早提出来是用在文字上，现在它也可以被用在影像上，举例来说，有一个Self-attention GAN ，你在处理影像的时候可以让每个pixel 都去attention 其他的pixel ，所以你在处理影像的时候可以考虑到比较global 的信息。</p>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-info copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/about">Ch3nYe</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/Transformer/">https://ch3nye.top/Transformer/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/区块链技术原理笔记/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一篇</div>
+        
+        <div class="nav-title">区块链技术原理笔记 </div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+  <div class="nav-item-next">
+    <a href="/符号执行技术笔记/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">符号执行技术笔记 </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="lv-container" data-id="city" data-uid="MTAyMC80NjQ0Ny8yMjk1OA==">
+    <script>
+      (function (d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') {
+          return;
+        }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.defer = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  </div>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#transformer"><span class="toc-text"> Transformer</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#sequence"><span class="toc-text"> Sequence</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#self-attention"><span class="toc-text"> Self Attention</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#why-could-speed-up"><span class="toc-text"> Why Could Speed Up</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#multi-head-self-attention"><span class="toc-text"> Multi-head Self-attention</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#positional-encoding"><span class="toc-text"> Positional Encoding</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#seq2seq-with-attention"><span class="toc-text"> Seq2seq with Attention</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#transformer-2"><span class="toc-text"> Transformer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#attention-visualization"><span class="toc-text"> Attention Visualization</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#multi-head-attention"><span class="toc-text"> Multi-head Attention</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#example-appplication"><span class="toc-text"> Example Appplication</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#universal-transformer"><span class="toc-text"> Universal Transformer</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#self-attention-gan"><span class="toc-text"> Self-Attention GAN</span></a></li></ol></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/images/logo.png" class="author-img">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>20</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>4</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>19</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:sud0su@163.com">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#transformer"><span class="toc-text"> Transformer</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#sequence"><span class="toc-text"> Sequence</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#self-attention"><span class="toc-text"> Self Attention</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#why-could-speed-up"><span class="toc-text"> Why Could Speed Up</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#multi-head-self-attention"><span class="toc-text"> Multi-head Self-attention</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#positional-encoding"><span class="toc-text"> Positional Encoding</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#seq2seq-with-attention"><span class="toc-text"> Seq2seq with Attention</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#transformer-2"><span class="toc-text"> Transformer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#attention-visualization"><span class="toc-text"> Attention Visualization</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#multi-head-attention"><span class="toc-text"> Multi-head Attention</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#example-appplication"><span class="toc-text"> Example Appplication</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#universal-transformer"><span class="toc-text"> Universal Transformer</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#self-attention-gan"><span class="toc-text"> Self-Attention GAN</span></a></li></ol></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/备忘">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/李宏毅机器学习笔记">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">14</span>
+        </div>
+      </a>
+    
+      <a href="/categories/论文阅读">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/笔记">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
+    
+    <a href="\tags\note" title="note"><div class="tags-list-item">note</div></a>
+    
+    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
+    
+    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="\tags\学习" title="学习"><div class="tags-list-item">学习</div></a>
+    
+    <a href="\tags\总结" title="总结"><div class="tags-list-item">总结</div></a>
+    
+    <a href="\tags\笔记" title="笔记"><div class="tags-list-item">笔记</div></a>
+    
+    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
+    
+    <a href="\tags\污点分析" title="污点分析"><div class="tags-list-item">污点分析</div></a>
+    
+    <a href="\tags\比特币" title="比特币"><div class="tags-list-item">比特币</div></a>
+    
+    <a href="\tags\区块链" title="区块链"><div class="tags-list-item">区块链</div></a>
+    
+    <a href="\tags\符号执行" title="符号执行"><div class="tags-list-item">符号执行</div></a>
+    
+    <a href="\tags\Adversarial-Attack" title="Adversarial-Attack"><div class="tags-list-item">Adversarial-Attack</div></a>
+    
+    <a href="\tags\漏洞挖掘" title="漏洞挖掘"><div class="tags-list-item">漏洞挖掘</div></a>
+    
+    <a href="\tags\System-Service" title="System-Service"><div class="tags-list-item">System-Service</div></a>
+    
+    <a href="\tags\Fuzzing" title="Fuzzing"><div class="tags-list-item">Fuzzing</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#transformer"><span class="toc-text"> Transformer</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#sequence"><span class="toc-text"> Sequence</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#self-attention"><span class="toc-text"> Self Attention</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#why-could-speed-up"><span class="toc-text"> Why Could Speed Up</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#multi-head-self-attention"><span class="toc-text"> Multi-head Self-attention</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#positional-encoding"><span class="toc-text"> Positional Encoding</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#seq2seq-with-attention"><span class="toc-text"> Seq2seq with Attention</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#transformer-2"><span class="toc-text"> Transformer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#attention-visualization"><span class="toc-text"> Attention Visualization</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#multi-head-attention"><span class="toc-text"> Multi-head Attention</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#example-appplication"><span class="toc-text"> Example Appplication</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#universal-transformer"><span class="toc-text"> Universal Transformer</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#self-attention-gan"><span class="toc-text"> Self-Attention GAN</span></a></li></ol></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-20</div>
+        <a href="/Note-FANS-Fuzzing-Android-Native-System-Services/"><div class="recent-posts-item-content">Note《FANS Fuzzing Android Native System Services via Automated Interface Analysis》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-16</div>
+        <a href="/ELMO-BERT-GPT/"><div class="recent-posts-item-content">ELMO, BERT, GPT</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-15</div>
+        <a href="/Note-FIRMSCOPE-Automatic-Uncovering-of-Privilege-Escala/"><div class="recent-posts-item-content">Note《FIRMSCOPE Automatic Uncovering of Privilege-Escala Vulnerabilities in Pre-Installed Apps in Android Firmware》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-14</div>
+        <a href="/Android流量抓包环境配置/"><div class="recent-posts-item-content">Android流量抓包环境配置</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2021
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">ch3nye's blog </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('data-fslightbox', 'gallery');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+    }
+    refreshFsLightbox();
+  }
+</script>
+<script>loadScript("//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-WHGL11014T');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "G-WHGL11014T", googleAnalytics)</script>
+  
+</body>
+
+</html>

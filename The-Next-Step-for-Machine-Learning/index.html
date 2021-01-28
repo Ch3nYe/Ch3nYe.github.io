@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="网络安全 Android ML CTF">
+  <link rel="icon" href="/images/logo.png">
+  <title>The Next Step for Machine Learning</title>
+  
+  
+  <meta property="og:title" content="The Next Step for Machine Learning">
+  
+  
+  <meta property="og:url" content="https://ch3nye.top/The-Next-Step-for-Machine-Learning/index.html">
+  
+  
+  <meta property="og:img" content="/images/logo.png">
+  
+  
+  <meta property="og:img" content="网络安全 Android ML CTF">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2020-10-29">
+  <meta property="og:article:modified_time" content="2021-01-18">
+  <meta property="og:article:author" content="Ch3nYe">
+  
+  
+  <meta property="og:article:tag" content="ML">
+  
+  <meta property="og:article:tag" content="note">
+  
+  <meta property="og:article:tag" content="Next-Step-of-ML">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js" as="script">
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn-city.livere.com/js/embed.dist.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+  
+  
+  
+  <link href="/js/lib/prism/prism-tomorrow.min.css" rel="stylesheet" data-prism="prism-tomorrow">
+  
+  
+  
+<link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+
+  
+  
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/images/logo.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/links" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      The Next Step for Machine Learning
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2020-10-28T16:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2020-10-29</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/李宏毅机器学习笔记/" class="post-meta-link">李宏毅机器学习笔记</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>2k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/ML/" class="post-meta-link">ML</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/note/" class="post-meta-link">note</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Next-Step-of-ML/" class="post-meta-link">Next-Step-of-ML</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="the-next-step-for-machine-learning"><a class="markdownIt-Anchor" href="#the-next-step-for-machine-learning"></a> The Next Step for Machine Learning</h1>
+<p>现在我们要讲一些新的技术，这些技术目前（2019年）被看作是机器学习的下一步，也就是说要让机器学习的技术真正落地到现实生活还需要哪些技术，还有哪些难题和障碍是需要我们解决的。</p>
+<h2 id="0x1-机器能不能知道我不知道-anomaly-detection"><a class="markdownIt-Anchor" href="#0x1-机器能不能知道我不知道-anomaly-detection"></a> 0x1 机器能不能知道“我不知道” Anomaly Detection</h2>
+<p>这个问题听起来有点哲学哦，为什么要研究这个问题呢，举个栗子：你可能训练一个识别动物的model放到网络上供大家使用，但是你以为网友只会给你上传动物的图片吗，搞不好他就给你传个凉宫春日的图片😂：</p>
+<p><img src="/images/chapter40_1.png" alt="40_1" / srcset="/images/LoadingImage.gif" data-src="/images/chapter40_1.png" class="lozad post-image"></p>
+<p>这种情况下，机器需要有能力说出：这个是我不知道的东西。机器会回答这是我不知道的，这样的技术就是Anomaly Detection。</p>
+<h2 id="0x2-说出为什么我知道-explanation-ml"><a class="markdownIt-Anchor" href="#0x2-说出为什么我知道-explanation-ml"></a> 0x2 说出为什么“我知道” Explanation ML</h2>
+<p>今天我们看到各式各样机器学习非常强大的力量，感觉机器好像非常的聪明。但这有可能是这样一个故事，过去有一只马叫做汉斯，它非常的聪明，聪明到甚至可以做数学。举例来说：你跟它讲 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msqrt><mn>9</mn></msqrt></mrow><annotation encoding="application/x-tex">\sqrt{9}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.04em;vertical-align:-0.13278em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.90722em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord">9</span></span></span><span style="top:-2.86722em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg width='400em' height='1.08em' viewBox='0 0 400000 1080' preserveAspectRatio='xMinYMin slice'><path d='M95,702c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,
+-10,-9.5,-14c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54c44.2,-33.3,65.8,
+-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10s173,378,173,378c0.7,0,
+35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429c69,-144,104.5,-217.7,106.5,
+-221c5.3,-9.3,12,-14,20,-14H400000v40H845.2724s-225.272,467,-225.272,467
+s-235,486,-235,486c-2.7,4.7,-9,7,-19,7c-6,0,-10,-1,-12,-3s-194,-422,-194,-422
+s-65,47,-65,47z M834 80H400000v40H845z'/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.13278em;"><span></span></span></span></span></span></span></span></span> 是多少，它就会敲它的马蹄三次，大家欢呼道，这是一只会算数学的马。可以解决根号的问题，大家都觉得非常的惊叹。后面就有人怀疑说：难道汉斯真的这么聪明吗？在没有任何的观众的情况下，让汉斯自己去解决一个数学都是题目，这时候它就会一直踏它的马蹄，一直的不停。这是为什么呢？因为它之前学会了观察旁观人的反应，它知道什么时候该停下来。它可能不知道自己在干什么，它也不知道数学是什么，但是踏对了正确的题目就有萝卜吃，它只是看了旁边人的反应得到了正确的答案。</p>
+<p>今天我们看到种种机器学习的成果，难道机器真的有那么的聪明吗？会不会它会汉斯一样用了奇怪的方法来得到答案的。</p>
+<p><img src="/images/chapter40_2.png" alt="40_2" / srcset="/images/LoadingImage.gif" data-src="/images/chapter40_2.png" class="lozad post-image"></p>
+<p>这件事其实是有可能发生的，举例来说，有人做了一个马的辨识器，两个model的辨识率都很高。然后分析，机器是根据什么来标识马的。</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="http://iphome.hhi.de/samek/pdf/MonDSP18.pdf">http://iphome.hhi.de/samek/pdf/MonDSP18.pdf</a></p>
+</blockquote>
+<p><img src="/images/image-20201102185240553.png" alt="image-20201102185240553" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201102185240553.png" class="lozad post-image"></p>
+<p><img src="/images/image-20201102185544373.png" alt="image-20201102185544373" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201102185544373.png" class="lozad post-image"></p>
+<p>第一个DNN模型是看到图上黄红部分正常分析出有马，看上去挺正常的；第二个FV模型是看到下面红色部分，辨识出有马，它只是看到左下角的英文，标识出马，并没有学到马真正的样子，其实这些图片都是来自一个网站都有相同的水印。</p>
+<p>我们不知道AI有没有那么聪明，我们需要一些技术，让AI不只是做出决定，还要让它告诉我们说它为什么做出这样的决定。</p>
+<h2 id="0x3-机器的错觉"><a class="markdownIt-Anchor" href="#0x3-机器的错觉"></a> 0x3 机器的错觉</h2>
+<p>我们知道说，人是有错觉的，比如下面两个圈圈，你觉得哪个圈圈颜色比较深？</p>
+<p><img src="/images/image-20201102190820546.png" alt="image-20201102190820546" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201102190820546.png" class="lozad post-image"></p>
+<p>你可能会觉得左边比较深，但你大概猜到我在搞你，会说右边更深。</p>
+<p>但是其实：</p>
+<p><img src="/images/image-20201102190731855.png" alt="image-20201102190731855" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201102190731855.png" class="lozad post-image"></p>
+<p>确实左边的圈圈颜色比较深，这是一个计中计🤣</p>
+<p>机器跟人一样，也很容易被骗，我们可以加一些噪声，让机器本来以为是的后来判断为不是。如本来判断出来是熊喵，加了噪声，就判断错误了。这种就叫做 Adversarial Attack。你甚至可以想象相同的技术应用在自动驾驶领域，有人在交通标识牌上贴一个贴纸，你的自动驾驶汽车就加速撞车，这显然是不可接受的，所以我们要想办法防御这种攻击，具体的后面Attack and Defense一节中会讲到。</p>
+<p><img src="/images/image-20201102191203140.png" alt="image-20201102191203140" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201102191203140.png" class="lozad post-image"></p>
+<h2 id="0x4-终身学习-life-long-learning"><a class="markdownIt-Anchor" href="#0x4-终身学习-life-long-learning"></a> 0x4 终身学习 Life-long Learning</h2>
+<p>我们希望机器能终生学习。人就是终生学习的，上学期修了线性代数，这学期学机器学习，学好线性代数，机器学习学得更容易。机器能不能跟人一样也做终生学习呢？现在我们一般只让一个模型学习一个任务，比如Alpha Go就只学习下围棋，Alpha star就是玩星际2，它们并不是同一个模型。</p>
+<p><img src="/images/chapter40_6.png" alt="40_6" / srcset="/images/LoadingImage.gif" data-src="/images/chapter40_6.png" class="lozad post-image"></p>
+<p>今天我们只让一个模型学习一个人任务，显然会存在如下问题</p>
+<ul>
+<li>模型的数量无限增长</li>
+<li>之前学到的技能对之后的学习没有帮助</li>
+</ul>
+<p>为什么我们今天不让机器去终生学习呢？比如我们先让机器学下围棋，然后再让它学玩星际2，实际上，当机器学完星际2之后它就不会下围棋了。这个现象叫做Catastrophic Forgetting（灾难性忘记？）。如果想让机器做终身学习，还尚在解决的问题。</p>
+<h2 id="0x5-学习如何学习-meta-learning-learn-to-learn"><a class="markdownIt-Anchor" href="#0x5-学习如何学习-meta-learning-learn-to-learn"></a> 0x5 学习如何学习 Meta-learning (Learn to Learn)</h2>
+<p>以前我们设计一个机器学习算法，让机器能够学习；现在，我们能不能写出一个算法实现一个模型，让它能自己设计算法编写模型程序实现具有学习能力的模型。</p>
+<p><img src="/images/image-20201102192140394.png" alt="image-20201102192140394" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201102192140394.png" class="lozad post-image"></p>
+<h2 id="0x6-一定要有很多训练数据吗"><a class="markdownIt-Anchor" href="#0x6-一定要有很多训练数据吗"></a> 0x6 一定要有很多训练数据吗</h2>
+<p>在现实生活中有一些任务或者某些情境下只能获取少量的样本，甚至没有样本，比如受限于资金限制等情况，这时候我们要么把机器学习厚重的教科书砸到boss脸上辞职，要么试试下面的方法：</p>
+<ul>
+<li>Few-shot learning 让机器看少量的资料</li>
+<li>Zero-shot learning 不给机器任何资料，只告诉机器物品的特征描述，然后机器根据描述进行判断</li>
+</ul>
+<h2 id="0x7-增强学习-reinforcement-learning"><a class="markdownIt-Anchor" href="#0x7-增强学习-reinforcement-learning"></a> 0x7 增强学习 Reinforcement Learning</h2>
+<p>Reinforcement Learning 真的有这么强吗？当你用Reinforcement Learning 去玩一些的游戏，Reinforcement Learning也许确实可以跟人做到差不多，但是需要很长时间才能达到，如下图机器需要900多个小时才能达到人类2个小时能达到的效果。机器感觉就是一个天资不佳却勤奋不解的笨小孩，他需要非常久的时间非常多的练习才能和人达到相同的水平，那Reinforcement Learning为什么学得这么慢，有没有办法让它快一点，就是我们要考虑的问题。</p>
+<p><img src="/images/image-20201102192549163.png" alt="image-20201102192549163" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201102192549163.png" class="lozad post-image"></p>
+<blockquote>
+<p>图片来自：<a target="_blank" rel="noopener" href="http://web.stanford.edu/class/psych209/Readings/LakeEtAlBBS.pdf">http://web.stanford.edu/class/psych209/Readings/LakeEtAlBBS.pdf</a></p>
+</blockquote>
+<h2 id="0x8-神经网络压缩-network-compression"><a class="markdownIt-Anchor" href="#0x8-神经网络压缩-network-compression"></a> 0x8 神经网络压缩 Network Compression</h2>
+<p>如果我们要把机器学习的模型应用到现实生活中，由于设备的运算和存储能力有限，带来的问题就是我们能不能把Network 的架构缩小，但让它维持同样的能力。</p>
+<ul>
+<li>
+<p>把一个大的神经网络缩小，减掉多余的神经元</p>
+<p><img src="/images/image-20201102193225742.png" alt="image-20201102193225742" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201102193225742.png" class="lozad post-image"></p>
+</li>
+<li>
+<p>参数二值化</p>
+<p>都变成“+1”和“-1”。如果是连续数值，就需要大量的运算和内存，如果把所有参数进行二值化，那么运算起来就快，内存也占用少。</p>
+</li>
+</ul>
+<h2 id="0x9-机器学习的谎言"><a class="markdownIt-Anchor" href="#0x9-机器学习的谎言"></a> 0x9 机器学习的谎言</h2>
+<p>今天我们在训练的时候，假设训练和测试的数据分布是一样的或者至少非常相似，但是实际上在真实应用里面，这就是一个谎言。</p>
+<p><img src="/images/image-20201102193312777.png" alt="image-20201102193312777" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201102193312777.png" class="lozad post-image"></p>
+<p>如果我们做手写数字辨识，在实验室情况下，训练资料和测试资料非常相似，可能会很容易达到99.5%。但是实际中，可能图片有背景，正确率变成57.5%，直接烂掉了。</p>
+<p><img src="/images/image-20201102193352175.png" alt="image-20201102193352175" / srcset="/images/LoadingImage.gif" data-src="/images/image-20201102193352175.png" class="lozad post-image"></p>
+<p>那么怎么解决机器在训练资料和测试资料不同的场景呢？现有可以参考的技术有Unsupervised Domain Adaptation，不在展开。</p>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-info copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/about">Ch3nYe</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/The-Next-Step-for-Machine-Learning/">https://ch3nye.top/The-Next-Step-for-Machine-Learning/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/Attack-and-Defense/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一篇</div>
+        
+        <div class="nav-title">Attack and Defense </div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="lv-container" data-id="city" data-uid="MTAyMC80NjQ0Ny8yMjk1OA==">
+    <script>
+      (function (d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') {
+          return;
+        }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.defer = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  </div>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#the-next-step-for-machine-learning"><span class="toc-text"> The Next Step for Machine Learning</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-%E6%9C%BA%E5%99%A8%E8%83%BD%E4%B8%8D%E8%83%BD%E7%9F%A5%E9%81%93%E6%88%91%E4%B8%8D%E7%9F%A5%E9%81%93-anomaly-detection"><span class="toc-text"> 0x1 机器能不能知道“我不知道” Anomaly Detection</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-%E8%AF%B4%E5%87%BA%E4%B8%BA%E4%BB%80%E4%B9%88%E6%88%91%E7%9F%A5%E9%81%93-explanation-ml"><span class="toc-text"> 0x2 说出为什么“我知道” Explanation ML</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x3-%E6%9C%BA%E5%99%A8%E7%9A%84%E9%94%99%E8%A7%89"><span class="toc-text"> 0x3 机器的错觉</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x4-%E7%BB%88%E8%BA%AB%E5%AD%A6%E4%B9%A0-life-long-learning"><span class="toc-text"> 0x4 终身学习 Life-long Learning</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x5-%E5%AD%A6%E4%B9%A0%E5%A6%82%E4%BD%95%E5%AD%A6%E4%B9%A0-meta-learning-learn-to-learn"><span class="toc-text"> 0x5 学习如何学习 Meta-learning (Learn to Learn)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x6-%E4%B8%80%E5%AE%9A%E8%A6%81%E6%9C%89%E5%BE%88%E5%A4%9A%E8%AE%AD%E7%BB%83%E6%95%B0%E6%8D%AE%E5%90%97"><span class="toc-text"> 0x6 一定要有很多训练数据吗</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x7-%E5%A2%9E%E5%BC%BA%E5%AD%A6%E4%B9%A0-reinforcement-learning"><span class="toc-text"> 0x7 增强学习 Reinforcement Learning</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x8-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%8E%8B%E7%BC%A9-network-compression"><span class="toc-text"> 0x8 神经网络压缩 Network Compression</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x9-%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%9A%84%E8%B0%8E%E8%A8%80"><span class="toc-text"> 0x9 机器学习的谎言</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/images/logo.png" class="author-img">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>20</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>4</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>19</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:sud0su@163.com">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#the-next-step-for-machine-learning"><span class="toc-text"> The Next Step for Machine Learning</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-%E6%9C%BA%E5%99%A8%E8%83%BD%E4%B8%8D%E8%83%BD%E7%9F%A5%E9%81%93%E6%88%91%E4%B8%8D%E7%9F%A5%E9%81%93-anomaly-detection"><span class="toc-text"> 0x1 机器能不能知道“我不知道” Anomaly Detection</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-%E8%AF%B4%E5%87%BA%E4%B8%BA%E4%BB%80%E4%B9%88%E6%88%91%E7%9F%A5%E9%81%93-explanation-ml"><span class="toc-text"> 0x2 说出为什么“我知道” Explanation ML</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x3-%E6%9C%BA%E5%99%A8%E7%9A%84%E9%94%99%E8%A7%89"><span class="toc-text"> 0x3 机器的错觉</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x4-%E7%BB%88%E8%BA%AB%E5%AD%A6%E4%B9%A0-life-long-learning"><span class="toc-text"> 0x4 终身学习 Life-long Learning</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x5-%E5%AD%A6%E4%B9%A0%E5%A6%82%E4%BD%95%E5%AD%A6%E4%B9%A0-meta-learning-learn-to-learn"><span class="toc-text"> 0x5 学习如何学习 Meta-learning (Learn to Learn)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x6-%E4%B8%80%E5%AE%9A%E8%A6%81%E6%9C%89%E5%BE%88%E5%A4%9A%E8%AE%AD%E7%BB%83%E6%95%B0%E6%8D%AE%E5%90%97"><span class="toc-text"> 0x6 一定要有很多训练数据吗</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x7-%E5%A2%9E%E5%BC%BA%E5%AD%A6%E4%B9%A0-reinforcement-learning"><span class="toc-text"> 0x7 增强学习 Reinforcement Learning</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x8-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%8E%8B%E7%BC%A9-network-compression"><span class="toc-text"> 0x8 神经网络压缩 Network Compression</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x9-%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%9A%84%E8%B0%8E%E8%A8%80"><span class="toc-text"> 0x9 机器学习的谎言</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/备忘">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/李宏毅机器学习笔记">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">14</span>
+        </div>
+      </a>
+    
+      <a href="/categories/论文阅读">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/笔记">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
+    
+    <a href="\tags\note" title="note"><div class="tags-list-item">note</div></a>
+    
+    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
+    
+    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="\tags\学习" title="学习"><div class="tags-list-item">学习</div></a>
+    
+    <a href="\tags\总结" title="总结"><div class="tags-list-item">总结</div></a>
+    
+    <a href="\tags\笔记" title="笔记"><div class="tags-list-item">笔记</div></a>
+    
+    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
+    
+    <a href="\tags\污点分析" title="污点分析"><div class="tags-list-item">污点分析</div></a>
+    
+    <a href="\tags\比特币" title="比特币"><div class="tags-list-item">比特币</div></a>
+    
+    <a href="\tags\区块链" title="区块链"><div class="tags-list-item">区块链</div></a>
+    
+    <a href="\tags\符号执行" title="符号执行"><div class="tags-list-item">符号执行</div></a>
+    
+    <a href="\tags\Adversarial-Attack" title="Adversarial-Attack"><div class="tags-list-item">Adversarial-Attack</div></a>
+    
+    <a href="\tags\漏洞挖掘" title="漏洞挖掘"><div class="tags-list-item">漏洞挖掘</div></a>
+    
+    <a href="\tags\System-Service" title="System-Service"><div class="tags-list-item">System-Service</div></a>
+    
+    <a href="\tags\Fuzzing" title="Fuzzing"><div class="tags-list-item">Fuzzing</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#the-next-step-for-machine-learning"><span class="toc-text"> The Next Step for Machine Learning</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-%E6%9C%BA%E5%99%A8%E8%83%BD%E4%B8%8D%E8%83%BD%E7%9F%A5%E9%81%93%E6%88%91%E4%B8%8D%E7%9F%A5%E9%81%93-anomaly-detection"><span class="toc-text"> 0x1 机器能不能知道“我不知道” Anomaly Detection</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-%E8%AF%B4%E5%87%BA%E4%B8%BA%E4%BB%80%E4%B9%88%E6%88%91%E7%9F%A5%E9%81%93-explanation-ml"><span class="toc-text"> 0x2 说出为什么“我知道” Explanation ML</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x3-%E6%9C%BA%E5%99%A8%E7%9A%84%E9%94%99%E8%A7%89"><span class="toc-text"> 0x3 机器的错觉</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x4-%E7%BB%88%E8%BA%AB%E5%AD%A6%E4%B9%A0-life-long-learning"><span class="toc-text"> 0x4 终身学习 Life-long Learning</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x5-%E5%AD%A6%E4%B9%A0%E5%A6%82%E4%BD%95%E5%AD%A6%E4%B9%A0-meta-learning-learn-to-learn"><span class="toc-text"> 0x5 学习如何学习 Meta-learning (Learn to Learn)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x6-%E4%B8%80%E5%AE%9A%E8%A6%81%E6%9C%89%E5%BE%88%E5%A4%9A%E8%AE%AD%E7%BB%83%E6%95%B0%E6%8D%AE%E5%90%97"><span class="toc-text"> 0x6 一定要有很多训练数据吗</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x7-%E5%A2%9E%E5%BC%BA%E5%AD%A6%E4%B9%A0-reinforcement-learning"><span class="toc-text"> 0x7 增强学习 Reinforcement Learning</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x8-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%8E%8B%E7%BC%A9-network-compression"><span class="toc-text"> 0x8 神经网络压缩 Network Compression</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x9-%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%9A%84%E8%B0%8E%E8%A8%80"><span class="toc-text"> 0x9 机器学习的谎言</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-20</div>
+        <a href="/Note-FANS-Fuzzing-Android-Native-System-Services/"><div class="recent-posts-item-content">Note《FANS Fuzzing Android Native System Services via Automated Interface Analysis》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-16</div>
+        <a href="/ELMO-BERT-GPT/"><div class="recent-posts-item-content">ELMO, BERT, GPT</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-15</div>
+        <a href="/Note-FIRMSCOPE-Automatic-Uncovering-of-Privilege-Escala/"><div class="recent-posts-item-content">Note《FIRMSCOPE Automatic Uncovering of Privilege-Escala Vulnerabilities in Pre-Installed Apps in Android Firmware》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-14</div>
+        <a href="/Android流量抓包环境配置/"><div class="recent-posts-item-content">Android流量抓包环境配置</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2021
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">ch3nye's blog </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('data-fslightbox', 'gallery');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+    }
+    refreshFsLightbox();
+  }
+</script>
+<script>loadScript("//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-WHGL11014T');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "G-WHGL11014T", googleAnalytics)</script>
+  
+</body>
+
+</html>
