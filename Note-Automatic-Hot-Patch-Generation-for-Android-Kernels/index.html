@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="网络安全 Android ML CTF">
+  <link rel="icon" href="/images/logo.png">
+  <title>Note《Automatic Hot Patch Generation for Android Kernels》</title>
+  
+  
+  <meta property="og:title" content="Note《Automatic Hot Patch Generation for Android Kernels》">
+  
+  
+  <meta property="og:url" content="https://ch3nye.top/Note-Automatic-Hot-Patch-Generation-for-Android-Kernels/index.html">
+  
+  
+  <meta property="og:img" content="/images/logo.png">
+  
+  
+  <meta property="og:img" content="网络安全 Android ML CTF">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2021-01-29">
+  <meta property="og:article:modified_time" content="2021-01-29">
+  <meta property="og:article:author" content="Ch3nYe">
+  
+  
+  <meta property="og:article:tag" content="Android">
+  
+  <meta property="og:article:tag" content="论文">
+  
+  <meta property="og:article:tag" content="笔记">
+  
+  <meta property="og:article:tag" content="Hot-Patch">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js" as="script">
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn-city.livere.com/js/embed.dist.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+  
+  
+  
+  <link href="/js/lib/prism/prism-tomorrow.min.css" rel="stylesheet" data-prism="prism-tomorrow">
+  
+  
+  
+<link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+
+  
+  
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/images/logo.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/links" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      Note《Automatic Hot Patch Generation for Android Kernels》
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2021-01-28T16:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2021-01-29</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/论文阅读/" class="post-meta-link">论文阅读</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>3.5k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/Android/" class="post-meta-link">Android</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/论文/" class="post-meta-link">论文</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/笔记/" class="post-meta-link">笔记</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Hot-Patch/" class="post-meta-link">Hot-Patch</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="automatic-hot-patch-generation-for-android-kernels"><a class="markdownIt-Anchor" href="#automatic-hot-patch-generation-for-android-kernels"></a> Automatic Hot Patch Generation for Android Kernels</h1>
+<h2 id="主要解决什么问题"><a class="markdownIt-Anchor" href="#主要解决什么问题"></a> 主要解决什么问题</h2>
+<p>Android 版本升级覆盖缓慢，往往发布半年的最新Android系统设备覆盖率只有个位数，如此便使得旧版本的Android系统的内核漏洞无法修复，而OEM厂商又无意修补这些漏洞，因为内核的改动需要繁琐的测试保证更改不会影像现有功能和性能。因此，多数设备上搭载的旧版Android系统会保持漏洞存在很长一段时间。</p>
+<p>为了解决上述问题，已经有很多方案被制定出来，在所有可能的解决方案中，热补丁技术提供了一种在不中断程序正常功能的情况下修复漏洞的便捷方法。由于它可以在不重新启动设备的情况下修补内核漏洞，因此极大地改善了用户体验。</p>
+<p>根据正式发布的补丁程序编写热补丁程序是较难的工作。在二进制文件中，很难准确找到要修改的脆弱点。为了在适当的位置打上热补丁，安全专家需要了解官方补丁的语义并编写相应的热补丁。但是，这是一个耗时并且容易出错的过程。受限于快速的开发周期和有限的安全预算，人工开发热补丁往往是商业公司不可接受的。因此，需要开发一种自动解决方案以将正式补丁正确转换为热补丁。</p>
+<p>为此，本文提出了一种自动执行热补丁生成过程的解决方案。为了对漏洞修补程序有完整的了解，我们首先分析了2012年至2016年的大多数Android CVE，并根据其修补行为对其进行了分类。根据这些分析，我们开发了Vulmet，它可以通过程序分析提取官方补丁的语义来自动生成热补丁。Vulmet将在函数中找到合适的位置，构建并应用语义等效的热补丁来修复漏洞。为了测试Vulmet的有效性，我们为实际的Android CVE生成了热补丁。热补丁程序可以以很少的系统开销来修补漏洞。</p>
+<p>概述结论：</p>
+<p>为此，我们首先研究了从2012年到2016年从373个Android内核CVE中自动生成补丁的可行性（结论为可行）。然后，我们开发了一种自动热补丁生成工具，名为Vulmet，<strong>该工具通过从官方补丁中学习来生成语义保留热补丁</strong>。 Vulmetis的关键思想是使用最弱的前提推理（weakest precondition reasoning）将官方补丁所做的更改转换为hot patch约束。实验表明，Vulmet可以为55个现实世界的Android kernel CVE生成正确的热补丁。热补丁不影响内核的健壮性，并且性能开销较低。</p>
+<p>PS：</p>
+<p>注意1：本文实现的热补丁生成工具Vulmet，需要看官方补丁，从中学习语义，根据Vulmet被定义的约束条件和操作范围，生成可行的热补丁。（在我看来本文想法稍微有点鸡肋，既然发布了官方补丁，OEM厂商只要跟进就好了呀，只能说热补丁具有不需要重启的优势，这种优势在服务器系统补丁上会更明显吧😐）</p>
+<p>注意2：Vulmet并不能百分百根据官方补丁生成热补丁，实现了xx/xxx 的成功率。</p>
+<h2 id="使用的方法"><a class="markdownIt-Anchor" href="#使用的方法"></a> 使用的方法</h2>
+<p>本节叙述Vulmet的实现过程：解释热补丁生成，android漏洞类型分析并定义操作范围，自动热补丁生成框架</p>
+<h3 id="section-2-automatic-hot-patch-generation"><a class="markdownIt-Anchor" href="#section-2-automatic-hot-patch-generation"></a> Section 2 Automatic Hot Patch Generation</h3>
+<p><strong>Problem Definition</strong>（定义热补丁生成）<strong>：</strong></p>
+<p>给定一个易受攻击的function F及在F的L位置上打上官方的patch P ，我们希望在二进制代码中找到function F的一个合适位置L’来插入自动生成的热补丁P’，其语义与P相同。</p>
+<p><strong>Requirements：</strong></p>
+<ul>
+<li>Requirements 1：生成的热补丁应该保留和官方补丁一致的语义，确保其正确性</li>
+<li>Requirements 2：生成的热修补程序不应破坏系统，确保系统运行的健壮性</li>
+<li>Requirements 3：生成的热补丁应该产生较低的开销，确保系统效率</li>
+</ul>
+<p><strong>Operation Scopes：</strong></p>
+<p>Operation Rule 1：补丁只能放在函数的开始或结尾处，或函数调用的开始或结尾处</p>
+<p>Operation Rule 2：补丁可以读取内存的有效内容，但禁止修改</p>
+<p>Operation Rule 3：该补丁只能在一个函数范围内进行很小的更改，以尝试修复漏洞</p>
+<p>原文2.4节介绍了一个用本文定义的规则和操作范围修补CVE-2015-8940整数溢出漏洞的过程，大意就是官方补丁检查了几个变量的值，本文做法是在函数开始处检查上述值，由于这些值并不是一开始就知道的，所以通过一个algorithm（in Section4）自动确定这些变量之间的关系，以此生成了和官方语义相同的检查约束添加到函数开始，热补丁结束。详细过程请参考原文。</p>
+<h3 id="section-3-patch-type-analysis"><a class="markdownIt-Anchor" href="#section-3-patch-type-analysis"></a> Section 3 Patch Type Analysis</h3>
+<p>在研究中，我们提供了漏洞补丁分类和分布情况以及从观察中的发现。本节，我们将讨论Vulmet能够支持的漏洞补丁的类型。</p>
+<p>我们的工作聚焦于热补丁生成，所以补丁分类应该反应补丁功能，而不是反应补丁修复漏洞的类型。目前来说针对后者的分类要原多于前者，我们遵从[36]的分类方案思想，形成我们的分类方案，如下图所示：</p>
+<p><img src="/images/Vulmet0.png" alt="Vulmet.png" / srcset="/images/LoadingImage.gif" data-src="/images/Vulmet0.png" class="lozad post-image"></p>
+<p>3.2 Observation</p>
+<p>在漏洞补丁的研究过程中，我们获得了四个有趣的发现。</p>
+<p>Observation 1: 与程序更新相比，漏洞补丁的更改通常很小</p>
+<p>Observation 2: 大型漏洞补丁通常由几个小型独立补丁组成</p>
+<p>Observation 3: 补丁类型和漏洞类型并不是一定相关的，或者说是比较无关的</p>
+<p>Observation 4: 一些补丁同时包括安全补丁和非安全补丁</p>
+<p>3.3 Vulmet Work Scope</p>
+<p><img src="/images/Vulmet1.png" alt="Vulmet1.png" / srcset="/images/LoadingImage.gif" data-src="/images/Vulmet1.png" class="lozad post-image"></p>
+<p>Sanity Testing 健壮性检查上面的栗子说过了，符合Requirements和Operation Scopes，Vulmet完全支持。</p>
+<p>对于Function Call类型，Vulmet可以进入被调用函数并该函数。如果此补丁的更改不涉及内存写入操作，则Vulmet可以支持该修补程序。</p>
+<p>对于Change of Variables和Change of Data Types都涉及内存写操作，因此不支持。</p>
+<p>Vulmet不支持Redesign类型补丁，因为它极大地改变了原始函数的语义并违反了Operation Scopes 3。</p>
+<h3 id="section-4-methodology"><a class="markdownIt-Anchor" href="#section-4-methodology"></a> Section 4 Methodology</h3>
+<p><img src="/images/Vulmet2.png" alt="Vulmet2.png" / srcset="/images/LoadingImage.gif" data-src="/images/Vulmet2.png" class="lozad post-image"></p>
+<p><strong>Patch Filtering</strong></p>
+<p>Vulmet将通过对比存在漏洞的代码和已修补的代码之间的不同来提取官方补丁。然后，针对补丁中的每个语句，将其分为正常操作和禁止操作。禁止的操作包括变量或指针值的分配以及对内存修改函数的调用。如果正式补丁不包含禁止的操作，Vulmet会将其选择为生成热补丁的候选对象。否则，补丁将被过滤掉。</p>
+<p><strong>Insertion Location Optimization</strong></p>
+<p>根据第2.3节的规则1，函数头或尾是patch 可以hook的位置。因此，Vulmet只能hook 漏洞函数或者漏洞函数中调用的函数。这些可以hook的位置都是为可能的补丁插入位置。Vulmetis需要寻找最佳的插入位置。具体的寻找算法看原文吧，不赘述了。</p>
+<p><strong>Weakest Precondition Reasoning</strong></p>
+<p>在选择补丁插入点之后，下一步是通过计算和官方补丁的语义等效性的热补丁。在Vulmet中，此过程被重构为<strong>最弱的前提推理任务</strong>。在编程中，前提条件是在调用函数之前应为true的语句。而后置条件是一个陈述，如果函数完成并且所有先决条件都满足，则该陈述为真。表6展示了语义计算与最弱前提条件推理之间的关系。给定一个正式补丁，其语义可以转换为一个或多个后置条件。漏洞函数中的陈述将定义解决最弱前提的transformer。获得热补丁约束的过程等同于计算最弱的前提条件。产生的最弱前提条件是官方补丁的语义等价的热补丁。（这就是核心算法，看不懂的话就算了，知道是使用这个算法就可）</p>
+<p><strong>Binary Hot Patch Generation</strong></p>
+<p>最后一步是根据precondition constraints生成热补丁。Vulmet使用空函数作为模板，并将函数的输入参数的数量和类型设置为与原始目标函数相同。然后，将所有约束插入其中，并将功能编译为可以热修补到内核的二进制可执行文件。</p>
+<p>关于热补丁生成的细节，包括变量地址，指令集支持，可执行文件生成等细节问题就不多赘述了。</p>
+<h2 id="结果评估"><a class="markdownIt-Anchor" href="#结果评估"></a> 结果评估</h2>
+<p>我们对Vulmet生成的热补丁的正确性，鲁棒性和效率进行了评估。</p>
+<p>正确性可以量化补丁修复漏洞的能力，健壮性可以量化补丁维护程序稳定性的能力，效率可以量化补丁引入的开销。</p>
+<p>我们设计了实验来测试这三个方面的补丁有效性。在实验中，所有补丁均在具有Android kernel版本7.1.1 r31 bullhead 构建的Android Open SourceProject（AOSP）平台Google Nexus 5X上进行了测试。</p>
+<p><strong>5.1 Correctness Evaluation</strong></p>
+<p>在本节中，我们评估生成的热补丁的正确性。实验包括三个部分。首先，我们使用真实的CVE漏洞测试补丁。其次，对于无法利用的漏洞，我们手动验证补丁的正确性。第三，我们手动编写热补丁，并将生成的热补丁与它们进行比较，以检查生成的补丁是否以与人类专家相同的方式解决了漏洞。</p>
+<p><img src="/images/Vulmet3.png" alt="Vulmet3.png" / srcset="/images/LoadingImage.gif" data-src="/images/Vulmet3.png" class="lozad post-image"></p>
+<p>手工收集了四个CVE攻击方法，用来攻击被Vulmet打过补丁的系统。结果表明，所有补丁均已成功阻止了来自攻击的攻击。对于CVE-2018-17182，该热补丁可以成功阻止漏洞利用，但无法阻止系统崩溃。这是因为该修补程序只能部分修复漏洞。</p>
+<p><img src="/images/Vulmet4.png" alt="Vulmet4.png" / srcset="/images/LoadingImage.gif" data-src="/images/Vulmet4.png" class="lozad post-image"></p>
+<p>人工验证59个自动生成的热补丁有55个是正常工作的，沃觉得算是相当不错了。</p>
+<p><img src="/images/Vulmet5.png" alt="Vulmet5.png" / srcset="/images/LoadingImage.gif" data-src="/images/Vulmet5.png" class="lozad post-image"></p>
+<p>与人类安全专家相比55个自动生成的热补丁只有一个语义不同，具体哪里不同参考原文。</p>
+<p><strong>5.2 Robustness Evaluation</strong></p>
+<p>为了构建测试环境，我们选择要使用Linux内核版本3.10构建的Android bullhead，然后回滚以生成具有许多未修补漏洞的内核。在此特定内核中，Vulmet管理21个漏洞补丁，可以将其转换为热补丁。</p>
+<p>然后我们将这些补丁应用到内核并运行安兔兔Benchmark和CF-bench，监控系统异常，比如崩溃和挂起。表11总结了该实验的结果。出于演示目的，我们选择5个CVE作为示例，并列出所有21个补丁的最终结果</p>
+<p><img src="/images/Vulmet6.png" alt="Vulmet6.png" / srcset="/images/LoadingImage.gif" data-src="/images/Vulmet6.png" class="lozad post-image"></p>
+<p>结果表明，所有热补丁都不会使程序崩溃或挂起。为了进一步检查现实情况中补丁的健壮性，我们从Google App Store中选择并安装了前100个Android应用程序。我们使用脚本来打开，加载和关闭已修补系统上的应用程序，并监视异常行为。结果是可以正确执行所有应用程序，这表明这些修补程序在实际情况下保持了良好的鲁棒性。总而言之，生成的补丁不会破坏补丁程序的正常功能</p>
+<p><strong>5.3 Efficiency Evaluation</strong></p>
+<p>我们在Google Nexus 5X设备上使用安兔兔基准测试修补前后的系统性能。我们将实验设置控制为相同，以便一次测试一个热补丁。每个实验重复10次，取平均分以避免噪声引起的变化。表12列出了具有5个单独CVE补丁的内核的性能以及应用所有21个补丁的总体性能。</p>
+<p><img src="/images/Vulmet7.png" alt="Vulmet7.png" / srcset="/images/LoadingImage.gif" data-src="/images/Vulmet7.png" class="lozad post-image"></p>
+<p>所有结果都在合理范围内，与原始内核结果相比，该范围略高或略低。因此，补丁使系统的开销较低。</p>
+<h2 id="缺点和不足选"><a class="markdownIt-Anchor" href="#缺点和不足选"></a> 缺点和不足（选）</h2>
+<ol>
+<li>Vulmet的前提之一是自动生成的热补丁无法修改内存和原始程序的内容。这就使得诸如变量类型修改，变量数值修改，函数过程重构等补丁类型无法自动生成。</li>
+<li>Vulmet依靠官方补丁语义的精确总结来生成正确的热补丁。在实验中，由于Vulmet无法完全提取语义，因此某些生成的热补丁不完整。</li>
+<li>有些补丁过于复杂而无法分析。很难找到大补丁的精确语义。当前Vulmet只能处理，仅对一个函数过程进行修补的补丁。</li>
+</ol>
+<h2 id="对我有什么启发"><a class="markdownIt-Anchor" href="#对我有什么启发"></a> 对我有什么启发</h2>
+<p>Hot Patch 技术是我没有接触过的，主要借助此篇文章了解内核补丁技术、热补丁技术，希望能更加深入的了解内核级补丁修补和应用原理。</p>
+<h2 id="这项研究的未来方向"><a class="markdownIt-Anchor" href="#这项研究的未来方向"></a> 这项研究的未来方向</h2>
+<p>可能会和人工智能结合的比较紧密吧，就如缺点2和3所述，补丁的生成依赖语义分析，如果语义分析器能借助人工智能技术的发展，强大到根据漏洞类型自动分析出某段代码的修补方案，这样的话，没有漏洞的世界就完成了。😃</p>
+<p>论文链接：<a target="_blank" rel="noopener" href="https://www.usenix.org/conference/usenixsecurity20/presentation/xu">https://www.usenix.org/conference/usenixsecurity20/presentation/xu</a></p>
+<p>参考文章：<a target="_blank" rel="noopener" href="https://www.infoq.cn/article/ilgqVvckWu6p4tTuXHsQ">应用程序热补丁（一）：几行代码构造免重启修复补丁</a></p>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-info copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/about">Ch3nYe</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/Note-Automatic-Hot-Patch-Generation-for-Android-Kernels/">https://ch3nye.top/Note-Automatic-Hot-Patch-Generation-for-Android-Kernels/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  
+  <div class="nav-item-next">
+    <a href="/Note-FANS-Fuzzing-Android-Native-System-Services/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">Note《FANS Fuzzing Android Native System Services via Automated Interface Analysis》 </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="lv-container" data-id="city" data-uid="MTAyMC80NjQ0Ny8yMjk1OA==">
+    <script>
+      (function (d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') {
+          return;
+        }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.defer = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  </div>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#automatic-hot-patch-generation-for-android-kernels"><span class="toc-text"> Automatic Hot Patch Generation for Android Kernels</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="toc-text"> 主要解决什么问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%9A%84%E6%96%B9%E6%B3%95"><span class="toc-text"> 使用的方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#section-2-automatic-hot-patch-generation"><span class="toc-text"> Section 2 Automatic Hot Patch Generation</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#section-3-patch-type-analysis"><span class="toc-text"> Section 3 Patch Type Analysis</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#section-4-methodology"><span class="toc-text"> Section 4 Methodology</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C%E8%AF%84%E4%BC%B0"><span class="toc-text"> 结果评估</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9%E5%92%8C%E4%B8%8D%E8%B6%B3%E9%80%89"><span class="toc-text"> 缺点和不足（选）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%B9%E6%88%91%E6%9C%89%E4%BB%80%E4%B9%88%E5%90%AF%E5%8F%91"><span class="toc-text"> 对我有什么启发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%99%E9%A1%B9%E7%A0%94%E7%A9%B6%E7%9A%84%E6%9C%AA%E6%9D%A5%E6%96%B9%E5%90%91"><span class="toc-text"> 这项研究的未来方向</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/images/logo.png" class="author-img">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>21</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>4</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>20</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:sud0su@163.com">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#automatic-hot-patch-generation-for-android-kernels"><span class="toc-text"> Automatic Hot Patch Generation for Android Kernels</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="toc-text"> 主要解决什么问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%9A%84%E6%96%B9%E6%B3%95"><span class="toc-text"> 使用的方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#section-2-automatic-hot-patch-generation"><span class="toc-text"> Section 2 Automatic Hot Patch Generation</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#section-3-patch-type-analysis"><span class="toc-text"> Section 3 Patch Type Analysis</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#section-4-methodology"><span class="toc-text"> Section 4 Methodology</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C%E8%AF%84%E4%BC%B0"><span class="toc-text"> 结果评估</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9%E5%92%8C%E4%B8%8D%E8%B6%B3%E9%80%89"><span class="toc-text"> 缺点和不足（选）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%B9%E6%88%91%E6%9C%89%E4%BB%80%E4%B9%88%E5%90%AF%E5%8F%91"><span class="toc-text"> 对我有什么启发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%99%E9%A1%B9%E7%A0%94%E7%A9%B6%E7%9A%84%E6%9C%AA%E6%9D%A5%E6%96%B9%E5%90%91"><span class="toc-text"> 这项研究的未来方向</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/备忘">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/李宏毅机器学习笔记">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">14</span>
+        </div>
+      </a>
+    
+      <a href="/categories/论文阅读">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/笔记">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
+    
+    <a href="\tags\note" title="note"><div class="tags-list-item">note</div></a>
+    
+    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
+    
+    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="\tags\笔记" title="笔记"><div class="tags-list-item">笔记</div></a>
+    
+    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
+    
+    <a href="\tags\学习" title="学习"><div class="tags-list-item">学习</div></a>
+    
+    <a href="\tags\总结" title="总结"><div class="tags-list-item">总结</div></a>
+    
+    <a href="\tags\Hot-Patch" title="Hot-Patch"><div class="tags-list-item">Hot-Patch</div></a>
+    
+    <a href="\tags\污点分析" title="污点分析"><div class="tags-list-item">污点分析</div></a>
+    
+    <a href="\tags\比特币" title="比特币"><div class="tags-list-item">比特币</div></a>
+    
+    <a href="\tags\区块链" title="区块链"><div class="tags-list-item">区块链</div></a>
+    
+    <a href="\tags\符号执行" title="符号执行"><div class="tags-list-item">符号执行</div></a>
+    
+    <a href="\tags\Adversarial-Attack" title="Adversarial-Attack"><div class="tags-list-item">Adversarial-Attack</div></a>
+    
+    <a href="\tags\漏洞挖掘" title="漏洞挖掘"><div class="tags-list-item">漏洞挖掘</div></a>
+    
+    <a href="\tags\System-Service" title="System-Service"><div class="tags-list-item">System-Service</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#automatic-hot-patch-generation-for-android-kernels"><span class="toc-text"> Automatic Hot Patch Generation for Android Kernels</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="toc-text"> 主要解决什么问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%9A%84%E6%96%B9%E6%B3%95"><span class="toc-text"> 使用的方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#section-2-automatic-hot-patch-generation"><span class="toc-text"> Section 2 Automatic Hot Patch Generation</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#section-3-patch-type-analysis"><span class="toc-text"> Section 3 Patch Type Analysis</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#section-4-methodology"><span class="toc-text"> Section 4 Methodology</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C%E8%AF%84%E4%BC%B0"><span class="toc-text"> 结果评估</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9%E5%92%8C%E4%B8%8D%E8%B6%B3%E9%80%89"><span class="toc-text"> 缺点和不足（选）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%B9%E6%88%91%E6%9C%89%E4%BB%80%E4%B9%88%E5%90%AF%E5%8F%91"><span class="toc-text"> 对我有什么启发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%99%E9%A1%B9%E7%A0%94%E7%A9%B6%E7%9A%84%E6%9C%AA%E6%9D%A5%E6%96%B9%E5%90%91"><span class="toc-text"> 这项研究的未来方向</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-29</div>
+        <a href="/Note-Automatic-Hot-Patch-Generation-for-Android-Kernels/"><div class="recent-posts-item-content">Note《Automatic Hot Patch Generation for Android Kernels》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-20</div>
+        <a href="/Note-FANS-Fuzzing-Android-Native-System-Services/"><div class="recent-posts-item-content">Note《FANS Fuzzing Android Native System Services via Automated Interface Analysis》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-16</div>
+        <a href="/ELMO-BERT-GPT/"><div class="recent-posts-item-content">ELMO, BERT, GPT</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-15</div>
+        <a href="/Note-FIRMSCOPE-Automatic-Uncovering-of-Privilege-Escala/"><div class="recent-posts-item-content">Note《FIRMSCOPE Automatic Uncovering of Privilege-Escala Vulnerabilities in Pre-Installed Apps in Android Firmware》</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2021
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">ch3nye's blog </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('data-fslightbox', 'gallery');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+    }
+    refreshFsLightbox();
+  }
+</script>
+<script>loadScript("//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-WHGL11014T');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "G-WHGL11014T", googleAnalytics)</script>
+  
+</body>
+
+</html>
