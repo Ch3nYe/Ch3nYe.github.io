@@ -226,7 +226,7 @@
     
     
     <span class="dot"></span>
-    <span>3.5k 字</span>
+    <span>3.6k 字</span>
     
   </div>
   
@@ -267,7 +267,7 @@
 <p>为此，我们首先研究了从2012年到2016年从373个Android内核CVE中自动生成补丁的可行性（结论为可行）。然后，我们开发了一种自动热补丁生成工具，名为Vulmet，<strong>该工具通过从官方补丁中学习来生成语义保留热补丁</strong>。 Vulmetis的关键思想是使用最弱的前提推理（weakest precondition reasoning）将官方补丁所做的更改转换为hot patch约束。实验表明，Vulmet可以为55个现实世界的Android kernel CVE生成正确的热补丁。热补丁不影响内核的健壮性，并且性能开销较低。</p>
 <p>PS：</p>
 <p>注意1：本文实现的热补丁生成工具Vulmet，需要看官方补丁，从中学习语义，根据Vulmet被定义的约束条件和操作范围，生成可行的热补丁。（在我看来本文想法稍微有点鸡肋，既然发布了官方补丁，OEM厂商只要跟进就好了呀，只能说热补丁具有不需要重启的优势，这种优势在服务器系统补丁上会更明显吧😐）</p>
-<p>注意2：Vulmet并不能百分百根据官方补丁生成热补丁，实现了xx/xxx 的成功率。</p>
+<p>注意2：Vulmet并不能百分百根据官方补丁生成热补丁，只能实现满足下述Requirements和Operation Scopes的情况下，官方补丁自动生成热补丁。</p>
 <h2 id="使用的方法"><a class="markdownIt-Anchor" href="#使用的方法"></a> 使用的方法</h2>
 <p>本节叙述Vulmet的实现过程：解释热补丁生成，android漏洞类型分析并定义操作范围，自动热补丁生成框架</p>
 <h3 id="section-2-automatic-hot-patch-generation"><a class="markdownIt-Anchor" href="#section-2-automatic-hot-patch-generation"></a> Section 2 Automatic Hot Patch Generation</h3>
