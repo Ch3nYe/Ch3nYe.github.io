@@ -251,7 +251,9 @@
   </header>
   <div id="section" class="post-content">
     <h1 id="linux二进制分析笔记elf"><a class="markdownIt-Anchor" href="#linux二进制分析笔记elf"></a> Linux二进制分析笔记(ELF)</h1>
-<p>不要读本文，建议只看参考文章</p>
+<p>不要读本文，建议只看参考文章，附一张我画的ELF文件思维导图：</p>
+<p><img src="/images/ELF(Executable-and-Linking-Format).png" alt="ELF(Executable-and-Linking-Format).png" / srcset="/images/LoadingImage.gif" data-src="/images/ELF(Executable-and-Linking-Format).png" class="lozad post-image"></p>
+<p><a href="/images/ELF%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE.xmind">ELF文件格式思维导图.xmind</a></p>
 <h2 id="关于linux下gcc-编译-c-源文件时生成的是shared-object-file而不是executable-file"><a class="markdownIt-Anchor" href="#关于linux下gcc-编译-c-源文件时生成的是shared-object-file而不是executable-file"></a> 关于Linux下gcc 编译 C 源文件时，生成的是Shared object file而不是Executable file</h2>
 <p>最近在Debian下写C时，发现用readelf命令查看编译后的可执行文件类型时，发现文件类型是DYN (Shared object file)，而不是EXEC (Executable file)。</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">-<span class="token operator">></span> % readelf -h a.out
