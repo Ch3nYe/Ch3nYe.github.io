@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="网络安全 Android ML CTF">
+  <link rel="icon" href="/images/logo.png">
+  <title>Linux二进制分析笔记(ELF)</title>
+  
+  
+  <meta property="og:title" content="Linux二进制分析笔记(ELF)">
+  
+  
+  <meta property="og:url" content="https://ch3nye.top/Linux%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%88%86%E6%9E%90%E7%AC%94%E8%AE%B0(ELF)/index.html">
+  
+  
+  <meta property="og:img" content="/images/logo.png">
+  
+  
+  <meta property="og:img" content="网络安全 Android ML CTF">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2021-02-08">
+  <meta property="og:article:modified_time" content="2021-02-09">
+  <meta property="og:article:author" content="Ch3nYe">
+  
+  
+  <meta property="og:article:tag" content="Linux">
+  
+  <meta property="og:article:tag" content="二进制">
+  
+  <meta property="og:article:tag" content="ELF">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js" as="script">
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn-city.livere.com/js/embed.dist.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+  
+  
+  
+  <link href="/js/lib/prism/prism-tomorrow.min.css" rel="stylesheet" data-prism="prism-tomorrow">
+  
+  
+  
+<link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+
+  
+  
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/images/logo.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/links" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      Linux二进制分析笔记(ELF)
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2021-02-07T16:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2021-02-08</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/笔记/" class="post-meta-link">笔记</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>6.9k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/Linux/" class="post-meta-link">Linux</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/二进制/" class="post-meta-link">二进制</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/ELF/" class="post-meta-link">ELF</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="linux二进制分析笔记elf"><a class="markdownIt-Anchor" href="#linux二进制分析笔记elf"></a> Linux二进制分析笔记(ELF)</h1>
+<p>不要读本文，建议只看参考文章</p>
+<h2 id="关于linux下gcc-编译-c-源文件时生成的是shared-object-file而不是executable-file"><a class="markdownIt-Anchor" href="#关于linux下gcc-编译-c-源文件时生成的是shared-object-file而不是executable-file"></a> 关于Linux下gcc 编译 C 源文件时，生成的是Shared object file而不是Executable file</h2>
+<p>最近在Debian下写C时，发现用readelf命令查看编译后的可执行文件类型时，发现文件类型是DYN (Shared object file)，而不是EXEC (Executable file)。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">-<span class="token operator">></span> % readelf -h a.out
+ELF Header:
+  Magic:   7f <span class="token number">45</span> 4c <span class="token number">46</span> 02 01 01 00 00 00 00 00 00 00 00 00
+  Class:                             ELF64
+  Data:                              <span class="token number">2</span>'s complement, little endian
+  Version:                           <span class="token number">1</span> <span class="token punctuation">(</span>current<span class="token punctuation">)</span>
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       <span class="token number">0</span>
+  Type:                              DYN <span class="token punctuation">(</span>Shared object <span class="token function">file</span><span class="token punctuation">)</span>
+  Machine:                           Advanced Micro Devices X86-64
+  Version:                           0x1
+  Entry point address:               0x580
+  Start of program headers:          <span class="token number">64</span> <span class="token punctuation">(</span>bytes into <span class="token function">file</span><span class="token punctuation">)</span>
+  Start of section headers:          <span class="token number">6656</span> <span class="token punctuation">(</span>bytes into <span class="token function">file</span><span class="token punctuation">)</span>
+  Flags:                             0x0
+  Size of this header:               <span class="token number">64</span> <span class="token punctuation">(</span>bytes<span class="token punctuation">)</span>
+  Size of program headers:           <span class="token number">56</span> <span class="token punctuation">(</span>bytes<span class="token punctuation">)</span>
+  Number of program headers:         <span class="token number">9</span>
+  Size of section headers:           <span class="token number">64</span> <span class="token punctuation">(</span>bytes<span class="token punctuation">)</span>
+  Number of section headers:         <span class="token number">31</span>
+  Section header string table index: <span class="token number">30</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>多方查找，发现gcc默认加了<code>--enable-default-pie</code>选项（<a target="_blank" rel="noopener" href="https://www.v2ex.com/amp/t/481562%EF%BC%89">https://www.v2ex.com/amp/t/481562）</a></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">-<span class="token operator">></span> % gcc -v
+Using built-in specs.
+<span class="token assign-left variable">COLLECT_GCC</span><span class="token operator">=</span>gcc
+<span class="token assign-left variable">COLLECT_LTO_WRAPPER</span><span class="token operator">=</span>/usr/lib/gcc/x86_64-linux-gnu/6/lto-wrapper
+Target: x86_64-linux-gnu
+Configured with: <span class="token punctuation">..</span>/src/configure -v --with-pkgversion<span class="token operator">=</span><span class="token string">'Debian 6.3.0-18+deb9u1'</span> --with-bugurl<span class="token operator">=</span>file:///usr/share/doc/gcc-6/README.Bugs --enable-languages<span class="token operator">=</span>c,ada,c++,java,go,d,fortran,objc,obj-c++ --prefix<span class="token operator">=</span>/usr --program-suffix<span class="token operator">=</span>-6 --program-prefix<span class="token operator">=</span>x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir<span class="token operator">=</span>/usr/lib --without-included-gettext --enable-threads<span class="token operator">=</span>posix --libdir<span class="token operator">=</span>/usr/lib --enable-nls --with-sysroot<span class="token operator">=</span>/ --enable-clocale<span class="token operator">=</span>gnu --enable-libstdcxx-debug --enable-libstdcxx-time<span class="token operator">=</span>yes --with-default-libstdcxx-abi<span class="token operator">=</span>new --enable-gnu-unique-object --disable-vtable-verify --enable-libmpx --enable-plugin --enable-default-pie --with-system-zlib --disable-browser-plugin --enable-java-awt<span class="token operator">=</span>gtk --enable-gtk-cairo --with-java-home<span class="token operator">=</span>/usr/lib/jvm/java-1.5.0-gcj-6-amd64/jre --enable-java-home --with-jvm-root-dir<span class="token operator">=</span>/usr/lib/jvm/java-1.5.0-gcj-6-amd64 --with-jvm-jar-dir<span class="token operator">=</span>/usr/lib/jvm-exports/java-1.5.0-gcj-6-amd64 --with-arch-directory<span class="token operator">=</span>amd64 --with-ecj-jar<span class="token operator">=</span>/usr/share/java/eclipse-ecj.jar --with-target-system-zlib --enable-objc-gc<span class="token operator">=</span>auto --enable-multiarch --with-arch-32<span class="token operator">=</span>i686 --with-abi<span class="token operator">=</span>m64 --with-multilib-list<span class="token operator">=</span>m32,m64,mx32 --enable-multilib --with-tune<span class="token operator">=</span>generic --enable-checking<span class="token operator">=</span>release --build<span class="token operator">=</span>x86_64-linux-gnu --host<span class="token operator">=</span>x86_64-linux-gnu --target<span class="token operator">=</span>x86_64-linux-gnu
+Thread model: posix
+gcc version <span class="token number">6.3</span>.0 <span class="token number">20170516</span> <span class="token punctuation">(</span>Debian <span class="token number">6.3</span>.0-18+deb9u1<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>关于gcc中pie选项可以参考这篇文章（<a target="_blank" rel="noopener" href="https://blog.csdn.net/ivan240/article/details/5363395%EF%BC%89">https://blog.csdn.net/ivan240/article/details/5363395）</a></p>
+<blockquote>
+<p>Position-Independent-Executable是Binutils,glibc和gcc的一个功能，能用来创建介于共享库和通常可执行代码之间的代码–能像共享库一样可重分配地址的程序，这种程序必须连接到Scrt1.o。标准的可执行程序需要固定的地址，并且只有被装载到这个地址时，程序才能正确执行。PIE能使程序像共享库一样在主存任何位置装载，这需要将程序编译成位置无关，并链接为ELF共享对象。</p>
+</blockquote>
+<blockquote>
+<p>引入PIE的原因是让程序能装载在随机的地址，通常情况下，内核都在固定的地址运行，如果能改用位置无关，那攻击者就很难借助系统中的可执行码实施攻击了。类似缓冲区溢出之类的攻击将无法实施。而且这种安全提升的代价很小</p>
+</blockquote>
+<p>因此，可以加上-no-pie 禁用掉该默认选项：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">-<span class="token operator">></span> % readelf -h a.out
+ELF Header:
+  Magic:   7f <span class="token number">45</span> 4c <span class="token number">46</span> 02 01 01 00 00 00 00 00 00 00 00 00
+  Class:                             ELF64
+  Data:                              <span class="token number">2</span>'s complement, little endian
+  Version:                           <span class="token number">1</span> <span class="token punctuation">(</span>current<span class="token punctuation">)</span>
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       <span class="token number">0</span>
+  Type:                              EXEC <span class="token punctuation">(</span>Executable <span class="token function">file</span><span class="token punctuation">)</span>
+  Machine:                           Advanced Micro Devices X86-64
+  Version:                           0x1
+  Entry point address:               0x400450
+  Start of program headers:          <span class="token number">64</span> <span class="token punctuation">(</span>bytes into <span class="token function">file</span><span class="token punctuation">)</span>
+  Start of section headers:          <span class="token number">6480</span> <span class="token punctuation">(</span>bytes into <span class="token function">file</span><span class="token punctuation">)</span>
+  Flags:                             0x0
+  Size of this header:               <span class="token number">64</span> <span class="token punctuation">(</span>bytes<span class="token punctuation">)</span>
+  Size of program headers:           <span class="token number">56</span> <span class="token punctuation">(</span>bytes<span class="token punctuation">)</span>
+  Number of program headers:         <span class="token number">9</span>
+  Size of section headers:           <span class="token number">64</span> <span class="token punctuation">(</span>bytes<span class="token punctuation">)</span>
+  Number of section headers:         <span class="token number">30</span>
+  Section header string table index: <span class="token number">29</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>于是文件类型又变成了EXEC (Executable file)。</p>
+<h2 id="android-app中的so文件到底属于哪种类型的elf文件"><a class="markdownIt-Anchor" href="#android-app中的so文件到底属于哪种类型的elf文件"></a> Android APP中的so文件到底属于哪种类型的ELF文件？</h2>
+<p>属于：Shared object file（共享目标文件），其ELF头中的e_type值为3</p>
+<p>e_type就是表示文件类型的当它的值：</p>
+<ul>
+<li>
+<p>为1时表示的是可重定位类型(Relocatable file)的文件，文件后缀.o</p>
+<p><code>gcc -c ./elftest.c</code></p>
+<p>就会生成elftest.o</p>
+</li>
+<li>
+<p>为2时表示可执行类型(Executable file)的文件，一般无文件后缀</p>
+<p><code>gcc ./elftest.c -o elftest</code></p>
+</li>
+<li>
+<p>为3时表共享库(Shared object file)文件，<a target="_blank" rel="noopener" href="http://xn--5nqz7jm0rl6x.so">文件后缀.so</a></p>
+<p><code>gcc -shared -fPIC ./elftest.c -o ./elftest.so</code></p>
+<p>-shared 生成共享目标文件，-fPIC 生成使用相对地址无关的目标代码</p>
+</li>
+</ul>
+<h2 id="链接视图和执行视图"><a class="markdownIt-Anchor" href="#链接视图和执行视图"></a> 链接视图和执行视图</h2>
+<p>ELF文件有两种视图形式：链接视图和执行视图</p>
+<p><img src="/images/Linux%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%88%86%E6%9E%90%E7%AC%94%E8%AE%B03.png" alt="Linux二进制分析笔记3.png" / srcset="/images/LoadingImage.gif" data-src="/images/Linux%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%88%86%E6%9E%90%E7%AC%94%E8%AE%B03.png" class="lozad post-image"></p>
+<p><strong>链接视图：</strong></p>
+<p>可以理解为目标文件的内容视图。</p>
+<p>静态链接器（即编译后参与生成最终ELF过程的链接器，如ld ）会以链接视图解析ELF。编译时生成的 .o（目标文件）以及链接后的 .so （共享库）均可通过链接视图解析，链接视图可以没有段表（如目标文件不会有段表）。</p>
+<p><strong>执行视图：</strong></p>
+<p>可以理解为目标文件的内存视图。</p>
+<p>动态链接器（即加载器，如x86架构 linux下的 /lib/ld-linux.so.2或者安卓系统下的 /system/linker均为动态链接器）会以执行视图解析ELF并动态链接，执行视图可以没有节表。</p>
+<p><strong>总结</strong></p>
+<p>链接视图是以节（section）为单位，执行视图是以段（segment）为单位。链接视图就是在链接时用到的视图，而执行视图则是在执行时用到的视图。实际上，在链接阶段，我们可以忽略Program Header Table来处理此文件，在运行阶段可以忽略Section Header Table来处理此程序（所以很多加固手段删除了Section Header Table）。<strong>或者说链接视图是给链接编辑器（静态链接器）看的，执行视图是给程序解析器（动态连接器）看的。</strong></p>
+<h2 id="如何解析一个so文件的依赖库"><a class="markdownIt-Anchor" href="#如何解析一个so文件的依赖库"></a> 如何解析一个SO文件的依赖库</h2>
+<p>DYNAMIC段中的数据格式如下：</p>
+<p><img src="/images/Linux%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%88%86%E6%9E%90%E7%AC%94%E8%AE%B01.png" alt="Linux二进制分析笔记1.png" / srcset="/images/LoadingImage.gif" data-src="/images/Linux%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%88%86%E6%9E%90%E7%AC%94%E8%AE%B01.png" class="lozad post-image"></p>
+<p>一个动态段数据项大小为8byte。</p>
+<p>d_tag 为0x00000005时，该结构体为DT_STRTAB类型，指明了字符串表的地址，d_ptr指向.dymstr节的字符串表的地址，此表中包含符号名、库名等。</p>
+<p>d_tag 为0x00000001时，该结构体为DT_NEEDED类型，<strong>指明了一个所需的库的名字</strong>，使用d_val指向上述字符串表的中的偏移地址。也就是说：d_val指向的所需库的名字的字符串地址=字符串表的基地址+d_val</p>
+<h2 id="我们首先需要弄清楚的几个概念"><a class="markdownIt-Anchor" href="#我们首先需要弄清楚的几个概念"></a> 我们首先需要弄清楚的几个概念</h2>
+<p>在已知ELF文件格式，通读《Understanding ELF》《Linux二进制分析》第一、二章的前提下，我们来回顾一些关键概念，捋清思路，帮助理解后面ELF文件加载过程中的链接和重定位到底是如何运转的。</p>
+<h3 id="链接编辑器"><a class="markdownIt-Anchor" href="#链接编辑器"></a> <strong>链接编辑器</strong></h3>
+<p>链接编辑器所做的工作就是将所有的二进制文件链接起来融合成一个可执行程序，不管这些二进制文件是编译器生成的目标二进制文件还是共享库文件。Android NDK中/ndk/xx.xxx/toolchains/aarch64-linux-android-4.9/prebuilt/windows-x86_64/bin/aarch64-linux-android-ld.exe 就是链接编辑器。</p>
+<h3 id="动态链接器"><a class="markdownIt-Anchor" href="#动态链接器"></a> <strong>动态链接器</strong></h3>
+<p>动态链接器是操作系统的一部分，负责按照可执行程序运行时的需要<strong>装入与链接共享库</strong>。装入是指把共享库在外部存储上的内容复制到内存，链接是指填充跳转表（jump table）与重定位指针。</p>
+<h3 id="重定位"><a class="markdownIt-Anchor" href="#重定位"></a> <strong>重定位</strong></h3>
+<p><strong>重定位就是将符号定义和符号引用进行连接的过程</strong>。可重定位文件需要包含描述如何修改节内容的相关信息，从而使得可执行文件和共享目标文件能够保存进程的程序镜像所需的正确信息。重定位条目就是我们上面说的相关信息。如.rel.plt节保存.plt节的动态链接过程中的重定位表。</p>
+<h3 id="动态链接符号表dynsym节"><a class="markdownIt-Anchor" href="#动态链接符号表dynsym节"></a> <strong>动态链接符号表(.dynsym节)</strong></h3>
+<p><strong>动态链接符号表包含所有外部引入的符号</strong>,表项结构同.symtab节的ElfN_Sym. 该节保存在text段中,节类型被标记为SHT_DYNSYM.</p>
+<h3 id="动态链接重定位表"><a class="markdownIt-Anchor" href="#动态链接重定位表"></a> <strong>动态链接重定位表</strong></h3>
+<p>重定位表项结构为ElfN_Rela/ElfN_Rel，重定位表存储在.rel.*和.rela.*节中。</p>
+<p>r_offset指向需要进行重定位操作的位置。即它所指向的位置需要被动态链接器修改。重定位操作详细描述了如何对存放在r_offset中的代码或数据进行修改。</p>
+<p>r_info指定必须对其进行重定位的符号表索引以及要应用的重定位类型。即说明了重定位操作。</p>
+<p>r_addend指定常量加数，用于计算存储在可重定位字段中的值。这里是显式加数存储在重定位项中，隐式加数存储在重定位目标本身，也就是要被修改的位置里的。</p>
+<p>一个“重定位节(relocation section)”需要引用另外两个节：一个是符号表节，一个是被修改节（某些类型还需要GOT表）。在重定位节中，节头的sh_info和sh_link成员分别指明了引用关系。不同的目标文件中，重定位项的r_offset成员的含义略有不同。</p>
+<ul>
+<li>在重定位文件中，r_offset成员含有一个节偏移量。也就是说，重定位节本身描述的是如何修改文件中的另一个节的内容，重定位偏移量(r_offset)指向了另一个节中的一个存储单元地址。</li>
+<li>在可执行文件或共享目标文件中，r_offset含有的是符号定义在进程空间中的虚拟地址。可执行文件和共享目标文件是用于运行程序而不是构建程序的，所以对它们来说更有用的信息是运行期的内存虚拟地址，而不是某个符号定义在文件中的位置。</li>
+</ul>
+<p>关于重定位类型的更多介绍推荐参考：《Understanding_ELF.pdf》1.8 重定位</p>
+<h3 id="全局偏移表global-offset-table-got"><a class="markdownIt-Anchor" href="#全局偏移表global-offset-table-got"></a> <strong>全局偏移表(Global Offset Table got)</strong></h3>
+<p>全局偏移量表用于把位置独立(Position Independent Code)的<strong>地址重定向到绝对地址</strong>。</p>
+<p><strong>存在数据段</strong>，为什么要强调这点呢，因为GOT表是需要动态修改的，而现代操作系统不允许动态修改代码段。由于我们需要动态修改GOT帮助程序寻址，所以我们把GOT表节安置在数据段。</p>
+<p>如果一个程序要求直接访问符号的绝对地址，那么这个符号在全局偏移表中就必须有一个对应的项。动态链接器会在程序开始执行之前，<strong>处理好所有全局偏移表的重定位工作</strong>，这些和GOT表相关的重定位项类型为R_xxxx_GLOB_DAT。最后在程序执行的时候，可以保证所有这些符号都有正确的绝对地址。</p>
+<p>此外，全局偏移表中的前三项是保留的，第0项持有动态结构（.dynmic节）的地址，由符号_DYNAMIC引用。这样，其它程序，比如动态链接器就可以直接找到其动态结构，而不用借助重定位项。这对于动态链接器程序来说尤为重要，因为它必须在不依赖于其它程序重定位其内存镜像的情况下初始化自己。</p>
+<blockquote>
+<p>got[0]：address of .dynamic section 也就是本ELF动态段(.dynamic段）的装载地址<br />
+got[1]：address of link_map object( 编译时填充0）也就是本ELF的link_map数据结构描述符地址，作用：link_map结构，结合.rel.plt段的偏移量，才能真正找到该elf的.rel.plt<br />
+got[2]：address of _dl_runtime_resolve function (编译时填充为0) 也就是_dl_runtime_resolve函数的地址，来得到真正的函数地址，回写到对应的got表位置中。</p>
+</blockquote>
+<p>全局偏移量表的格式和解析方法是依处理器而不同的，就Intel架构而言，符号_GLOBAL_OFFSET_TABLE_会被用来访问此表。</p>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">extern</span>  Elf32_Addr  _GLOBAL_OFFSET_TABLE_<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token keyword">extern</span>  Elf64_Addr  _GLOBAL_OFFSET_TABLE_<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>符号_GLOBAL_OFFSET_TABLE_可能位于.got节中部，所以它也接受负的数组索引值。对于 32 位代码，符号类型是 Elf32_Addr 数组；对于 64 位代码，符号类型是 Elf64_Addr 数组。所以上述的第0项往往都在.got节的中间某个位置上。</p>
+<p>推荐参考：<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E26926_01/html/E25910/chapter6-74186.html">https://docs.oracle.com/cd/E26926_01/html/E25910/chapter6-74186.html</a></p>
+<h3 id="过程链接表procedure-linkage-table-plt"><a class="markdownIt-Anchor" href="#过程链接表procedure-linkage-table-plt"></a> <strong>过程链接表(Procedure Linkage Table plt)</strong></h3>
+<p>过程链接表(<strong>Procedure Linkage Table</strong>)的作用是把位置独立的<strong>函数调用重定向到绝对地址</strong>。</p>
+<p>每个动态链接的可执行文件和共享目标文件都有一个 PLT，PLT 表的每一项都是一小段代码，对应于本运行模块要引用的一个全局函数。程序对某个函数的访问都被调整为对 PLT 入口的访问。</p>
+<p>过程链接表中的每一项都占用 3 个字（12 字节），并且表的最后一项后跟 nop 指令。</p>
+<p>链接编辑器不能解析函数在不同目标文件之间的跳转，那么，它就把对其它目标文件中函数的调用重定向到一个过程链接表项中去。</p>
+<p>在Intel架构中，过程链接表位于共享代码段中，但它们使用全局偏移表中的私有地址。动态链接器决定目标的绝对地址，并且会相应地修改全局偏移表的内存镜像。这样，动态连接器就可以在不牺牲位置无关性和代码的可共享性条件下，实现到绝对地址的重定位。可执行文件和共享目标文件有各自的过程链接表。</p>
+<p>重定位表与过程链接表关联。.dynmic节中的动态数组ElfN_Dyn中的 DT_JMP_REL 类型的项指定了第一个重定位项的位置。对于非保留的过程链接表的每一项，重定位表中都包含相同顺序的对应项。所有这些项的重定位类型均为 R_SPARC_JMP_SLOT。重定位项的偏移r_offset可指定关联的过程链接表项的第一个字节的地址。符号表索引会指向相应的符号。</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">.PLT0</span><span class="token punctuation">:</span>
+    pushl   got_plus_4
+    jmp     <span class="token important">*got_plus_8</span>
+    nop;    nop
+    nop;    nop
+<span class="token key atrule">.PLT1</span><span class="token punctuation">:</span>
+    jmp     <span class="token important">*name1_in_GOT</span>
+    pushl   $offset
+    jmp     .PLT0@PC
+<span class="token key atrule">.PLT2</span><span class="token punctuation">:</span>
+    jmp     <span class="token important">*name2_in_GOT</span>
+    pushl   $offset
+    jmp     .PLT0@PC<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">.PLT0</span><span class="token punctuation">:</span>
+    pushl   4(%ebx)
+    jmp     <span class="token important">*8(%ebx)</span>
+    nop;    nop
+    nop;    nop
+<span class="token key atrule">.PLT1</span><span class="token punctuation">:</span>
+    jmp     <span class="token important">*name1@GOT(%ebx)</span>
+    pushl   $offset
+    jmp     .PLT0@PC
+<span class="token key atrule">.PLT2</span><span class="token punctuation">:</span>
+    jmp     <span class="token important">*name2@GOT(%ebx)</span>
+    pushl   $offset
+    jmp     .PLT0@PC<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>比较上面两图可知，在绝对地址代码和位置无关代码中，过程链接表中的指令使用的操作数寻址方式不同。但是它们给动态链接器的接口都是相同的。</p>
+<p>推荐参考：<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E26926_01/html/E25910/chapter6-1235.html">https://docs.oracle.com/cd/E26926_01/html/E25910/chapter6-1235.html</a></p>
+<h2 id="elf文件如何链接和重定位"><a class="markdownIt-Anchor" href="#elf文件如何链接和重定位"></a> ELF文件如何链接和重定位？</h2>
+<h3 id="首先明确什么是链接和重定位"><a class="markdownIt-Anchor" href="#首先明确什么是链接和重定位"></a> 首先明确什么是链接和重定位</h3>
+<p><strong>链接</strong>：（个人理解）<strong>链接就是把一个目标文件中符号引用连接到其他目标文件中的符号定义</strong>。</p>
+<p>从编译/链接和运行的角度看，库分为<strong>动态链接和静态链接</strong>。相应的两种不同的ELF格式映像：</p>
+<p>1）<strong>静态链接</strong>，在装入/启动其运行时无需装入函数库映像、也无需进行动态连接。</p>
+<p>2）<strong>动态连接</strong>，需要在装入/启动其运行时同时装入函数库映像并进行动态链接。</p>
+<p>Linux内核既支持静态链接的ELF映像，也支持动态链接的ELF映像，GNU规定：</p>
+<p>1）把ELF映像的装入/启动在Linux内核中实现；</p>
+<p>2）把动态链接的实现放在用户空间（glibc），并为此提供一个称为”解释器”(ld-linux.so.2)的工具软件，而解释器的装入/启动也由内核负责。</p>
+<p><strong>重定位</strong>：<strong>将符号定义和符号引用进行连接的过程</strong>。</p>
+<p>其实重定位可以算作连接的一个步骤，不过这里我们主要讲解这两部分，所以我们拆开做笔记。</p>
+<p><strong>下面，我们以动态链接为主讲解一个ELF可执行程序的链接和重定位过程</strong>。</p>
+<h3 id="动态链接"><a class="markdownIt-Anchor" href="#动态链接"></a> 动态链接</h3>
+<p><strong>动态链接的步骤分为3步：动态链接器自举，装载共享对象，重定位和初始化。</strong></p>
+<p>PT_INERP段说明了需要的动态链接器比如/lib64/ld-linux-x86-64.so.2</p>
+<p>动态链接器与普通共享对象一样被映射到了进程的地址空间，在系统开始运行程序之前，首先会把控制权交给动态链接器，由它完成所有的动态链接工作以后再把控制权交给程序，然后开始执行。</p>
+<p><strong>动态链接器自举</strong></p>
+<p>动态链接器本身也是一个共享对象，但有一些特殊性。首先，动态链接器本身不可以依赖于其他任何共享对象；其次动态链接器本身所需要的全局和静态变量的重定位工作由它本身完成。对于第一个条件，可以人为的控制在编写动态链接器时保证不使用任何系统库、运行库；对于第二个条件，动态链接器必须在启动时有一段非常精巧的代码可以完成这项艰巨的工作而同时又不能用到全局和静态变量。这种具有一定限制条件的启动代码往往被称为<strong>自举</strong>（Bootstrap）。</p>
+<p>动态链接器入口地址即是自举代码的入口，当操作系统将进程控制权交给动态链接器时，动态链接器的自举代码即开始执行。自举代码首先会找到它自己的GOT。而GOT的第一个入口保存的即是“.dynamic”段的偏移地址，由此找到了动态连接器本身的“.dynamic”段。通过“.dynamic”中的信息，自举代码便可以获得动态链接器本身的重定位表和符号表等，从而得到动态链接器本身的重定位入口，先将它们全部重定位。从这一步开始，动态链接器代码中才可以开始使用自己的全局变量和静态变量。实际上在动态链接器的自举代码中，除了不可以使用全局变量和静态变量之外，甚至不能调用函数，即动态链接器本身的函数也不能调用。因为使用PIC模式编译的共享对象，对于模块内部的函数调用也是采用跟模块外部函数调用一样的方式，即使用GOT/PLT的方式，所以在GOT/PLT没有被重定位之前，自举代码不可以使用任何全局变量，也不可以调用函数。</p>
+<p><strong>装载共享对象</strong></p>
+<p>完成基本自举以后，动态链接器将可执行文件和链接器本身的符号表都合并到一个符号表当中，称它为全局符号表（Global Symbol Table）。然后链接器开始寻找可执行文件所依赖的共享对象。在“.dynamic”段中，有一种类型的入口是DT_NEEDED，它所指出的是该可执行文件（或共享对象）所依赖的共享对象。由此，链接器可以列出可执行文件所需要的所有共享对象，并将这些共享对象的名字放入到一个装载集合中。然后链接器开始从集合里取一个所需要的共享对象的名字，找到相应的文件后打开该文件，读取相应的ELF文件头和“.dynamic”段，然后将它相应的代码段和数据段映射到进程空间中。如果这个ELF共享对象还依赖于其他共享对象，那么将所依赖的共享对象的名字放到装载集合中。如此循环直到所有依赖的共享对象都被装载进来为止，当然链接器可以有不同的装载顺序，如果把依赖关系看作一个图的话，那么这个装载过程就是一个图的遍历过程，链接器可能会使用深度优先或者广度优先或者其他的顺序来遍历整个图，这取决于链接器，比较常见的算法一般都是广度优先的。</p>
+<p><strong>当一个新的共享对象被装载进来的时候，它的符号表会被合并到全局符号表中，所以当所有的共享对象都被装载进来的时候，全局符号表里面将包含进程中所有的动态链接所需要的符号。</strong></p>
+<p>符号的优先级：</p>
+<p>一个共享对象里面的全局符号被另一个共享对象的同名全局符号覆盖的现象又被称为<strong>共享对象全局符号介入（Global Symbol Interpose）</strong>。关于全局符号介入这个问题，实际上Linux下的动态链接器是这样处理的：它定义了一个规则，那就是当一个符号需要被加入全局符号表时，如果相同的符号名已经存在，则后加入的符号被忽略。所以当程序使用大量共享对象时应该非常小心符号的重名问题。</p>
+<p>下面讲解最后一部分，重定位和初始化。</p>
+<h3 id="重定位-2"><a class="markdownIt-Anchor" href="#重定位-2"></a> 重定位</h3>
+<p>重定位是解析ELF程序的最后一步，完成重定位一个ELF程序就可以执行了。</p>
+<p>当上面的步骤完成之后，链接器开始重新遍历可执行文件和每个共享对象的重定位表，将它们的GOT/PLT中的每个需要重定位的位置进行修正。因为此时动态链接器已经拥有了进程的全局符号表，所以这个修正过程也显得比较容易。</p>
+<p>ELF使用PLT（Procedure Linkage Table）来实现延迟绑定，它使用了一些很精巧的指令序列来完成。在Glibc中，动态链接器完成绑定工作的函数叫<code>_dl_runtime_resolve()</code>，它必须知道绑定发生在哪个模块中的哪个函数，因此假设其函数原型为<code>_dl_runtime_resolve(module, function)</code>。 当调用某个外部模块的函数时，并不直接通过GOT跳转，而是通过一个叫作PLT项的结构来进行跳转，每个外部函数在PLT中都有一个相应的项，比如bar()函数在PLT中的项的地址称为bar@plt。来看看bar@plt的实现：</p>
+<pre class="line-numbers language-none"><code class="language-none">bar@plt:
+jmp *(bar@GOT)
+push n
+push moduleID
+jump _dl_runtime_resolve<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>bar@plt的第一条指令是通过GOT间接跳转的指令。bar@GOT表示GOT中保存bar()这个函数相应的项。如果链接器在初始化阶段已将bar()的地址填入该项，就跳转到bar()。但为了实现延迟绑定，链接器在初始化阶段并没有将bar()的地址填入到该项，而是将上面代码中第二条指令<code>push n</code>的地址填入到bar@GOT中，这个步骤不需要查找任何符号，所以代价很低。很明显，第一条指令的效果是跳转到第二条指令，相当于没有进行任何操作。第二条指令将一个数字n压入堆栈中，这个数字是bar这个符号引用在重定位表<code>.rel.plt</code>中的下标。接着又是一条push指令将模块的ID压入到堆栈，然后跳转到<code>_dl_runtime_resolve</code>。这实际上就是在实现<code>_dl_runtime_resolve</code>函数调用，它在进行一系列符号解析和重定位工作以后将bar()的真正地址填入到bar@GOT中。</p>
+<p>之后当我们再次调用bar@plt时，第一条jmp指令就能够跳转到真正的bar()函数中，bar()函数返回的时候会根据堆栈里面保存的EIP直接返回到调用者，而不会再继续执行bar@plt中第二条指令开始的那段代码，那段代码只会在符号未被解析时执行一次。</p>
+<p>上面描述的是PLT的基本原理，PLT真正的实现要比它的结构稍微复杂一些。ELF将GOT拆分成了两个表叫做“.got”和“.got.plt”。其中“.got”用来保存全局变量引用的地址，“.got.plt”用来保存函数引用的地址，即把外部函数的引用分离到“.got.plt”中。另外“.got.plt”的前三项是有特殊意义的：</p>
+<ul>
+<li>第一项保存的是“.dynamic”段的地址，这个段描述了本模块动态链接相关的信息</li>
+<li>第二项保存的是本模块的ID。</li>
+<li>第三项保存的是<code>_dl_runtime_resolve()</code>的地址。</li>
+</ul>
+<p>其中第二项和第三项由动态链接器在装载共享模块的时候负责将它们初始化。“.got.plt”的其余项分别对应每个外部函数的引用。如下图所示：</p>
+<p><img src="/images/Linux%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%88%86%E6%9E%90%E7%AC%94%E8%AE%B02.png" alt="Linux二进制分析笔记2.png" / srcset="/images/LoadingImage.gif" data-src="/images/Linux%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%88%86%E6%9E%90%E7%AC%94%E8%AE%B02.png" class="lozad post-image"></p>
+<p>PLT的结构也稍有不同，为了减少代码的重复，ELF把上面例子中的最后两条指令放到PLT中的第一项。并且规定每一项的长度是16个字节，刚好用来存放3条指令。实际的PLT基本结构代码如下：</p>
+<pre class="line-numbers language-none"><code class="language-none">PLT0:
+push *(GOT + 4)
+jump *(GOT + 8)
+...
+bar@plt:
+jmp *(bar@GOT)
+push n
+jump PLT0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>PLT在ELF文件中以独立的段存放，段名通常叫做“.plt”，因为它本身是一些地址无关的代码，所以可以跟代码段等一起合并成同一个可读可执行的“Segment”被装载入内存。</p>
+<blockquote>
+<p>共享对象中存在.plt,.rel.plt,.got,.got.plt 4个相关的段。</p>
+</blockquote>
+<p>重定位完成之后，如果某个共享对象有“.init”段，那么动态链接器会执行“.init”段中的代码，用以实现共享对象特有的初始化过程，比如最常见的，共享对象中的C<ins>的全局/静态对象的构造就需要通过“.init”来初始化。相应地，共享对象中还可能有“.finit”段，当进程退出时会执行“.finit”段中的代码，可以用来实现类似C</ins>全局对象析构之类的操作。</p>
+<p>如果进程的可执行文件也有“.init”段，那么动态链接器不会执行它，因为可执行文件中的“.init”段和“.finit”段由程序初始化部分代码负责执行。</p>
+<p>当完成了重定位和初始化之后，所有的准备工作就宣告完成了，所需要的共享对象也都已经装载并且链接完成了，这时候动态链接器就如释重负，将进程的控制权转交给程序的入口并且开始执行。</p>
+<h2 id="总结"><a class="markdownIt-Anchor" href="#总结"></a> 总结</h2>
+<p>我发现现阶段我还是很难很好的总结ELF文件的解析过程，还需要一段时间的实践和学习，先挖个坑2021年之内一定要把这篇文章捋顺到通俗易懂。</p>
+<p>参考：</p>
+<p>elf(5) - Linux man page <a target="_blank" rel="noopener" href="https://linux.die.net/man/5/elf">https://linux.die.net/man/5/elf</a></p>
+<p>《Understanding_ELF.pdf》 <a target="_blank" rel="noopener" href="https://paper.seebug.org/papers/Archive/refs/elf/Understanding_ELF.pdf">https://paper.seebug.org/papers/Archive/refs/elf/Understanding_ELF.pdf</a></p>
+<p>elf.h <a target="_blank" rel="noopener" href="https://github.com/torvalds/linux/blob/master/include/uapi/linux/elf.h">https://github.com/torvalds/linux/blob/master/include/uapi/linux/elf.h</a></p>
+<p>深入理解动态链接 <a target="_blank" rel="noopener" href="https://www.jianshu.com/p/cdb5cfcb5056">https://www.jianshu.com/p/cdb5cfcb5056</a></p>
+<p>ELF文件加载过程 <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/287863861">https://zhuanlan.zhihu.com/p/287863861</a></p>
+<p>ELF文件的加载过程(load_elf_binary函数详解)–Linux进程的管理与调度（十三） <a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1351964">https://cloud.tencent.com/developer/article/1351964</a></p>
+<p>《Linux二进制分析》</p>
+<p>Oracle Docs《链接程序和库指南》第 13 章程序装入和动态链接 <a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E26926_01/html/E25910/glchi.html#scrolltoc">https://docs.oracle.com/cd/E26926_01/html/E25910/glchi.html</a></p>
+<p>ELF可执行文件在虚拟地址空间的分布：<a target="_blank" rel="noopener" href="https://github.com/chenpengcong/blog/issues/14">https://github.com/chenpengcong/blog/issues/14</a></p>
+<p>从PLT和GOT的角度理解程序的链接和重定位：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/130271689">https://zhuanlan.zhihu.com/p/130271689</a></p>
+<ul>
+<li>
+<p>[ ]  链接、装载与库 — 动态链接：<a target="_blank" rel="noopener" href="https://markrepo.github.io/kernel/2018/08/19/dynamic-link/">https://markrepo.github.io/kernel/2018/08/19/dynamic-link/</a></p>
+</li>
+<li>
+<p>[ ] 链接、装载与库 — 可执行文件的装载：<a target="_blank" rel="noopener" href="https://markrepo.github.io/kernel/2018/08/17/load-and-process/">https://markrepo.github.io/kernel/2018/08/17/load-and-process/</a></p>
+</li>
+</ul>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-info copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/about">Ch3nYe</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/Linux%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%88%86%E6%9E%90%E7%AC%94%E8%AE%B0(ELF)/">https://ch3nye.top/Linux%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%88%86%E6%9E%90%E7%AC%94%E8%AE%B0(ELF)/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  
+  <div class="nav-item-next">
+    <a href="/Note-Automatic-Hot-Patch-Generation-for-Android-Kernels/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">Note《Automatic Hot Patch Generation for Android Kernels》 </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="lv-container" data-id="city" data-uid="MTAyMC80NjQ0Ny8yMjk1OA==">
+    <script>
+      (function (d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') {
+          return;
+        }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.defer = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  </div>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#linux%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%88%86%E6%9E%90%E7%AC%94%E8%AE%B0elf"><span class="toc-text"> Linux二进制分析笔记(ELF)</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B3%E4%BA%8Elinux%E4%B8%8Bgcc-%E7%BC%96%E8%AF%91-c-%E6%BA%90%E6%96%87%E4%BB%B6%E6%97%B6%E7%94%9F%E6%88%90%E7%9A%84%E6%98%AFshared-object-file%E8%80%8C%E4%B8%8D%E6%98%AFexecutable-file"><span class="toc-text"> 关于Linux下gcc 编译 C 源文件时，生成的是Shared object file而不是Executable file</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#android-app%E4%B8%AD%E7%9A%84so%E6%96%87%E4%BB%B6%E5%88%B0%E5%BA%95%E5%B1%9E%E4%BA%8E%E5%93%AA%E7%A7%8D%E7%B1%BB%E5%9E%8B%E7%9A%84elf%E6%96%87%E4%BB%B6"><span class="toc-text"> Android APP中的so文件到底属于哪种类型的ELF文件？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%93%BE%E6%8E%A5%E8%A7%86%E5%9B%BE%E5%92%8C%E6%89%A7%E8%A1%8C%E8%A7%86%E5%9B%BE"><span class="toc-text"> 链接视图和执行视图</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E8%A7%A3%E6%9E%90%E4%B8%80%E4%B8%AAso%E6%96%87%E4%BB%B6%E7%9A%84%E4%BE%9D%E8%B5%96%E5%BA%93"><span class="toc-text"> 如何解析一个SO文件的依赖库</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%91%E4%BB%AC%E9%A6%96%E5%85%88%E9%9C%80%E8%A6%81%E5%BC%84%E6%B8%85%E6%A5%9A%E7%9A%84%E5%87%A0%E4%B8%AA%E6%A6%82%E5%BF%B5"><span class="toc-text"> 我们首先需要弄清楚的几个概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%93%BE%E6%8E%A5%E7%BC%96%E8%BE%91%E5%99%A8"><span class="toc-text"> 链接编辑器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5%E5%99%A8"><span class="toc-text"> 动态链接器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E5%AE%9A%E4%BD%8D"><span class="toc-text"> 重定位</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5%E7%AC%A6%E5%8F%B7%E8%A1%A8dynsym%E8%8A%82"><span class="toc-text"> 动态链接符号表(.dynsym节)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5%E9%87%8D%E5%AE%9A%E4%BD%8D%E8%A1%A8"><span class="toc-text"> 动态链接重定位表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%A8%E5%B1%80%E5%81%8F%E7%A7%BB%E8%A1%A8global-offset-table-got"><span class="toc-text"> 全局偏移表(Global Offset Table got)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%87%E7%A8%8B%E9%93%BE%E6%8E%A5%E8%A1%A8procedure-linkage-table-plt"><span class="toc-text"> 过程链接表(Procedure Linkage Table plt)</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#elf%E6%96%87%E4%BB%B6%E5%A6%82%E4%BD%95%E9%93%BE%E6%8E%A5%E5%92%8C%E9%87%8D%E5%AE%9A%E4%BD%8D"><span class="toc-text"> ELF文件如何链接和重定位？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A6%96%E5%85%88%E6%98%8E%E7%A1%AE%E4%BB%80%E4%B9%88%E6%98%AF%E9%93%BE%E6%8E%A5%E5%92%8C%E9%87%8D%E5%AE%9A%E4%BD%8D"><span class="toc-text"> 首先明确什么是链接和重定位</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5"><span class="toc-text"> 动态链接</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E5%AE%9A%E4%BD%8D-2"><span class="toc-text"> 重定位</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text"> 总结</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/images/logo.png" class="author-img">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>22</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>4</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>23</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:sud0su@163.com">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#linux%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%88%86%E6%9E%90%E7%AC%94%E8%AE%B0elf"><span class="toc-text"> Linux二进制分析笔记(ELF)</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B3%E4%BA%8Elinux%E4%B8%8Bgcc-%E7%BC%96%E8%AF%91-c-%E6%BA%90%E6%96%87%E4%BB%B6%E6%97%B6%E7%94%9F%E6%88%90%E7%9A%84%E6%98%AFshared-object-file%E8%80%8C%E4%B8%8D%E6%98%AFexecutable-file"><span class="toc-text"> 关于Linux下gcc 编译 C 源文件时，生成的是Shared object file而不是Executable file</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#android-app%E4%B8%AD%E7%9A%84so%E6%96%87%E4%BB%B6%E5%88%B0%E5%BA%95%E5%B1%9E%E4%BA%8E%E5%93%AA%E7%A7%8D%E7%B1%BB%E5%9E%8B%E7%9A%84elf%E6%96%87%E4%BB%B6"><span class="toc-text"> Android APP中的so文件到底属于哪种类型的ELF文件？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%93%BE%E6%8E%A5%E8%A7%86%E5%9B%BE%E5%92%8C%E6%89%A7%E8%A1%8C%E8%A7%86%E5%9B%BE"><span class="toc-text"> 链接视图和执行视图</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E8%A7%A3%E6%9E%90%E4%B8%80%E4%B8%AAso%E6%96%87%E4%BB%B6%E7%9A%84%E4%BE%9D%E8%B5%96%E5%BA%93"><span class="toc-text"> 如何解析一个SO文件的依赖库</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%91%E4%BB%AC%E9%A6%96%E5%85%88%E9%9C%80%E8%A6%81%E5%BC%84%E6%B8%85%E6%A5%9A%E7%9A%84%E5%87%A0%E4%B8%AA%E6%A6%82%E5%BF%B5"><span class="toc-text"> 我们首先需要弄清楚的几个概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%93%BE%E6%8E%A5%E7%BC%96%E8%BE%91%E5%99%A8"><span class="toc-text"> 链接编辑器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5%E5%99%A8"><span class="toc-text"> 动态链接器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E5%AE%9A%E4%BD%8D"><span class="toc-text"> 重定位</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5%E7%AC%A6%E5%8F%B7%E8%A1%A8dynsym%E8%8A%82"><span class="toc-text"> 动态链接符号表(.dynsym节)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5%E9%87%8D%E5%AE%9A%E4%BD%8D%E8%A1%A8"><span class="toc-text"> 动态链接重定位表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%A8%E5%B1%80%E5%81%8F%E7%A7%BB%E8%A1%A8global-offset-table-got"><span class="toc-text"> 全局偏移表(Global Offset Table got)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%87%E7%A8%8B%E9%93%BE%E6%8E%A5%E8%A1%A8procedure-linkage-table-plt"><span class="toc-text"> 过程链接表(Procedure Linkage Table plt)</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#elf%E6%96%87%E4%BB%B6%E5%A6%82%E4%BD%95%E9%93%BE%E6%8E%A5%E5%92%8C%E9%87%8D%E5%AE%9A%E4%BD%8D"><span class="toc-text"> ELF文件如何链接和重定位？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A6%96%E5%85%88%E6%98%8E%E7%A1%AE%E4%BB%80%E4%B9%88%E6%98%AF%E9%93%BE%E6%8E%A5%E5%92%8C%E9%87%8D%E5%AE%9A%E4%BD%8D"><span class="toc-text"> 首先明确什么是链接和重定位</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5"><span class="toc-text"> 动态链接</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E5%AE%9A%E4%BD%8D-2"><span class="toc-text"> 重定位</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text"> 总结</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/备忘">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/李宏毅机器学习笔记">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">14</span>
+        </div>
+      </a>
+    
+      <a href="/categories/论文阅读">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/笔记">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">4</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
+    
+    <a href="\tags\note" title="note"><div class="tags-list-item">note</div></a>
+    
+    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
+    
+    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="\tags\笔记" title="笔记"><div class="tags-list-item">笔记</div></a>
+    
+    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
+    
+    <a href="\tags\学习" title="学习"><div class="tags-list-item">学习</div></a>
+    
+    <a href="\tags\总结" title="总结"><div class="tags-list-item">总结</div></a>
+    
+    <a href="\tags\ELF" title="ELF"><div class="tags-list-item">ELF</div></a>
+    
+    <a href="\tags\二进制" title="二进制"><div class="tags-list-item">二进制</div></a>
+    
+    <a href="\tags\Linux" title="Linux"><div class="tags-list-item">Linux</div></a>
+    
+    <a href="\tags\Hot-Patch" title="Hot-Patch"><div class="tags-list-item">Hot-Patch</div></a>
+    
+    <a href="\tags\污点分析" title="污点分析"><div class="tags-list-item">污点分析</div></a>
+    
+    <a href="\tags\比特币" title="比特币"><div class="tags-list-item">比特币</div></a>
+    
+    <a href="\tags\区块链" title="区块链"><div class="tags-list-item">区块链</div></a>
+    
+    <a href="\tags\符号执行" title="符号执行"><div class="tags-list-item">符号执行</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#linux%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%88%86%E6%9E%90%E7%AC%94%E8%AE%B0elf"><span class="toc-text"> Linux二进制分析笔记(ELF)</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B3%E4%BA%8Elinux%E4%B8%8Bgcc-%E7%BC%96%E8%AF%91-c-%E6%BA%90%E6%96%87%E4%BB%B6%E6%97%B6%E7%94%9F%E6%88%90%E7%9A%84%E6%98%AFshared-object-file%E8%80%8C%E4%B8%8D%E6%98%AFexecutable-file"><span class="toc-text"> 关于Linux下gcc 编译 C 源文件时，生成的是Shared object file而不是Executable file</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#android-app%E4%B8%AD%E7%9A%84so%E6%96%87%E4%BB%B6%E5%88%B0%E5%BA%95%E5%B1%9E%E4%BA%8E%E5%93%AA%E7%A7%8D%E7%B1%BB%E5%9E%8B%E7%9A%84elf%E6%96%87%E4%BB%B6"><span class="toc-text"> Android APP中的so文件到底属于哪种类型的ELF文件？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%93%BE%E6%8E%A5%E8%A7%86%E5%9B%BE%E5%92%8C%E6%89%A7%E8%A1%8C%E8%A7%86%E5%9B%BE"><span class="toc-text"> 链接视图和执行视图</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E8%A7%A3%E6%9E%90%E4%B8%80%E4%B8%AAso%E6%96%87%E4%BB%B6%E7%9A%84%E4%BE%9D%E8%B5%96%E5%BA%93"><span class="toc-text"> 如何解析一个SO文件的依赖库</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%91%E4%BB%AC%E9%A6%96%E5%85%88%E9%9C%80%E8%A6%81%E5%BC%84%E6%B8%85%E6%A5%9A%E7%9A%84%E5%87%A0%E4%B8%AA%E6%A6%82%E5%BF%B5"><span class="toc-text"> 我们首先需要弄清楚的几个概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%93%BE%E6%8E%A5%E7%BC%96%E8%BE%91%E5%99%A8"><span class="toc-text"> 链接编辑器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5%E5%99%A8"><span class="toc-text"> 动态链接器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E5%AE%9A%E4%BD%8D"><span class="toc-text"> 重定位</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5%E7%AC%A6%E5%8F%B7%E8%A1%A8dynsym%E8%8A%82"><span class="toc-text"> 动态链接符号表(.dynsym节)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5%E9%87%8D%E5%AE%9A%E4%BD%8D%E8%A1%A8"><span class="toc-text"> 动态链接重定位表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%A8%E5%B1%80%E5%81%8F%E7%A7%BB%E8%A1%A8global-offset-table-got"><span class="toc-text"> 全局偏移表(Global Offset Table got)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%87%E7%A8%8B%E9%93%BE%E6%8E%A5%E8%A1%A8procedure-linkage-table-plt"><span class="toc-text"> 过程链接表(Procedure Linkage Table plt)</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#elf%E6%96%87%E4%BB%B6%E5%A6%82%E4%BD%95%E9%93%BE%E6%8E%A5%E5%92%8C%E9%87%8D%E5%AE%9A%E4%BD%8D"><span class="toc-text"> ELF文件如何链接和重定位？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A6%96%E5%85%88%E6%98%8E%E7%A1%AE%E4%BB%80%E4%B9%88%E6%98%AF%E9%93%BE%E6%8E%A5%E5%92%8C%E9%87%8D%E5%AE%9A%E4%BD%8D"><span class="toc-text"> 首先明确什么是链接和重定位</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5"><span class="toc-text"> 动态链接</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E5%AE%9A%E4%BD%8D-2"><span class="toc-text"> 重定位</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text"> 总结</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-02-08</div>
+        <a href="/Linux二进制分析笔记(ELF)/"><div class="recent-posts-item-content">Linux二进制分析笔记(ELF)</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-29</div>
+        <a href="/Note-Automatic-Hot-Patch-Generation-for-Android-Kernels/"><div class="recent-posts-item-content">Note《Automatic Hot Patch Generation for Android Kernels》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-20</div>
+        <a href="/Note-FANS-Fuzzing-Android-Native-System-Services/"><div class="recent-posts-item-content">Note《FANS Fuzzing Android Native System Services via Automated Interface Analysis》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-01-16</div>
+        <a href="/ELMO-BERT-GPT/"><div class="recent-posts-item-content">ELMO, BERT, GPT</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2021
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">ch3nye's blog </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('data-fslightbox', 'gallery');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+    }
+    refreshFsLightbox();
+  }
+</script>
+<script>loadScript("//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-WHGL11014T');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "G-WHGL11014T", googleAnalytics)</script>
+  
+</body>
+
+</html>
