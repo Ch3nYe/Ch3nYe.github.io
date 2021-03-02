@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="网络安全 Android ML CTF">
+  <link rel="icon" href="/images/logo.png">
+  <title>某哩视频app的crack尝试</title>
+  
+  
+  <meta property="og:title" content="某哩视频app的crack尝试">
+  
+  
+  <meta property="og:url" content="https://ch3nye.top/%E3%80%90%E5%AE%9E%E6%88%98%E3%80%91%E6%9F%90%E5%93%A9%E8%A7%86%E9%A2%91app%E7%9A%84crack%E5%B0%9D%E8%AF%95/index.html">
+  
+  
+  <meta property="og:img" content="/images/logo.png">
+  
+  
+  <meta property="og:img" content="网络安全 Android ML CTF">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2021-03-01">
+  <meta property="og:article:modified_time" content="2021-03-02">
+  <meta property="og:article:author" content="Ch3nYe">
+  
+  
+  <meta property="og:article:tag" content="Android">
+  
+  <meta property="og:article:tag" content="crack">
+  
+  <meta property="og:article:tag" content="实战">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js" as="script">
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn-city.livere.com/js/embed.dist.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+  
+  
+  
+  <link href="/js/lib/prism/prism-tomorrow.min.css" rel="stylesheet" data-prism="prism-tomorrow">
+  
+  
+  
+<link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+
+  
+  
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/images/logo.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/links" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      某哩视频app的crack尝试
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2021-02-28T16:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2021-03-01</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/实战/" class="post-meta-link">实战</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>3.5k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/Android/" class="post-meta-link">Android</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/crack/" class="post-meta-link">crack</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/实战/" class="post-meta-link">实战</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="实战某哩视频app的crack尝试"><a class="markdownIt-Anchor" href="#实战某哩视频app的crack尝试"></a> 【实战】某哩视频app的crack尝试</h1>
+<p>这个app已经被大哥们玩烂了，我这算是复现吧，随手记录一下，留作以后温习。</p>
+<p>目的：</p>
+<ul>
+<li>分析传输字段的生成方式和作用</li>
+<li>尝试破解部分VIP功能</li>
+</ul>
+<h2 id="从流量分析开始"><a class="markdownIt-Anchor" href="#从流量分析开始"></a> 从流量分析开始</h2>
+<p>Fiddler 抓包，前半部分还正常，从点开视频开始app在向<code>localhost:1500</code>请求，Fiddler 就会返回：<code>502 Fiddler - Connection Failed</code> 。我猜app解析视频的业务逻辑是向本地1500端口启动的服务发出类似以下请求，通过本地服务解析视频地址，或向服务器发出加密解析请求。</p>
+<pre class="line-numbers language-none"><code class="language-none">GET http:&#x2F;&#x2F;localhost:1500&#x2F;video?mode&#x3D;online&amp;video_id&#x3D;100981&amp;quality&#x3D;qvga&amp;type&#x3D;.m3u8 HTTP&#x2F;1.1
+User-Agent: com.xxxxxxxx.other.MyApplication&#x2F;2.3.1-2820 (Linux;Android 10) ExoPlayerLib&#x2F;2.11.1
+Accept-Encoding: gzip
+Host: localhost:1500
+Connection: Keep-Alive<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>手机WIFI代理设置localhost不走代理就可以在代理下看视频了，但是这样你也抓不到上述请求包了。</p>
+<p><strong>app启动过程中的流量：</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">接口</th>
+<th style="text-align:center">请求方式</th>
+<th style="text-align:center">提交内容</th>
+<th style="text-align:center">数据类型</th>
+<th style="text-align:center">(猜测)用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">host_xxxxxxxx.txt</td>
+<td style="text-align:center">GET</td>
+<td style="text-align:center">仅有http头hash/lang/platform/time/userid/usertype/version</td>
+<td style="text-align:center">密文（后续已破解）</td>
+<td style="text-align:center">可能是返回能正常访问的主机群</td>
+</tr>
+<tr>
+<td style="text-align:center">/speed.html</td>
+<td style="text-align:center">GET</td>
+<td style="text-align:center">同上</td>
+<td style="text-align:center">明文&quot;ok&quot;</td>
+<td style="text-align:center">测速</td>
+</tr>
+<tr>
+<td style="text-align:center">/v1/initial</td>
+<td style="text-align:center">GET</td>
+<td style="text-align:center">同上</td>
+<td style="text-align:center">明文</td>
+<td style="text-align:center">新版本检测+首页弹窗+视频分类</td>
+</tr>
+<tr>
+<td style="text-align:center">/v1/register/token</td>
+<td style="text-align:center">POST</td>
+<td style="text-align:center">device_id/platform/key/universal_id/lang</td>
+<td style="text-align:center">明文</td>
+<td style="text-align:center">注册新用户，返回token和uid</td>
+</tr>
+<tr>
+<td style="text-align:center">/v1/user/info</td>
+<td style="text-align:center">POST</td>
+<td style="text-align:center">token/lang/download_amount</td>
+<td style="text-align:center">明文</td>
+<td style="text-align:center">查询并返回用户信息</td>
+</tr>
+<tr>
+<td style="text-align:center">/v1/firstpurchase</td>
+<td style="text-align:center">GET</td>
+<td style="text-align:center">仅有http头</td>
+<td style="text-align:center">明文</td>
+<td style="text-align:center">买VIP悬浮广告</td>
+</tr>
+</tbody>
+</table>
+<p>第一次启动app时向服务器请求token样例：eyJ1c2VyX2lkIjo0NDk5NzQ3MjYsImxhc3Rsb2dpbiI6MTYxNDMxMTg0OX0.1ea8cfc740dc64f1b0a70adc0357be61.234d8d0043d2b0368285c605f974769d5eea56017ef0fcd116b613cf</p>
+<p>稍后再分析token</p>
+<h2 id="视频请求流量解密"><a class="markdownIt-Anchor" href="#视频请求流量解密"></a> 视频请求流量解密</h2>
+<p><img src="/images/image-20210226151240389.png" alt="image-20210226151240389" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210226151240389.png" class="lozad post-image"></p>
+<ol>
+<li>
+<p>请求视频信息，返回json格式数据中video_url字段包含m3u8视频地址</p>
+</li>
+<li>
+<p>演员信息</p>
+</li>
+<li>
+<p>向服务器请求视频信息，返回数据是加密的，估计这就是m3u8的信息</p>
+</li>
+<li>
+<p>5.都是本地请求，猜测是请求解析具体m3u8视频的数据</p>
+<p><img src="/images/image-20210226234651298.png" alt="image-20210226234651298" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210226234651298.png" class="lozad post-image">上图是具体视频数据信息可以看到是请求m3u8的切片ts文件。</p>
+</li>
+</ol>
+<p>在media/240/xxxx.m3u8?token=…的响应报文中有一个X-VTag将是解密该报文的重要信息之一</p>
+<p>a.b.i.a.h.a部分代码：</p>
+<pre class="line-numbers language-java" data-language="java"><code class="language-java"><span class="token class-name">String</span> a4 <span class="token operator">=</span> tVar<span class="token punctuation">.</span><span class="token function">mo12446a</span><span class="token punctuation">(</span><span class="token string">"X-VTag"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span>a4 <span class="token operator">==</span> <span class="token keyword">null</span> <span class="token operator">||</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token class-name">StringExt</span><span class="token punctuation">.</span><span class="token function">m2783i</span><span class="token punctuation">(</span>a4<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    str <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+    str <span class="token operator">=</span> i<span class="token punctuation">.</span><span class="token function">substring</span><span class="token punctuation">(</span><span class="token number">8</span><span class="token punctuation">,</span> <span class="token number">24</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token class-name">C7509i</span><span class="token punctuation">.</span><span class="token function">m26507a</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token class-name">Object</span><span class="token punctuation">)</span> str<span class="token punctuation">,</span> <span class="token string">"(this as java.lang.Strin…ing(startIndex, endIndex)"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token class-name">ResponseBody</span> h0Var2 <span class="token operator">=</span> a<span class="token punctuation">.</span>f18837g<span class="token punctuation">;</span>
+<span class="token class-name">MediaType</span> c <span class="token operator">=</span> h0Var2 <span class="token operator">!=</span> <span class="token keyword">null</span> <span class="token operator">?</span> h0Var2<span class="token punctuation">.</span><span class="token function">mo12175c</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">:</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token punctuation">(</span>str <span class="token operator">==</span> <span class="token keyword">null</span> <span class="token operator">||</span> c <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token class-name">ResponseBody</span> a5 <span class="token operator">=</span> <span class="token class-name">ResponseBody</span><span class="token punctuation">.</span><span class="token function">m17589a</span><span class="token punctuation">(</span>c<span class="token punctuation">,</span> <span class="token class-name">EncodeUtility</span><span class="token punctuation">.</span><span class="token function">abaababa</span><span class="token punctuation">(</span><span class="token class-name">CipherClient</span><span class="token punctuation">.</span><span class="token function">decodeKey</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> str<span class="token punctuation">,</span> a2<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token class-name">C5325g0<span class="token punctuation">.</span>C5326a</span> aVar2 <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">C5325g0<span class="token punctuation">.</span>C5326a</span><span class="token punctuation">(</span>a<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    aVar2<span class="token punctuation">.</span>f18849g <span class="token operator">=</span> a5<span class="token punctuation">;</span>
+    <span class="token class-name">C5325g0</span> a6 <span class="token operator">=</span> aVar2<span class="token punctuation">.</span><span class="token function">mo12169a</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token class-name">C7509i</span><span class="token punctuation">.</span><span class="token function">m26507a</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token class-name">Object</span><span class="token punctuation">)</span> a6<span class="token punctuation">,</span> <span class="token string">"response.newBuilder().body(body).build()"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> a6<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>去看一下StringExt.m2783i函数，虽然他虚晃你说他调用AES算法，但是你仔细看看就发现根本不符合AES的调用。再去看看AESEncryptor.HASH_ALGORITHM，就知道他应该是做md5散列的。所以综合这两个函数的分析得到：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">变量</th>
+<th style="text-align:center">解析</th>
+<th style="text-align:center">值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">a4</td>
+<td style="text-align:center">headers中的X-VTag的值</td>
+<td style="text-align:center">958893970</td>
+</tr>
+<tr>
+<td style="text-align:center">i</td>
+<td style="text-align:center">md5(a4)</td>
+<td style="text-align:center">e10adc3949ba59abbe56e057f20f883e</td>
+</tr>
+<tr>
+<td style="text-align:center">str</td>
+<td style="text-align:center">i.substring(8, 24)</td>
+<td style="text-align:center">49ba59abbe56e057</td>
+</tr>
+</tbody>
+</table>
+<p>接着看CipherClient.decodeKey()，你会发现这个类里面全是用常量生成的返回值：</p>
+<pre class="line-numbers language-java" data-language="java"><code class="language-java"><span class="token keyword">package</span> <span class="token namespace">net<span class="token punctuation">.</span>idik<span class="token punctuation">.</span>lib<span class="token punctuation">.</span>cipher<span class="token punctuation">.</span>p620so</span><span class="token punctuation">;</span>
+
+<span class="token comment">/* renamed from: net.idik.lib.cipher.so.CipherClient */</span>
+<span class="token keyword">public</span> <span class="token keyword">final</span> <span class="token keyword">class</span> <span class="token class-name">CipherClient</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">public</span> <span class="token class-name">CipherClient</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">throws</span> <span class="token class-name">IllegalAccessException</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">IllegalAccessException</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">final</span> <span class="token class-name">String</span> <span class="token function">apiHashKey</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token class-name">CipherCore</span><span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">"d708e111b5db90af74ef84ff4d5e647b"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">final</span> <span class="token class-name">String</span> <span class="token function">decodeKey</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token class-name">CipherCore</span><span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">"aa01bdd83d0f12833ddaea2f2af22865"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">final</span> <span class="token class-name">String</span> <span class="token function">encodeType</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token class-name">CipherCore</span><span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">"e82b6153b4ea2340333e2254c3553d03"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">final</span> <span class="token class-name">String</span> <span class="token function">everIv</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token class-name">CipherCore</span><span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">"c5b287eb7ee64e90ed015bac470f4b6b"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>追踪下去发现追到native程序里了：CipherClient.decodeKey()–&gt;CipherCore.get()–&gt;native CipherCore.getString()</p>
+<p>native库为：<strong>cipher-lib</strong></p>
+<p>不太想看native逻辑了，为了快速省事就用frida hook返回值看看：</p>
+<pre class="line-numbers language-none"><code class="language-none">function main()&#123;
+    Java.perform(function()&#123;
+        var CipherCore &#x3D; Java.use(&quot;net.idik.lib.cipher.so.CipherCore&quot;)
+        var stringClass &#x3D; Java.use(&quot;java.lang.String&quot;)
+        var str &#x3D; stringClass.$new(&quot;aa01bdd83d0f12833ddaea2f2af22865&quot;)
+        var res &#x3D; CipherCore.get(str)
+        console.log(&quot;getString(&quot;+str+&quot;):&quot;+res)
+    &#125;)
+&#125;
+setImmediate(main);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><img src="/images/image-20210226163204315.png" alt="image-20210226163204315" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210226163204315.png" class="lozad post-image"></p>
+<p>通过上述方式我们可以把每个CipherClient方法的返回值都得到：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">函数</th>
+<th style="text-align:center">常量</th>
+<th style="text-align:center">获取到的结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">apiHashKey</td>
+<td style="text-align:center">d708e111b5db90af74ef84ff4d5e647b</td>
+<td style="text-align:center">666wInteriscommingyoUshouldNotpassmotherfuckeR=</td>
+</tr>
+<tr>
+<td style="text-align:center">ccToken</td>
+<td style="text-align:center">810d903a88254b27c643e0bc471d406a</td>
+<td style="text-align:center">2cfbf0f5d358406b96ab9fd1aa59ae89</td>
+</tr>
+<tr>
+<td style="text-align:center">decodeKey</td>
+<td style="text-align:center">aa01bdd83d0f12833ddaea2f2af22865</td>
+<td style="text-align:center">6e561ccd4aade2fed458d4da61e76770</td>
+</tr>
+<tr>
+<td style="text-align:center">encodeType</td>
+<td style="text-align:center">e82b6153b4ea2340333e2254c3553d03</td>
+<td style="text-align:center">app</td>
+</tr>
+<tr>
+<td style="text-align:center">everIv</td>
+<td style="text-align:center">c5b287eb7ee64e90ed015bac470f4b6b</td>
+<td style="text-align:center">BakinsodaIgotbakinsoda</td>
+</tr>
+<tr>
+<td style="text-align:center">everKey</td>
+<td style="text-align:center">0d7cb519eb483a597549f7f466b189bc</td>
+<td style="text-align:center">iaMiNloveWithtHecoCo</td>
+</tr>
+<tr>
+<td style="text-align:center">hostIv</td>
+<td style="text-align:center">6cf9e96524081ac264dc31982d0be319</td>
+<td style="text-align:center">5e8bf1f958f56644</td>
+</tr>
+<tr>
+<td style="text-align:center">hostKey</td>
+<td style="text-align:center">51cdba173d412fdecec3e78572cde731</td>
+<td style="text-align:center">f332ae8214fcbb0d98f8626f123459b4</td>
+</tr>
+<tr>
+<td style="text-align:center">imageDecodeIv</td>
+<td style="text-align:center">9e1add49a87568f90c43e418e7370287</td>
+<td style="text-align:center">E01EDE6331D37AFCC7BE05597D654D22</td>
+</tr>
+<tr>
+<td style="text-align:center">imageDecodeKey</td>
+<td style="text-align:center">a8ae2831cbea74111bc5116ba81ec191</td>
+<td style="text-align:center">B2F3842866F9583D1ECE61C4E055C255</td>
+</tr>
+<tr>
+<td style="text-align:center">registerKey</td>
+<td style="text-align:center">951eeb6b19b70177fd25706aa620edcf</td>
+<td style="text-align:center">ggh%*KXOqk882jO&amp;Z3Sz43dQGTfD4y6SC&amp;9z</td>
+</tr>
+</tbody>
+</table>
+<p>我们再继续回去看a.b.i.a.h.a，现在就知道<code>EncodeUtility.abaababa(CipherClient.decodeKey(), str, a2)</code>应该是：</p>
+<p><code>EncodeUtility.abaababa(&quot;6e561ccd4aade2fed458d4da61e76770&quot;, &quot;49ba59abbe56e057&quot;, a2)</code></p>
+<p>猜测 a2 应该是密文</p>
+<p>EncodeUtility.abaababa 是 a.b.j.v3.a 的别名，阿巴阿巴是我不小心起的，忘记原来jadx给的命名是啥了。其定义如下</p>
+<pre class="line-numbers language-java" data-language="java"><code class="language-java"><span class="token comment">/* renamed from: a */</span>
+<span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token class-name">String</span> <span class="token function">abaababa</span><span class="token punctuation">(</span><span class="token class-name">String</span> str<span class="token punctuation">,</span> <span class="token class-name">String</span> str2<span class="token punctuation">,</span> <span class="token class-name">String</span> str3<span class="token punctuation">)</span> <span class="token keyword">throws</span> <span class="token class-name">UnsupportedEncodingException</span><span class="token punctuation">,</span> <span class="token class-name">NoSuchAlgorithmException</span><span class="token punctuation">,</span> <span class="token class-name">NoSuchPaddingException</span><span class="token punctuation">,</span> <span class="token class-name">IllegalBlockSizeException</span><span class="token punctuation">,</span> <span class="token class-name">BadPaddingException</span><span class="token punctuation">,</span> <span class="token class-name">InvalidAlgorithmParameterException</span><span class="token punctuation">,</span> <span class="token class-name">InvalidKeyException</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> <span class="token function">m3078a</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">IvParameterSpec</span><span class="token punctuation">(</span>str2<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span><span class="token string">"UTF-8"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token keyword">new</span> <span class="token class-name">SecretKeySpec</span><span class="token punctuation">(</span><span class="token function">m3076a</span><span class="token punctuation">(</span>str<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span><span class="token string">"UTF-8"</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">"AES"</span><span class="token punctuation">)</span><span class="token punctuation">,</span> str3<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>m3078a方法，看一下它的声明就知道，这个函数是AES解密，该函数中有声明AES模式：<code>AESEncryptor.AES_MODE==&quot;AES/CBC/PKCS5Padding&quot;</code> ，这里就不展示了。</p>
+<p>m3076a方法，同样看下声明也容易知道是MD5散列。</p>
+<p>现在基本就确定了abaababa方法最后一个参数就应该是密文，参数2是偏移，参数1的md5值是密钥，执行的是AES解密。</p>
+<p><code>md5('6e561ccd4aade2fed458d4da61e76770')=ae52f7ffd2dd66ba5743bb180188b991</code></p>
+<p><strong>综上所述：</strong></p>
+<blockquote>
+<p>GET请求 /media/240/xxxxxx.m3u8?token=…向服务器请求视频信息，返回数据是是m3u8的信息，且经过AES加密的</p>
+<p>AES模式CBC，padding模式PKCS5Padding</p>
+<p>KEY：ae52f7ffd2dd66ba5743bb180188b991</p>
+<p>IV：49ba59abbe56e057</p>
+</blockquote>
+<p><img src="/images/image-20210226165417396.png" alt="image-20210226165417396" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210226165417396.png" class="lozad post-image"></p>
+<p>解密成功。</p>
+<p>到这里视频请求信息的解密就完成了，我们来复盘一下思考下<strong>开发者是怎么考虑视频信息加密的：</strong></p>
+<p>每个视频都有独特的x-vtag，md5(x-vtag).substring(8,24) 作为AES偏移量IV，app的java代码中的一个常量通过native 代码得到另一个常量作为AES的密钥KEY。KEY服务器和客户端都知道，x-vtag服务器明文发给客户端。服务端通过AES加密m3u8信息，客户端AES解密，获取m3u8信息。</p>
+<p><strong>视频请求步骤：</strong></p>
+<ul>
+<li>用户向服务器A请求某个视频的信息：<code>/v1/video/info/&lt;视频id&gt;?token=...</code> 得到JSON格式视频信息，包括演员，类别，视频TAG，封面图片连接，video_url 等信息</li>
+<li>用户向服务器B请求某个m3u8视频的媒体信息，就是使用上一步得到的video_url：<code>/media/240/100981.m3u8?token=...</code> 客户端得到AES加密的m3u8视频的媒体信息</li>
+<li>APP解密上述信息得到视频的流媒体源，向本地请求：localhost:1500/video?mode=online&amp;video_id=100981&amp;quality=qvga&amp;type=.m3u8 这一步真正的意义现在还没弄懂</li>
+<li>根据m3u8解码得到的分片信息，向存储视频数据的服务器请求流媒体</li>
+</ul>
+<p>总的来说到这里就分析完了m3u8视频获取的流程和机密视频信息的方法了，但是要通过m3u8信息想获取视频你需要附加请求头。</p>
+<h3 id="m3u8请求头"><a class="markdownIt-Anchor" href="#m3u8请求头"></a> m3u8请求头</h3>
+<p>发现在请求m3u8密文的时候会经常提示拒绝访问access denied<br />
+看一下请求头中的参数</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">参数</th>
+<th style="text-align:center">值</th>
+<th style="text-align:center">来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">version</td>
+<td style="text-align:center">2.3.1</td>
+<td style="text-align:center">app版本</td>
+</tr>
+<tr>
+<td style="text-align:center">platform</td>
+<td style="text-align:center">Android</td>
+<td style="text-align:center">安卓平台</td>
+</tr>
+<tr>
+<td style="text-align:center">time</td>
+<td style="text-align:center">1614354694</td>
+<td style="text-align:center">当前十位时间戳</td>
+</tr>
+<tr>
+<td style="text-align:center">userid</td>
+<td style="text-align:center">YaoIcnqMTOWO</td>
+<td style="text-align:center">每次不一，可能是随机值</td>
+</tr>
+<tr>
+<td style="text-align:center">hash</td>
+<td style="text-align:center">e6195dd2a9cf277f480f797222823542</td>
+<td style="text-align:center">待探索</td>
+</tr>
+</tbody>
+</table>
+<p>jadx中搜一下&quot;hash&quot;字符串，就能找到其定义，在a.b.a.v.f.e()中：</p>
+<p><img src="/images/image-20210226235912062.png" alt="image-20210226235912062" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210226235912062.png" class="lozad post-image"></p>
+<pre class="line-numbers language-java" data-language="java"><code class="language-java"><span class="token class-name">String</span> i <span class="token operator">=</span> <span class="token class-name">StringExt</span><span class="token punctuation">.</span><span class="token function">m2783i</span><span class="token punctuation">(</span>a <span class="token operator">+</span> value <span class="token operator">+</span> valueOf <span class="token operator">+</span> str <span class="token operator">+</span> str2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+之前我们已经得出<span class="token class-name">StringExt</span><span class="token punctuation">.</span>m2783i是md5的操作。
+依次看a <span class="token operator">+</span> value <span class="token operator">+</span> valueOf <span class="token operator">+</span> str <span class="token operator">+</span> str2
+a <span class="token operator">=</span> version的值 <span class="token operator">=</span> APP版本号
+value <span class="token operator">=</span> platform的值 <span class="token operator">=</span> 平台<span class="token class-name">Android</span>
+valueOf <span class="token operator">=</span> time的值 <span class="token operator">=</span> 时间戳
+str <span class="token operator">=</span> userId的值 <span class="token operator">=</span> 从<span class="token string">"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"</span>取随机字符
+str2 <span class="token operator">=</span> <span class="token class-name">CipherClient</span><span class="token punctuation">.</span><span class="token function">apiHashKey</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">"666wInteriscommingyoUshouldNotpassmotherfuckeR="</span>
+所以i <span class="token operator">=</span> <span class="token function">md5</span><span class="token punctuation">(</span>app版本 <span class="token operator">+</span> 平台<span class="token class-name">Android</span> <span class="token operator">+</span> 时间戳 <span class="token operator">+</span> 随机userId <span class="token operator">+</span> <span class="token string">"666wInteriscommingyoUshouldNotpassmotherfuckeR="</span><span class="token punctuation">)</span>
+上述案例中 i <span class="token operator">=</span> <span class="token function">md5</span><span class="token punctuation">(</span><span class="token string">"2.3.1Android1614354694YaoIcnqMTOWO666wInteriscommingyoUshouldNotpassmotherfuckeR="</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">"e6195dd2a9cf277f480f797222823542"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>另外，这个hash在其他报头也出现了，生成方式应该都是一样的。</p>
+<h2 id="host信息decrypt"><a class="markdownIt-Anchor" href="#host信息decrypt"></a> Host信息decrypt</h2>
+<p>还记得最开始流量分析的时候，APP启动时有请求host_xxxxxxxx.txt这个文件吗，我们已经获得了hostIV和hostKey，可以AES解密该txt文件，其中包含各类业务的domain url：</p>
+<pre class="line-numbers language-none"><code class="language-none">0xxxxxxx6dd4x26xxxxf0axxfx8&#123;
+    &quot;api&quot;: [ 
+        &#123;
+            &quot;url&quot;: &quot;https:&#x2F;&#x2F;xxxxxxxxxx&quot;
+    ],
+    &quot;img&quot;: [
+        
+        &#123;
+            &quot;url&quot;: &quot;https:&#x2F;&#x2F;xxxxxxxxxxxx&quot;
+        &#125;, 
+    ],
+    &quot;stream&quot;: [ 
+        &#123;
+            &quot;url&quot;: &quot;https:&#x2F;&#x2F;xxxxxxxxxxxxx&quot;
+        &#125;,
+     ],
+    &quot;cash&quot;:[
+        &#123;
+            &quot;url&quot;: &quot;https:&#x2F;&#x2F;xxxxxxxxxx&quot;
+        &#125;,
+    ],
+    &quot;pwaredirect&quot;: [
+        &#123;
+            &quot;url&quot;: &quot;https:&#x2F;&#x2F;xxxxxxxx&quot;
+        &#125;
+    ]&#125;50xxxxxxxxxxxxxxxxxxxxxdc<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="vip"><a class="markdownIt-Anchor" href="#vip"></a> VIP?</h2>
+<p>据大佬分析，修改两个函数就可以在本地实现vip，可以使用倍速和切换线路，但是高清播放这种功能大概是有云端验证所以没办法。具体来说需要修改：getExpiry()和getLevel()两个函数</p>
+<p>我使用frida做hook验证了，确实可以，脚本和命令如下：</p>
+<p><code>frida -U -f com.xxxxxxxx --no-paus -l .\hookvip.js</code></p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token comment">//打印参数、返回值</span>
+<span class="token keyword">function</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+    Java<span class="token punctuation">.</span><span class="token function">perform</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+        Java<span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span><span class="token string">"xxx.xxxxxxxx.model.response.ResponseUserInfo"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>getExpiry<span class="token punctuation">.</span><span class="token function">overload</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function-variable function">implementation</span> <span class="token operator">=</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+            console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">"[+]function getExpiry() was called"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> <span class="token number">0x746a6480</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+        Java<span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span><span class="token string">"xxx.xxxxxxxx.model.response.ResponseUserInfo"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>getLevel<span class="token punctuation">.</span><span class="token function">overload</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function-variable function">implementation</span> <span class="token operator">=</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+            console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">"[+]function getLevel() was called"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> <span class="token number">2</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+<span class="token function">setImmediate</span><span class="token punctuation">(</span>main<span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p><strong>另外提一嘴，前段时间这个应用的web端程序，如果在请求token的时候修改提交的参数pwa-ckv=1，则会返回一个尊容vip的token。这个bug已经被修复了。</strong></p>
+</blockquote>
+<h2 id="rigister请求字段生成"><a class="markdownIt-Anchor" href="#rigister请求字段生成"></a> Rigister请求字段生成</h2>
+<p>多次抓注册请求报文：</p>
+<pre class="line-numbers language-none"><code class="language-none">&#123;&quot;device_id&quot;:&quot;ce793c3e-e720-4e0d-9e56-fddcd033d862&quot;,&quot;platform&quot;:&quot;Android&quot;,&quot;key&quot;:&quot;3d5f7885e4d45c17c547a0f2bc9d499a3799ce69d616f8504091df86e55d360a&quot;,&quot;universal_id&quot;:&quot;884885A46B10364A5AF184395FF4DD93&quot;,&quot;lang&quot;:&quot;cn&quot;&#125;
+token&#x3D;eyJ1c2VyX2lkIjo0NDk5NzQ3MjYsImxhc3Rsb2dpbiI6MTYxNDY2MTAzN30.49f3f134c8f1d86478c5dd6cb0fbaeb8.7caa99b911ce29125339244676fd7c17a713f7117502dbc6948bc56c
+
+&#123;&quot;device_id&quot;:&quot;a591b897-0c35-4514-9a69-2c61ad40e812&quot;,&quot;platform&quot;:&quot;Android&quot;,&quot;key&quot;:&quot;631a809db87dae8c038ca63252cc3c67b0755a7c2a23ea180dca7deba768c3c0&quot;,&quot;universal_id&quot;:&quot;884885A46B10364A5AF184395FF4DD93&quot;,&quot;lang&quot;:&quot;cn&quot;&#125;
+token&#x3D;eyJ1c2VyX2lkIjo0NDk5NzQ3MjYsImxhc3Rsb2dpbiI6MTYxNDY2MzQ0MX0.aae1a8f7a517e7802e00b36832a98475.fe497a9da7ae1867dcc50f151305d2989d3e7e7ca670b0e076226d2f
+
+&#123;&quot;device_id&quot;:&quot;8b12ee47-199a-4f0d-9937-1509d84eac3f&quot;,&quot;platform&quot;:&quot;Android&quot;,&quot;key&quot;:&quot;fde31433a815946f4debbd4d961d3c23142b5b41a60367f9bab7055afc988de2&quot;,&quot;universal_id&quot;:&quot;884885A46B10364A5AF184395FF4DD93&quot;,&quot;lang&quot;:&quot;cn&quot;&#125;
+token&#x3D;eyJ1c2VyX2lkIjo0NDk5NzQ3MjYsImxhc3Rsb2dpbiI6MTYxNDY2MzQ1NH0.45689a362d7207a94dfd58ccebddfe66.979a33cbcf7f91cb671a830fc21c941c156a523b3b17efae97ce410b<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>下面先来研究一下注册请求中各个字段的生成，具体代码应该是在 a.b.h.b.m.toString()</p>
+<pre class="line-numbers language-java" data-language="java"><code class="language-java"><span class="token keyword">public</span> <span class="token class-name">String</span> <span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token class-name">StringBuilder</span> a <span class="token operator">=</span> outline<span class="token punctuation">.</span><span class="token function">m3774a</span><span class="token punctuation">(</span><span class="token string">"RegisterTokenBody(deviceId="</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>f2668a<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token string">", platform="</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>f2669b<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token string">", key="</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>f2670c<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token string">", universalId="</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>f2671d<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token string">", lang="</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>f2672e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token string">", unicode="</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>f2673f<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token string">", utmSource="</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>f2674g<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    a<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token string">", utmMedium="</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> outline<span class="token punctuation">.</span><span class="token function">m3771a</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>f2675h<span class="token punctuation">,</span> <span class="token string">")"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>很容易可以找到deviceId、key、universalId的生成函数：a.b.h.a.e0中的a()、b()、c()</p>
+<pre class="line-numbers language-java" data-language="java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">final</span> <span class="token class-name">String</span> <span class="token function">a</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    a a2 <span class="token operator">=</span> g<span class="token punctuation">.</span><span class="token function">a</span><span class="token punctuation">(</span>g<span class="token punctuation">.</span>f1311a<span class="token punctuation">,</span> <span class="token string">"app_uuid"</span><span class="token punctuation">,</span> <span class="token string">""</span><span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">,</span> <span class="token number">12</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">boolean</span> z2 <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+    i<span class="token generics"><span class="token punctuation">&lt;</span><span class="token operator">?</span><span class="token punctuation">></span></span> iVar <span class="token operator">=</span> b<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    m mVar <span class="token operator">=</span> <span class="token punctuation">(</span>m<span class="token punctuation">)</span> a2<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token class-name">CharSequence</span><span class="token punctuation">)</span> mVar<span class="token punctuation">.</span><span class="token function">a</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token class-name">Object</span><span class="token punctuation">)</span> <span class="token keyword">null</span><span class="token punctuation">,</span> iVar<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">length</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        z2 <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>z2<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token class-name">String</span><span class="token punctuation">)</span> mVar<span class="token punctuation">.</span><span class="token function">a</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token class-name">Object</span><span class="token punctuation">)</span> <span class="token keyword">null</span><span class="token punctuation">,</span> iVar<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token class-name">String</span> uuid <span class="token operator">=</span> UUID<span class="token punctuation">.</span><span class="token function">randomUUID</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment">//random???</span>
+    z<span class="token punctuation">.</span>t<span class="token punctuation">.</span>c<span class="token punctuation">.</span>i<span class="token punctuation">.</span><span class="token function">a</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token class-name">Object</span><span class="token punctuation">)</span> uuid<span class="token punctuation">,</span> <span class="token string">"UUID.randomUUID().toString()"</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment">//验证uuid非空</span>
+    mVar<span class="token punctuation">.</span><span class="token function">a</span><span class="token punctuation">(</span><span class="token keyword">null</span><span class="token punctuation">,</span> iVar<span class="token punctuation">,</span> uuid<span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment">//存储uuid->/data/data/com.xxxxxxxx/shared_prefs/com.xxxxxxxx_preferences.xml</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token class-name">String</span><span class="token punctuation">)</span> mVar<span class="token punctuation">.</span><span class="token function">a</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token class-name">Object</span><span class="token punctuation">)</span> <span class="token keyword">null</span><span class="token punctuation">,</span> iVar<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">final</span> <span class="token class-name">String</span> <span class="token function">b</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token class-name">String</span> a2 <span class="token operator">=</span> <span class="token function">a</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment">//取device_id</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>a2 <span class="token operator">!=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">try</span> <span class="token punctuation">&#123;</span>
+            <span class="token class-name">MessageDigest</span> instance <span class="token operator">=</span> <span class="token class-name">MessageDigest</span><span class="token punctuation">.</span><span class="token function">getInstance</span><span class="token punctuation">(</span><span class="token string">"SHA-256"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token class-name">String</span> str <span class="token operator">=</span> <span class="token string">"jav"</span> <span class="token operator">+</span> a2 <span class="token operator">+</span> <span class="token string">"jav"</span><span class="token punctuation">;</span><span class="token comment">//jav&lt;device_id>jav</span>
+            <span class="token class-name">Charset</span> charset <span class="token operator">=</span> <span class="token class-name">StandardCharsets</span><span class="token punctuation">.</span>UTF_8<span class="token punctuation">;</span>
+            z<span class="token punctuation">.</span>t<span class="token punctuation">.</span>c<span class="token punctuation">.</span>i<span class="token punctuation">.</span><span class="token function">a</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token class-name">Object</span><span class="token punctuation">)</span> charset<span class="token punctuation">,</span> <span class="token string">"StandardCharsets.UTF_8"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>str <span class="token operator">!=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                <span class="token keyword">byte</span><span class="token punctuation">[</span><span class="token punctuation">]</span> bytes <span class="token operator">=</span> str<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>charset<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                z<span class="token punctuation">.</span>t<span class="token punctuation">.</span>c<span class="token punctuation">.</span>i<span class="token punctuation">.</span><span class="token function">a</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token class-name">Object</span><span class="token punctuation">)</span> bytes<span class="token punctuation">,</span> <span class="token string">"(this as java.lang.String).getBytes(charset)"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">byte</span><span class="token punctuation">[</span><span class="token punctuation">]</span> digest <span class="token operator">=</span> instance<span class="token punctuation">.</span><span class="token function">digest</span><span class="token punctuation">(</span>bytes<span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment">//sha-256(jav&lt;device_id>jav)</span>
+                z<span class="token punctuation">.</span>t<span class="token punctuation">.</span>c<span class="token punctuation">.</span>i<span class="token punctuation">.</span><span class="token function">a</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token class-name">Object</span><span class="token punctuation">)</span> digest<span class="token punctuation">,</span> <span class="token string">"hash"</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment">//验证摘要信息非空</span>
+                <span class="token keyword">return</span> f<span class="token punctuation">.</span><span class="token function">a</span><span class="token punctuation">(</span>digest<span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment">//摘要格式化为小写</span>
+            <span class="token punctuation">&#125;</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token function">k</span><span class="token punctuation">(</span><span class="token string">"null cannot be cast to non-null type java.lang.String"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Exception</span> e<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            e<span class="token punctuation">.</span><span class="token function">printStackTrace</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+        z<span class="token punctuation">.</span>t<span class="token punctuation">.</span>c<span class="token punctuation">.</span>i<span class="token punctuation">.</span><span class="token function">a</span><span class="token punctuation">(</span><span class="token string">"$this$toHashKey256"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">throw</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token annotation punctuation">@SuppressLint</span><span class="token punctuation">(</span><span class="token punctuation">&#123;</span><span class="token string">"HardwareIds"</span><span class="token punctuation">,</span> <span class="token string">"DefaultLocale"</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token keyword">public</span> <span class="token keyword">final</span> <span class="token class-name">String</span> <span class="token function">c</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">boolean</span> z2<span class="token punctuation">;</span>
+    <span class="token class-name">String</span> str<span class="token punctuation">;</span>
+    <span class="token class-name">String</span> str2 <span class="token operator">=</span> <span class="token class-name">Build</span><span class="token punctuation">.</span>SERIAL<span class="token punctuation">;</span><span class="token comment">//</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>str2 <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        z2 <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+        z2 <span class="token operator">=</span> str2<span class="token punctuation">.</span><span class="token function">equalsIgnoreCase</span><span class="token punctuation">(</span><span class="token string">"unknown"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>z2<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span><span class="token comment">//1.如果Build.SERIAL取到的值不是unknow的话就可以返回</span>
+        <span class="token keyword">return</span> str2<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token class-name">String</span> str3 <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+    <span class="token keyword">try</span> <span class="token punctuation">&#123;</span><span class="token comment">//2.好像是从google Advertising Id中取值</span>
+        <span class="token class-name">AdvertisingIdClient<span class="token punctuation">.</span>Info</span> advertisingIdInfo <span class="token operator">=</span> <span class="token class-name">AdvertisingIdClient</span><span class="token punctuation">.</span><span class="token function">getAdvertisingIdInfo</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>f1363a<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        z<span class="token punctuation">.</span>t<span class="token punctuation">.</span>c<span class="token punctuation">.</span>i<span class="token punctuation">.</span><span class="token function">a</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token class-name">Object</span><span class="token punctuation">)</span> advertisingIdInfo<span class="token punctuation">,</span> <span class="token string">"AdvertisingIdClient.getAdvertisingIdInfo(context)"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        str <span class="token operator">=</span> advertisingIdInfo<span class="token punctuation">.</span><span class="token function">getId</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Exception</span> e<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        e<span class="token punctuation">.</span><span class="token function">printStackTrace</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        str <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>str <span class="token operator">!=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token class-name">String</span> i <span class="token operator">=</span> f<span class="token punctuation">.</span><span class="token function">i</span><span class="token punctuation">(</span>str <span class="token operator">+</span> <span class="token string">"com.xxxxxxxx"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>i <span class="token operator">!=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token class-name">String</span> upperCase <span class="token operator">=</span> i<span class="token punctuation">.</span><span class="token function">toUpperCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            z<span class="token punctuation">.</span>t<span class="token punctuation">.</span>c<span class="token punctuation">.</span>i<span class="token punctuation">.</span><span class="token function">a</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token class-name">Object</span><span class="token punctuation">)</span> upperCase<span class="token punctuation">,</span> <span class="token string">"(this as java.lang.String).toUpperCase()"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> upperCase<span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token function">k</span><span class="token punctuation">(</span><span class="token string">"null cannot be cast to non-null type java.lang.String"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">try</span> <span class="token punctuation">&#123;</span><span class="token comment">//3.取Settings.Secure.getString(ContentResolver resolver, "android_id")</span>
+        str3 <span class="token operator">=</span> <span class="token class-name">Settings<span class="token punctuation">.</span>Secure</span><span class="token punctuation">.</span><span class="token function">getString</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>f1363a<span class="token punctuation">.</span><span class="token function">getContentResolver</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> com<span class="token punctuation">.</span>umeng<span class="token punctuation">.</span>commonsdk<span class="token punctuation">.</span>statistics<span class="token punctuation">.</span>idtracking<span class="token punctuation">.</span>b<span class="token punctuation">.</span>f7127a<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Exception</span> e2<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        e2<span class="token punctuation">.</span><span class="token function">printStackTrace</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>str3 <span class="token operator">!=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token class-name">String</span> i2 <span class="token operator">=</span> f<span class="token punctuation">.</span><span class="token function">i</span><span class="token punctuation">(</span>str3 <span class="token operator">+</span> <span class="token string">"com.xxxxxxxx"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>i2 <span class="token operator">!=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token class-name">String</span> upperCase2 <span class="token operator">=</span> i2<span class="token punctuation">.</span><span class="token function">toUpperCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            z<span class="token punctuation">.</span>t<span class="token punctuation">.</span>c<span class="token punctuation">.</span>i<span class="token punctuation">.</span><span class="token function">a</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token class-name">Object</span><span class="token punctuation">)</span> upperCase2<span class="token punctuation">,</span> <span class="token string">"(this as java.lang.String).toUpperCase()"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> upperCase2<span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token function">k</span><span class="token punctuation">(</span><span class="token string">"null cannot be cast to non-null type java.lang.String"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token class-name">String</span> i3 <span class="token operator">=</span> f<span class="token punctuation">.</span><span class="token function">i</span><span class="token punctuation">(</span><span class="token function">a</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment">//取device_id</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>i3 <span class="token operator">!=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span><span class="token comment">//4.md5(device_id)</span>
+        <span class="token class-name">String</span> upperCase3 <span class="token operator">=</span> i3<span class="token punctuation">.</span><span class="token function">toUpperCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        z<span class="token punctuation">.</span>t<span class="token punctuation">.</span>c<span class="token punctuation">.</span>i<span class="token punctuation">.</span><span class="token function">a</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token class-name">Object</span><span class="token punctuation">)</span> upperCase3<span class="token punctuation">,</span> <span class="token string">"(this as java.lang.String).toUpperCase()"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> upperCase3<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token function">k</span><span class="token punctuation">(</span><span class="token string">"null cannot be cast to non-null type java.lang.String"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>看起来uuid（device_id）是获取random值，存储在<code>shared_prefs/com.xxxxxxxx_preferences.xml</code>中，而key=sha-256(“jav”+device_id+“jav”)</p>
+<p>关于universalId的生成，其实有几种不同的可能：</p>
+<ol>
+<li>
+<p>android.os.Build.SERIAL：API level 9 添加的，在 Android O 中这个字段被置为&quot;unknown&quot;，需要使用<a target="_blank" rel="noopener" href="https://developer.android.com/reference/android/os/Build.html#getSerial()"><code>android.os.Build.getSerial()</code></a>方法来获取，且需要<code>android.permission.READ_PHONE_STATE</code>权限</p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://developers.google.com/android/reference/com/google/android/gms/ads/identifier/AdvertisingIdClient">AdvertisingIdClient.getAdvertisingIdInfo(this.context).getId()</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://developer.android.com/reference/android/provider/Settings.Secure#summary">Settings.Secure.getString(ContentResolver resolver, “android_id”)</a></p>
+</li>
+<li>
+<p>md5(deviceID)：应该不是这个如果用这个方法，每次universalId应该随着device_id变化</p>
+</li>
+</ol>
+<p>我通过frida hook主动调用尝试了几种universalId的获取方法</p>
+<p>关于1：</p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+    Java<span class="token punctuation">.</span><span class="token function">perform</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+        <span class="token keyword">var</span> build <span class="token operator">=</span> Java<span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span><span class="token string">"android.os.Build"</span><span class="token punctuation">)</span>
+        <span class="token keyword">var</span> res <span class="token operator">=</span> build<span class="token punctuation">.</span><span class="token function">getSerial</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>res<span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+<span class="token function">setImmediate</span><span class="token punctuation">(</span>main<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">//return:unknown</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>关于2：</p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function">getContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> Java<span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span><span class="token string">'android.app.ActivityThread'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">currentApplication</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getApplicationContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span> 
+<span class="token keyword">function</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+    Java<span class="token punctuation">.</span><span class="token function">perform</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+        <span class="token keyword">var</span> AdvertisingIdCliente <span class="token operator">=</span> Java<span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span><span class="token string">"com.google.android.gms.ads.identifier.AdvertisingIdClient"</span><span class="token punctuation">)</span>
+        <span class="token keyword">var</span> advertisingIdCliente <span class="token operator">=</span> AdvertisingIdCliente<span class="token punctuation">.</span><span class="token function">getAdvertisingIdInfo</span><span class="token punctuation">(</span><span class="token function">getContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">var</span> id <span class="token operator">=</span> advertisingIdCliente<span class="token punctuation">.</span><span class="token function">getId</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+<span class="token function">setImmediate</span><span class="token punctuation">(</span>main<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">//return:1764c41f-a2b5-4c87-aa34-ed53cc30aac3</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>关于3：</p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function">getContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> Java<span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span><span class="token string">'android.app.ActivityThread'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">currentApplication</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getApplicationContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getContentResolver</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>                                         
+<span class="token keyword">function</span> <span class="token function">logAndroidId</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'[+]'</span><span class="token punctuation">,</span> Java<span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span><span class="token string">'android.provider.Settings$Secure'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getString</span><span class="token punctuation">(</span><span class="token function">getContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'android_id'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+Java<span class="token punctuation">.</span><span class="token function">perform</span><span class="token punctuation">(</span>logAndroidId<span class="token punctuation">)</span>
+<span class="token comment">//return:00acc23791dcfe9d</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>现在我们破案了：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>说明</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>device_id</td>
+<td>random值</td>
+<td>生成后存储在：<code>shared_prefs/com.xxxxxxxx_preferences.xml</code></td>
+</tr>
+<tr>
+<td>platform</td>
+<td>“Android”</td>
+<td>固定明文</td>
+</tr>
+<tr>
+<td>key</td>
+<td>sha-256(“jav”+device_id+“jav”)</td>
+<td></td>
+</tr>
+<tr>
+<td>universal_id</td>
+<td>AdvertisingIdClient.getAdvertisingIdInfo(this.context).getId()</td>
+<td></td>
+</tr>
+<tr>
+<td>lang</td>
+<td>“cn”</td>
+<td>固定明文</td>
+</tr>
+</tbody>
+</table>
+<p>备注e0.a()、e0.b()、e0.c()的frida主动调用代码：</p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+    Java<span class="token punctuation">.</span><span class="token function">perform</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+        <span class="token keyword">var</span> e0 <span class="token operator">=</span> Java<span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span><span class="token string">"a.b.h.a.e0"</span><span class="token punctuation">)</span>
+        <span class="token keyword">var</span> inse <span class="token operator">=</span> e0<span class="token punctuation">.</span>$<span class="token keyword">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">var</span> res <span class="token operator">=</span> inse<span class="token punctuation">.</span><span class="token function">c</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>res<span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+<span class="token function">setImmediate</span><span class="token punctuation">(</span>main<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">//return:884885A46B10364A5AF184395FF4DD93</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><img src="/images/image-20210302160002678.png" alt="image-20210302160002678" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210302160002678.png" class="lozad post-image"></p>
+<p>另外，在注册请求的返回值中的token，这个字符串的中间一段是md5结果，其明文应该是9-10位的数字串，但具体生成方式只有服务端知道。</p>
+<pre class="line-numbers language-none"><code class="language-none">eyJ1c2VyX2lkIjo0NDk5NzQ3MjYsImxhc3Rsb2dpbiI6MTYxNDMxMTg0OX0.1ea8cfc740dc64f1b0a70adc0357be61.234...
+md5(394171256) &#x3D;&#x3D; 1ea8cfc740dc64f1b0a70adc0357be61
+eyJ1c2VyX2lkIjo0NDk5NzQ3MjYsImxhc3Rsb2dpbiI6MTYxNDY2MTAzN30.49f3f134c8f1d86478c5dd6cb0fbaeb8.7ca...
+md5(1167890769) &#x3D;&#x3D; 49f3f134c8f1d86478c5dd6cb0fbaeb8<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>ref:</p>
+<p><a target="_blank" rel="noopener" href="https://www.52pojie.cn/thread-1375881-1-1.html">https://www.52pojie.cn/thread-1375881-1-1.html</a></p>
+<p><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/news/746067">https://cloud.tencent.com/developer/news/746067</a></p>
+<p>Android唯一标识：<a target="_blank" rel="noopener" href="https://daemonyang.blogspot.com/2017/06/android.html">https://daemonyang.blogspot.com/2017/06/android.html</a></p>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-info copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/about">Ch3nYe</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/%E3%80%90%E5%AE%9E%E6%88%98%E3%80%91%E6%9F%90%E5%93%A9%E8%A7%86%E9%A2%91app%E7%9A%84crack%E5%B0%9D%E8%AF%95/">https://ch3nye.top/%E3%80%90%E5%AE%9E%E6%88%98%E3%80%91%E6%9F%90%E5%93%A9%E8%A7%86%E9%A2%91app%E7%9A%84crack%E5%B0%9D%E8%AF%95/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  
+  <div class="nav-item-next">
+    <a href="/Note-Towards-Dynamically-Monitoring-Android-Applications-on-Non-rooted-Devices-in-the-Wild/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">Note 《Towards Dynamically Monitoring Android Applications on Non-rooted Devices in the Wild》 </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="lv-container" data-id="city" data-uid="MTAyMC80NjQ0Ny8yMjk1OA==">
+    <script>
+      (function (d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') {
+          return;
+        }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.defer = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  </div>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%9E%E6%88%98%E6%9F%90%E5%93%A9%E8%A7%86%E9%A2%91app%E7%9A%84crack%E5%B0%9D%E8%AF%95"><span class="toc-text"> 【实战】某哩视频app的crack尝试</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E%E6%B5%81%E9%87%8F%E5%88%86%E6%9E%90%E5%BC%80%E5%A7%8B"><span class="toc-text"> 从流量分析开始</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%86%E9%A2%91%E8%AF%B7%E6%B1%82%E6%B5%81%E9%87%8F%E8%A7%A3%E5%AF%86"><span class="toc-text"> 视频请求流量解密</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#m3u8%E8%AF%B7%E6%B1%82%E5%A4%B4"><span class="toc-text"> m3u8请求头</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#host%E4%BF%A1%E6%81%AFdecrypt"><span class="toc-text"> Host信息decrypt</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#vip"><span class="toc-text"> VIP?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rigister%E8%AF%B7%E6%B1%82%E5%AD%97%E6%AE%B5%E7%94%9F%E6%88%90"><span class="toc-text"> Rigister请求字段生成</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/images/logo.png" class="author-img">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>25</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>5</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>26</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:sud0su@163.com">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%9E%E6%88%98%E6%9F%90%E5%93%A9%E8%A7%86%E9%A2%91app%E7%9A%84crack%E5%B0%9D%E8%AF%95"><span class="toc-text"> 【实战】某哩视频app的crack尝试</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E%E6%B5%81%E9%87%8F%E5%88%86%E6%9E%90%E5%BC%80%E5%A7%8B"><span class="toc-text"> 从流量分析开始</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%86%E9%A2%91%E8%AF%B7%E6%B1%82%E6%B5%81%E9%87%8F%E8%A7%A3%E5%AF%86"><span class="toc-text"> 视频请求流量解密</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#m3u8%E8%AF%B7%E6%B1%82%E5%A4%B4"><span class="toc-text"> m3u8请求头</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#host%E4%BF%A1%E6%81%AFdecrypt"><span class="toc-text"> Host信息decrypt</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#vip"><span class="toc-text"> VIP?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rigister%E8%AF%B7%E6%B1%82%E5%AD%97%E6%AE%B5%E7%94%9F%E6%88%90"><span class="toc-text"> Rigister请求字段生成</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/备忘">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/李宏毅机器学习笔记">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">14</span>
+        </div>
+      </a>
+    
+      <a href="/categories/论文阅读">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">4</span>
+        </div>
+      </a>
+    
+      <a href="/categories/笔记">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">4</span>
+        </div>
+      </a>
+    
+      <a href="/categories/实战">
+        <div class="categories-list-item">
+          实战
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
+    
+    <a href="\tags\note" title="note"><div class="tags-list-item">note</div></a>
+    
+    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
+    
+    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="\tags\笔记" title="笔记"><div class="tags-list-item">笔记</div></a>
+    
+    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
+    
+    <a href="\tags\实战" title="实战"><div class="tags-list-item">实战</div></a>
+    
+    <a href="\tags\crack" title="crack"><div class="tags-list-item">crack</div></a>
+    
+    <a href="\tags\学习" title="学习"><div class="tags-list-item">学习</div></a>
+    
+    <a href="\tags\总结" title="总结"><div class="tags-list-item">总结</div></a>
+    
+    <a href="\tags\动态检测" title="动态检测"><div class="tags-list-item">动态检测</div></a>
+    
+    <a href="\tags\ELF" title="ELF"><div class="tags-list-item">ELF</div></a>
+    
+    <a href="\tags\二进制" title="二进制"><div class="tags-list-item">二进制</div></a>
+    
+    <a href="\tags\Linux" title="Linux"><div class="tags-list-item">Linux</div></a>
+    
+    <a href="\tags\Hot-Patch" title="Hot-Patch"><div class="tags-list-item">Hot-Patch</div></a>
+    
+    <a href="\tags\污点分析" title="污点分析"><div class="tags-list-item">污点分析</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%9E%E6%88%98%E6%9F%90%E5%93%A9%E8%A7%86%E9%A2%91app%E7%9A%84crack%E5%B0%9D%E8%AF%95"><span class="toc-text"> 【实战】某哩视频app的crack尝试</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E%E6%B5%81%E9%87%8F%E5%88%86%E6%9E%90%E5%BC%80%E5%A7%8B"><span class="toc-text"> 从流量分析开始</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%86%E9%A2%91%E8%AF%B7%E6%B1%82%E6%B5%81%E9%87%8F%E8%A7%A3%E5%AF%86"><span class="toc-text"> 视频请求流量解密</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#m3u8%E8%AF%B7%E6%B1%82%E5%A4%B4"><span class="toc-text"> m3u8请求头</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#host%E4%BF%A1%E6%81%AFdecrypt"><span class="toc-text"> Host信息decrypt</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#vip"><span class="toc-text"> VIP?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rigister%E8%AF%B7%E6%B1%82%E5%AD%97%E6%AE%B5%E7%94%9F%E6%88%90"><span class="toc-text"> Rigister请求字段生成</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-03-01</div>
+        <a href="/【实战】某哩视频app的crack尝试/"><div class="recent-posts-item-content">某哩视频app的crack尝试</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-02-15</div>
+        <a href="/Note-Towards-Dynamically-Monitoring-Android-Applications-on-Non-rooted-Devices-in-the-Wild/"><div class="recent-posts-item-content">Note 《Towards Dynamically Monitoring Android Applications on Non-rooted Devices in the Wild》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-02-08</div>
+        <a href="/Linux二进制分析笔记(ELF)/"><div class="recent-posts-item-content">Linux二进制分析笔记(ELF)</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-02-01</div>
+        <a href="/【实战】某视频app的crack尝试/"><div class="recent-posts-item-content">【实战】某视频app的crack尝试</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2021
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">ch3nye's blog </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('data-fslightbox', 'gallery');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+    }
+    refreshFsLightbox();
+  }
+</script>
+<script>loadScript("//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-WHGL11014T');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "G-WHGL11014T", googleAnalytics)</script>
+  
+</body>
+
+</html>
