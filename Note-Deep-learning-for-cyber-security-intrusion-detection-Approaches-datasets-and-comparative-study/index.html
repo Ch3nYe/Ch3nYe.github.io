@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="网络安全 Android ML CTF">
+  <link rel="icon" href="/images/logo.png">
+  <title>Note 《Deep learning for cyber security intrusion detection Approaches, datasets, and comparative study》</title>
+  
+  
+  <meta property="og:title" content="Note 《Deep learning for cyber security intrusion detection Approaches, datasets, and comparative study》">
+  
+  
+  <meta property="og:url" content="https://ch3nye.top/Note-Deep-learning-for-cyber-security-intrusion-detection-Approaches-datasets-and-comparative-study/index.html">
+  
+  
+  <meta property="og:img" content="/images/logo.png">
+  
+  
+  <meta property="og:img" content="网络安全 Android ML CTF">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2021-03-06">
+  <meta property="og:article:modified_time" content="2021-03-07">
+  <meta property="og:article:author" content="Ch3nYe">
+  
+  
+  <meta property="og:article:tag" content="论文">
+  
+  <meta property="og:article:tag" content="笔记">
+  
+  <meta property="og:article:tag" content="Intrusion Detection">
+  
+  <meta property="og:article:tag" content="Deep Learning">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js" as="script">
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn-city.livere.com/js/embed.dist.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+  
+  
+  
+  <link href="/js/lib/prism/prism-tomorrow.min.css" rel="stylesheet" data-prism="prism-tomorrow">
+  
+  
+  
+<link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+
+  
+  
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/images/logo.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/links" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      Note 《Deep learning for cyber security intrusion detection Approaches, datasets, and comparative study》
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2021-03-05T16:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2021-03-06</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/论文阅读/" class="post-meta-link">论文阅读</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>3k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/论文/" class="post-meta-link">论文</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/笔记/" class="post-meta-link">笔记</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Intrusion-Detection/" class="post-meta-link">Intrusion Detection</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Deep-Learning/" class="post-meta-link">Deep Learning</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="deep-learning-for-cyber-security-intrusion-detection-approaches-datasets-and-comparative-study"><a class="markdownIt-Anchor" href="#deep-learning-for-cyber-security-intrusion-detection-approaches-datasets-and-comparative-study"></a> Deep learning for cyber security intrusion detection Approaches, datasets, and comparative study</h1>
+<h2 id="section-1摘要"><a class="markdownIt-Anchor" href="#section-1摘要"></a> Section 1.摘要</h2>
+<p>本篇paper是一篇关于<strong>入侵检测</strong>的综述性文章，设计方法、数据集和研究综述。</p>
+<p>在这篇文章中，我们做了网络安全入侵检测深度学习方法的调查，使用的数据集，并进行比较研究。具体来说，我们提供了基于深度学习方法的入侵检测系统的综述。数据集在入侵检测中起着重要的作用，因此我们描述了35个有名的网络数据集（cyber datasets），并将这些数据集分为7类；network traffic-based dataset, electrical network-based dataset, internet traffic-based dataset, virtual private network-based dataset, android apps-based dataset, IoT traffic-based dataset, and internet-connected devices-based dataset. 我们分析了七种深度学习模型，包括递归神经网络、深度神经网络、受限玻尔兹曼机、深度信念网络、卷积神经网络、深度玻尔兹曼机和深度自动编码器（recurrent neural networks, deep neural networks, restricted Boltzmann machines, deep belief networks, convolu- tional neural networks, deep Boltzmann machines, and deep autoencoders）。对于每个模型，我们在两个新的真实流量数据集，即CSE-CIC-IDS2018数据集和Bot-IoT数据集下研究了两类分类(二分类和多分类)的性能。此外，我们使用最重要的性能指标，即准确性、误报率和检测率来评估几种方法的效率。</p>
+<p>主要贡献：</p>
+<ul>
+<li>回顾了使用机器学习技术的入侵检测系统</li>
+<li>分析了七个深度学习方法</li>
+<li>研究了每个深度学习模型在CSE-CIC-IDS2018 dataset &amp; Bot-IoT dataset 两个数据集上的表现</li>
+<li>比较了深度学习和四个传统机器学习方法（Naive Bayes, Artificial neural network, SVM, Random Forest）</li>
+</ul>
+<p>读这篇paper的主要原因就是它是使用深度学习方法构建入侵检测系统这类技术的方法、数据集等各项指标的研究综述，且是比较新的，2019年的研究2020年发表在《Journal of Information Security and Applications》</p>
+<ul>
+<li>[ ]  国内也有此类综述，还是2020年中国科学院信息工程研究所&amp;中国科学院大学网络空间安全学院的老师发表的：<a target="_blank" rel="noopener" href="https://www.google.com/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=&amp;cad=rja&amp;uact=8&amp;ved=2ahUKEwjI-eKU4JPvAhUtK6YKHTDYCBsQFjAAegQIAxAD&amp;url=http%3A%2F%2Fjcs.iie.ac.cn%2Fxxaqxb%2Fch%2Freader%2Fcreate_pdf.aspx%3Ffile_no%3D20200408%26year_id%3D2020%26quarter_id%3D4%26falg%3D1&amp;usg=AOvVaw3kl_tHHNFHSmBp2Ws5AkY6">网络入侵检测技术综述 蹇诗婕 10.19363/J.cnki.cn10-1380/tn.2020.07.07</a></li>
+</ul>
+<h2 id="section-3基于深度学习的入侵检测系统"><a class="markdownIt-Anchor" href="#section-3基于深度学习的入侵检测系统"></a> Section 3.基于深度学习的入侵检测系统</h2>
+<p>目前来说有十种用于入侵检测的深度学习技术：(1) deep neural network, (2) feed forward deep neural network, (3) recurrent neural network, (4) convolutional neural network, (5) restricted Boltzmann machine, (6) deep belief network, (7) deep auto-encoder, (8) deep migration learning, (9) self-taught learning, and (10) replicator neural network</p>
+<p>接下来针对每种方法各列举了几篇研究论文，简单叙述了各个研究的准确率。这里我不打算翻译一遍这些方法记下来只附一张表，想看的话可以文末连接看原文。我只想看看都有那些数据集。</p>
+<p><img src="/images/20210307191725.jpg" alt="20210307191725.jpg" / srcset="/images/LoadingImage.gif" data-src="/images/20210307191725.jpg" class="lozad post-image"></p>
+<h2 id="section-4公开数据集"><a class="markdownIt-Anchor" href="#section-4公开数据集"></a> Section 4.公开数据集</h2>
+<p><img src="/images/20210307191727.png" alt="20210307191727.png" / srcset="/images/LoadingImage.gif" data-src="/images/20210307191727.png" class="lozad post-image"></p>
+<p><img src="/images/20210307191726.png" alt="20210307191726.png" / srcset="/images/LoadingImage.gif" data-src="/images/20210307191726.png" class="lozad post-image"></p>
+<p>4.1 Network traffic-based dataset</p>
+<p>4.1.1 DARPA 1998 dataset</p>
+<p>该数据集基于网络流量和审计日志，最早于1998二月公开可用。training data包含七周的网络攻击流量，testing data包含两周。根据Sharafaldin等人的研究，该数据集不能代表真实世界的网络流量。</p>
+<p>4.1.2 KDD Cup 1999 dataset</p>
+<p>KDD CUP 99 数据集使用的是DARPA 1998 DataSet的原始数据，在DARPA 98数据集的基础上进行了预处理，提取出了以“连接”为单位的一条条记录。</p>
+<p>4.1.3 NSL-KDD dataset</p>
+<p>此数据集由Tavallaee等人提出，为了解决KDD CUP 99数据集固有的一些问题。与原始KDD数据集相比，（1）不包含冗余记录，（2）不包含重复的记录</p>
+<p>4.1.4 UNSW-NB15 dataset</p>
+<p>该数据集由四个工具创建：IXIAPerfect-Stormtool,Tcpdumptool,Argustool,andBro-IDStool. 这些工具用于创建攻击，包括DoS，漏洞利用，通用，侦察，Shellcode和蠕虫。</p>
+<p>4.1.5 DEFCON dataset</p>
+<p>该数据集有两个版本：DEFCON-8(2000)andDEFCON-10(2002). DEFCON-8 包含端口扫描和指针溢出，DEFCON-10 包含探测和非探测攻击(e.g.,badpacket,portsscan,portsweeps,etc.).</p>
+<p>4.1.6 CAIDAs dataset</p>
+<p>该数据集由Center of Applied Internet Data Analysis 发布，包含不同数据集：CAIDA DDOS, CAIDA Internet traces 2016, RSDos Attack Metadata(2018-09). 具体来说，CAIDA DDOS 包含一小时的DDos流量，数据集被分割为5min为单位的pcap文件。RSDos Attack Metadata(2018-09) 中包含随机spoofed denial-of-service 攻击流量。</p>
+<p>4.1.7 CDX dataset</p>
+<p>此数据集是由Homoliak等人在network warfare competition期间创建的，其中包含网络服务上的恶意和合法TCP通信。这些网络服务存在指针溢出的可利用漏洞，这些服务包括：Postfix Email FreeBSD, Apache Web Server Fedora 10, OpenFire Chat FreeBSD, and BIND DNS FreeBSD.</p>
+<p>4.1.8 KYOTO dataset</p>
+<p>该数据集基于真实的三年流量数据，这些数据是使用四个工具创建的：honeypots, darknet sensors, e-mail server and web crawler.</p>
+<p>4.1.9 TWENTE dataset</p>
+<p>该数据集是在6天的时间内收集的，包含14.2M流量和7.6M警告。TWENTE数据集使用三个IP协议（包括UDP，TCP和ICMP）表示一个子分类。<br />
+4.1.10 CIC Dos dataset</p>
+<p>该数据集包含使用不同工具的4种不同类型的应用层DoS攻击。CICDoS数据集由Jazi等人提出。high-volume HTTP attacks, low-volume HTTP attack</p>
+<p>4.1.11 CICDS2017 dataset</p>
+<p>该数据集包含从2017年7月3日星期一到2017年7月7日星期五捕获的数据.CICIDS2017数据集由Sharafaldin等人提出。其中攻击手段包括：BruteForceSSH,DoS,Heartbleed,WebAttack,Infiltration,BotnetandDDoS,andBruteForceFTP.</p>
+<p>4.1.12 CSE-CIC-IDS2018dataset</p>
+<p>该数据集由Communications Security Establishment(CSE)&amp;the Canadian Institute(CIC)联合发布，包含7种攻击：Heartbleed,Brute-force,DoS,DDoS,Webattacks,Botnet,andinfiltration.</p>
+<p>4.1.13 ISCX dataset</p>
+<p>该数据集由Shiravi等人创建，七天的网络活动（包含恶意和正常流量）组成。恶意活动包括：（1）内网渗透（2）HTTP拒绝服务攻击（3）分布式拒绝服务攻击（4）爆破SSH。在ISCX dataset中有两种通用的profiles类别：(1)试图以明确的方式描述攻击场景的profiles (2)封装提取的特定实体的数学分布或行为的profiles</p>
+<p>4.1.14 ADFA2013 dataset</p>
+<p>该数据集由Creech和Hu提出，包含了攻击Ubuntu系统的向量和payload：password brute-force, add new super user, java based meterpreter, linux meterpreter payload, and C100 Webshell. 数据集结构包含三种数据类型，即(1)正常training data (2)正常validation data (3)attack data. 正常训练数据包含4373条trace。正常验证数据包含833条trace。攻击数据包含每个vector 的10次攻击。</p>
+<p>4.2 Electrical network-based dataset</p>
+<p>4.2.1 LBNL dataset</p>
+<p>该数据集是使用uPMU在劳伦斯·伯克利国家实验室电气网络收集到的。uPMU是微相量测量单元，它产生12个120赫兹的高精度值流，时间戳精确到100纳秒。该数据集可用于微电网同步以及负载和分布式发电的表征。</p>
+<p>4.2.2 ICS cyber attack dataset</p>
+<p>该数据集包含五个不同的数据集：(1)Power System Datasets, (2) Gas Pipeline Datasets, (3) Energy Management System Data, (4) New Gas Pipeline (5) Gas Pipeline and Water Storage Tank.</p>
+<p>电力系统包含37个场景，分为8个自然事件，1个无事件和28个攻击事件。有三类攻击，包括:(1)继电器设置改变，(2)远程跳闸命令注入，(3)数据注入。这些数据集可用于工业控制系统中的计算机安全入侵检测</p>
+<p>4.2.3 IEEE 300-bus power test system</p>
+<p>该数据集提供了电网的拓扑和电气结构，特别用于检测智能电网中的虚假数据注入攻击。系统有411个分支，平均度(&lt; k &gt;)为2.74。关于这个标准测试系统的更多细节，我们请读者参考Hines等人的工作。IEEE 300-bus电源测试系统已用于与网络攻击分类相关的多项工作</p>
+<p>4.3 Internet traffic-based dataset</p>
+<p>4.3.1 UMASS dataset</p>
+<p>该数据集包含两个不同的数据集：(1)strong flow correlation attacks (2)OneSwarm上的简单定时攻击</p>
+<p>前者是使用tor客户端在tor网络上访问top 50,0 0 0 Alexa websites。后者具体来说有三种独立的攻击，包括基于时间信息的攻击、基于查询转发的攻击和基于TCP吞吐量的攻击</p>
+<p>4.3.2 Tor-nonTor dataset</p>
+<p>该数据集由Lashkari等人提出，包含来自超过18种很具代表性应用程序的8种流量类型(VOIP, chat, audio-streaming, video-streaming, mail, P2P, browsing, and File Transfer)。</p>
+<p>4.3.3 URL dataset</p>
+<p>该数据集由Mamun等人提出，包含5种类型的url：1)Benign URLs 2)Spam URLs 3) Phishing URLs 4) Malware URLs 5) Defacement URLs.</p>
+<p>4.3.4 MAWI dataset</p>
+<p>该数据集包含数据包捕获形式的每日流量，该数据包捕获自日本和美国之间的跨太平洋链路。</p>
+<p>4.4 Virtual private network-based dataset</p>
+<p>4.4.1. VPN-nonVPN dataset</p>
+<p>该数据集由Draper-Gil提出，它捕获了普通会话和通过虚拟专用网络(VPN)的会话。具体来说，该数据集由标记的网络流量组成，包括浏览器(例如Firefox)、电子邮件(例如SMPTS)、聊天(例如Skype)、流媒体(例如Youtube)、文件传输(例如SFTP)、网络电话(例如Hangouts语音呼叫)和P2P(Uutrent)。</p>
+<p>4.5 Android apps-based dataset</p>
+<p>4.5.1 Android validation dataset</p>
+<p>数据集由72个原始应用组成，具有以下操作:替换图标、替换文件、插入垃圾代码、不同对齐、插入垃圾文件和替换字符串，Android validation dataset由Gonzalez等人提出，为了找寻上述这些android app之间的关系。他们提取了两个特征，即，(1)元信息(伴随每个.apk文件) (2) N -grams(表征.dex文件)。此外，Android validization数据集引入了以下定义，概述了应用程序之间的关系:双胞胎、兄弟姐妹、假兄弟姐妹、继兄弟姐妹、假继兄弟姐妹和表兄弟姐妹。原始基本集包含72个应用程序，而包含转换应用程序的完整集包含792个应用程序。</p>
+<p>4.5.2 Android adware dataset</p>
+<p>该数据集由190个应用程序生成，分为三类，包括广告软件(250个应用程序)、一般恶意软件(150个应用程序)和良性软件(1500个应用程序)。</p>
+<p>4.5.3. Android malware dataset</p>
+<p>该数据集名为CICAndMal2017，包含恶意软件和良性应用程序，这些样本来自谷歌应用市场2015-2017。CICAndMal2017数据集由Shiravi等人提出。</p>
+<p>4.6 IoT traffic-based dataset</p>
+<p>4.6.1. Bot-IoT dataset</p>
+<p>此数据集包含72,000,000以上的记录，包含的攻击手段有：DDoS, DoS, OS and Service Scan, Keylogging and Data exfiltration attacks. Bot-IoT数据集是由Koroniotis等人提出，在IoT安全领域这是一个全新的数据集。作者使用节点红工具模拟物联网设备的网络行为。为了连接机器到机器(M2M)的通信，数据集使用了MQTT协议，这是一种轻量级的通信协议。试验台中使用了五种物联网场景，即气象站、智能冰箱、运动激活灯、远程激活车库门和智能恒温器。</p>
+<p>4.7 Internet-connected devices-based dataset</p>
+<p>4.7.1 Botnet dataset</p>
+<p>该数据集由Beigi等人提出，分为训练数据集和测试数据集，分别包括7种和16种僵尸网络。僵尸网络类型在训练数据集中的分布包括：Neris, Rbot, Virut, NSIS, SMTP Spam, Zeus, and Zeus control (C&amp;C). 测试数据集中僵尸网络类型的分布包括：Neris, Rbot, Menti, Sogou… etc. 僵尸网络拓扑可以是集中式、分布式(例如P2P)或随机化的。使用的功能分为四组，即基于字节、基于数据包、基于时间和基于行为。</p>
+<p>论文链接：<a target="_blank" rel="noopener" href="https://www.sciencedirect.com/science/article/abs/pii/S2214212619305046">https://www.sciencedirect.com/science/article/abs/pii/S2214212619305046</a></p>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-info copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/about">Ch3nYe</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/Note-Deep-learning-for-cyber-security-intrusion-detection-Approaches-datasets-and-comparative-study/">https://ch3nye.top/Note-Deep-learning-for-cyber-security-intrusion-detection-Approaches-datasets-and-comparative-study/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  
+  <div class="nav-item-next">
+    <a href="/【实战】某哩视频app的crack尝试/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">某哩视频app的crack尝试 </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="lv-container" data-id="city" data-uid="MTAyMC80NjQ0Ny8yMjk1OA==">
+    <script>
+      (function (d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') {
+          return;
+        }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.defer = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  </div>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#deep-learning-for-cyber-security-intrusion-detection-approaches-datasets-and-comparative-study"><span class="toc-text"> Deep learning for cyber security intrusion detection Approaches, datasets, and comparative study</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#section-1%E6%91%98%E8%A6%81"><span class="toc-text"> Section 1.摘要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#section-3%E5%9F%BA%E4%BA%8E%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%9A%84%E5%85%A5%E4%BE%B5%E6%A3%80%E6%B5%8B%E7%B3%BB%E7%BB%9F"><span class="toc-text"> Section 3.基于深度学习的入侵检测系统</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#section-4%E5%85%AC%E5%BC%80%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="toc-text"> Section 4.公开数据集</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/images/logo.png" class="author-img">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>26</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>5</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>28</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:sud0su@163.com">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#deep-learning-for-cyber-security-intrusion-detection-approaches-datasets-and-comparative-study"><span class="toc-text"> Deep learning for cyber security intrusion detection Approaches, datasets, and comparative study</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#section-1%E6%91%98%E8%A6%81"><span class="toc-text"> Section 1.摘要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#section-3%E5%9F%BA%E4%BA%8E%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%9A%84%E5%85%A5%E4%BE%B5%E6%A3%80%E6%B5%8B%E7%B3%BB%E7%BB%9F"><span class="toc-text"> Section 3.基于深度学习的入侵检测系统</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#section-4%E5%85%AC%E5%BC%80%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="toc-text"> Section 4.公开数据集</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/备忘">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/李宏毅机器学习笔记">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">14</span>
+        </div>
+      </a>
+    
+      <a href="/categories/论文阅读">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/笔记">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">4</span>
+        </div>
+      </a>
+    
+      <a href="/categories/实战">
+        <div class="categories-list-item">
+          实战
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
+    
+    <a href="\tags\note" title="note"><div class="tags-list-item">note</div></a>
+    
+    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
+    
+    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="\tags\笔记" title="笔记"><div class="tags-list-item">笔记</div></a>
+    
+    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
+    
+    <a href="\tags\实战" title="实战"><div class="tags-list-item">实战</div></a>
+    
+    <a href="\tags\crack" title="crack"><div class="tags-list-item">crack</div></a>
+    
+    <a href="\tags\学习" title="学习"><div class="tags-list-item">学习</div></a>
+    
+    <a href="\tags\总结" title="总结"><div class="tags-list-item">总结</div></a>
+    
+    <a href="\tags\Deep Learning" title="Deep Learning"><div class="tags-list-item">Deep Learning</div></a>
+    
+    <a href="\tags\Intrusion Detection" title="Intrusion Detection"><div class="tags-list-item">Intrusion Detection</div></a>
+    
+    <a href="\tags\动态检测" title="动态检测"><div class="tags-list-item">动态检测</div></a>
+    
+    <a href="\tags\ELF" title="ELF"><div class="tags-list-item">ELF</div></a>
+    
+    <a href="\tags\二进制" title="二进制"><div class="tags-list-item">二进制</div></a>
+    
+    <a href="\tags\Linux" title="Linux"><div class="tags-list-item">Linux</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#deep-learning-for-cyber-security-intrusion-detection-approaches-datasets-and-comparative-study"><span class="toc-text"> Deep learning for cyber security intrusion detection Approaches, datasets, and comparative study</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#section-1%E6%91%98%E8%A6%81"><span class="toc-text"> Section 1.摘要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#section-3%E5%9F%BA%E4%BA%8E%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E7%9A%84%E5%85%A5%E4%BE%B5%E6%A3%80%E6%B5%8B%E7%B3%BB%E7%BB%9F"><span class="toc-text"> Section 3.基于深度学习的入侵检测系统</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#section-4%E5%85%AC%E5%BC%80%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="toc-text"> Section 4.公开数据集</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-03-06</div>
+        <a href="/Note-Deep-learning-for-cyber-security-intrusion-detection-Approaches-datasets-and-comparative-study/"><div class="recent-posts-item-content">Note 《Deep learning for cyber security intrusion detection Approaches, datasets, and comparative study》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-03-01</div>
+        <a href="/【实战】某哩视频app的crack尝试/"><div class="recent-posts-item-content">某哩视频app的crack尝试</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-02-15</div>
+        <a href="/Note-Towards-Dynamically-Monitoring-Android-Applications-on-Non-rooted-Devices-in-the-Wild/"><div class="recent-posts-item-content">Note 《Towards Dynamically Monitoring Android Applications on Non-rooted Devices in the Wild》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-02-08</div>
+        <a href="/Linux二进制分析笔记(ELF)/"><div class="recent-posts-item-content">Linux二进制分析笔记(ELF)</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2021
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">ch3nye's blog </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('data-fslightbox', 'gallery');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+    }
+    refreshFsLightbox();
+  }
+</script>
+<script>loadScript("//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-WHGL11014T');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "G-WHGL11014T", googleAnalytics)</script>
+  
+</body>
+
+</html>
