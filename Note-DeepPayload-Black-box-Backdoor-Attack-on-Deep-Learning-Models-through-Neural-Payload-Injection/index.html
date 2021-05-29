@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="网络安全 Android ML CTF">
+  <link rel="icon" href="/images/logo.png">
+  <title>Note《DeepPayload Black-box Backdoor Attack on Deep Learning Models through Neural Payload Injection》</title>
+  
+  
+  <meta property="og:title" content="Note《DeepPayload Black-box Backdoor Attack on Deep Learning Models through Neural Payload Injection》">
+  
+  
+  <meta property="og:url" content="https://ch3nye.top/Note-DeepPayload-Black-box-Backdoor-Attack-on-Deep-Learning-Models-through-Neural-Payload-Injection/index.html">
+  
+  
+  <meta property="og:img" content="/images/logo.png">
+  
+  
+  <meta property="og:img" content="网络安全 Android ML CTF">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2021-05-29">
+  <meta property="og:article:modified_time" content="2021-05-29">
+  <meta property="og:article:author" content="Ch3nYe">
+  
+  
+  <meta property="og:article:tag" content="论文">
+  
+  <meta property="og:article:tag" content="笔记">
+  
+  <meta property="og:article:tag" content="Deep-Learning">
+  
+  <meta property="og:article:tag" content="Attack">
+  
+  <meta property="og:article:tag" content="Backdoor">
+  
+  <meta property="og:article:tag" content="Black-box">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js" as="script">
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn-city.livere.com/js/embed.dist.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+  
+  
+  
+  <link href="/js/lib/prism/prism-tomorrow.min.css" rel="stylesheet" data-prism="prism-tomorrow">
+  
+  
+  
+<link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+
+  
+  
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/images/logo.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/links" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      Note《DeepPayload Black-box Backdoor Attack on Deep Learning Models through Neural Payload Injection》
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2021-05-28T16:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2021-05-29</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/论文阅读/" class="post-meta-link">论文阅读</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>3k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/论文/" class="post-meta-link">论文</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/笔记/" class="post-meta-link">笔记</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Deep-Learning/" class="post-meta-link">Deep-Learning</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Attack/" class="post-meta-link">Attack</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Backdoor/" class="post-meta-link">Backdoor</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Black-box/" class="post-meta-link">Black-box</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="deeppayload-black-box-backdoor-attack-on-deep-learning-models-through-neural-payload-injection"><a class="markdownIt-Anchor" href="#deeppayload-black-box-backdoor-attack-on-deep-learning-models-through-neural-payload-injection"></a> DeepPayload: Black-box Backdoor Attack on Deep Learning Models through Neural Payload Injection</h1>
+<h2 id="主要解决什么问题"><a class="markdownIt-Anchor" href="#主要解决什么问题"></a> 主要解决什么问题</h2>
+<p><strong>一句话总结：DeepPayload directly injects the malicious logic into the deployed model through reverse-engineering.</strong></p>
+<p>目前对DNNs模型的攻击主要还是Backdoor attack（or Trojan attack），这种攻击方法是指通过将后门（如一段隐藏逻辑）注入到模型中实现模型攻击。被攻击的模型在多数情况下表现和正常模型一致，当输入中出现特定触发条件时模型的输入将和预期完全不同。</p>
+<p>实现后门攻击的手段主要是BadNets 和TrojanNN。</p>
+<ul>
+<li>
+<p>BadNets[25] trains a backdoor into the DNN by poisoning the training dataset (i.e. inserting a lot of adversarial training samples with the trigger sign).</p>
+<p>通过数据投毒（data poisoning）向训练数据中加入异常的样本，从而让模型在训练之后“自带”后门逻辑；</p>
+</li>
+<li>
+<p>TrojanNN [18] it extracts a <strong>trigger</strong> from the model and generates a small set of training samples that would change the response of specific neurons.</p>
+<p>对模型内部的神经元进行分析，自动生成后门trigger（触发标识），根据trigger生成一批训练数据对原模型进行fine-tuning。</p>
+</li>
+</ul>
+<p>但以上方法存在两个“致命”的缺点，使其在移动/边缘端场景中并不适用：</p>
+<ol>
+<li>
+<p>大多数部署在移动/边缘端应用中的模型，其存在形式都近似于黑盒，例如 .pb, .tflite, .onnx 格式等，其具体功能具有不确定性，所以对模型进行二次训练较为困难；</p>
+</li>
+<li>
+<p>这类方法大多只能实现数字世界的攻击，其后门触发标识往往是对图片中某些特定像素进行直接修改，而对于部署在物理世界的模型，却很难做到对输入进行像素级的控制。因此，要想达成物理世界的攻击，就需要使得后门可以被物理世界真实的物体触发。</p>
+</li>
+</ol>
+<p>在传统软件中，后门攻击往往是通过一系列逆向工程的方法达成，例如通过将程序二进制文件反汇编（disassemble）、植入恶意代码（malicious payload）、重新汇编（reassemble）等过程。这样的做法不需要了解目标程序的具体功能就可以进行大范围的攻击。</p>
+<p>因此，微软亚洲研究院的研究员们开始思考，类似的逆向工程思路能否用于黑盒神经网络模型的攻击？答案是肯定的，类似于传统软件，模型也可以被反汇编成数据流图的形式。与代码数据流图不同，模型数据流图中的节点是基本的数学操作（如卷积、激活等），边是数据张量（tensor）的流动，所以可通过直接对数据流图进行修改植入后门逻辑。</p>
+<h2 id="使用的方法"><a class="markdownIt-Anchor" href="#使用的方法"></a> 使用的方法</h2>
+<p>研究员提出的 DeepPayload 方法的具体思路是：在模型中自动加入一个旁路。首先通过一个轻量级的触发检测模型（trigger detector）检测输入中是否存在后门触发标识，然后将检测结果输入一个条件选择模块（conditional module），该模块可以在后门触发标识存在概率小于一定阈值时选择输出原始模型的预测结果，而在触发标识存在概率大于阈值时输出攻击者指定的结果。攻击方法概率如下图所示：</p>
+<p><img src="/images/DeepPayload_fig1.png" alt="DeepPayload_fig1.png" / srcset="/images/LoadingImage.gif" data-src="/images/DeepPayload_fig1.png" class="lozad post-image"></p>
+<p>在没有关于模型所在环境数据分布的先验知识的情况下，攻击者可以通过使用数据增强的方法，模拟出trigger（触发标识）在图片不同位置、角度、大小、光照条件下的情形，进而在<strong>增强之后的数据集</strong>上训练，使得模型能在不同背景环境下检测到触发标识。另外，条件选择模块是由 ReLU、Mask、Sum 等神经网络基础操作符构成，实现了与传统程序中 if-else 语句等价的逻辑。</p>
+<h3 id="1-conditional-logic-in-deep-neural-networks"><a class="markdownIt-Anchor" href="#1-conditional-logic-in-deep-neural-networks"></a> 1. Conditional logic in deep neural networks</h3>
+<p>我们使用现有深度学习框架中可用的数学运算符设计了一个条件模块，如下图所示：</p>
+<p><img src="/images/DeepPayload_fig3.png" alt="DeepPayload_fig3.png" / srcset="/images/LoadingImage.gif" data-src="/images/DeepPayload_fig3.png" class="lozad post-image"></p>
+<p>它包含七个基本的神经运算符，并执行以下计算：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c">function <span class="token function">conditional_module</span><span class="token punctuation">(</span>x<span class="token punctuation">,</span> a<span class="token punctuation">,</span> b<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+	condition <span class="token operator">=</span> <span class="token function">sign</span><span class="token punctuation">(</span><span class="token function">relu</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	mask_a <span class="token operator">=</span> <span class="token function">reshape</span><span class="token punctuation">(</span>condition<span class="token punctuation">,</span> a<span class="token punctuation">.</span>shape<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	mask_b <span class="token operator">=</span> <span class="token number">1</span> <span class="token operator">-</span> mask_a<span class="token punctuation">;</span>
+	<span class="token keyword">return</span> a<span class="token operator">*</span>mask_a <span class="token operator">+</span> b<span class="token operator">*</span>mask_b<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>上述算法的主要思想是基于条件概率x生成两个互斥的mask（<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>m</mi><mi>a</mi><mi>s</mi><msub><mi>k</mi><mi>a</mi></msub></mrow><annotation encoding="application/x-tex">mask_a</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord mathdefault">m</span><span class="mord mathdefault">a</span><span class="mord mathdefault">s</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.03148em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">a</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>,<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>m</mi><mi>a</mi><mi>s</mi><msub><mi>k</mi><mi>b</mi></msub></mrow><annotation encoding="application/x-tex">mask_b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord mathdefault">m</span><span class="mord mathdefault">a</span><span class="mord mathdefault">s</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.03148em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">b</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>），且确保一次只激活一个mask。比如当x&gt;0时激活<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>m</mi><mi>a</mi><mi>s</mi><msub><mi>k</mi><mi>a</mi></msub></mrow><annotation encoding="application/x-tex">mask_a</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord mathdefault">m</span><span class="mord mathdefault">a</span><span class="mord mathdefault">s</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.03148em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">a</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>屏蔽<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>m</mi><mi>a</mi><mi>s</mi><msub><mi>k</mi><mi>b</mi></msub></mrow><annotation encoding="application/x-tex">mask_b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord mathdefault">m</span><span class="mord mathdefault">a</span><span class="mord mathdefault">s</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.03148em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">b</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>。通过将a,b向量乘以各自的mask再相加得到最终的模型输出向量y。</p>
+<h3 id="2-trigger-detector"><a class="markdownIt-Anchor" href="#2-trigger-detector"></a> 2. Trigger detector</h3>
+<p>本文一再提及：我们的攻击考虑了更广泛的物理世界场景，其中输入图像由相机直接捕获，即，trigger是一个现实世界的对象，它可能以任意明暗和角度出现在相机视图中的任意位置。</p>
+<p>要设计能使被这种trigger的模型是很困难的，只要有两点：</p>
+<ul>
+<li>数据集难以收集。需要大量的出现和未出现trigger的图片，还要尽可能包括各种明暗、角度、距离的trigger。</li>
+<li>trigger识别模型应该对局部敏感。而非其他图像识别模型尝试理解整个图像。（即，一旦trigger出现再图像中，无论以何种大小和角度，该模型都要给出很高概率的结果</li>
+</ul>
+<p>为了解决训练数据的不足，我们选择了一种方法data augmentation，以从大规模的公共可用数据集（如ImageNet）自动生成训练数据。假定攻击者可以获取trigger的几张图片（本文实验使用5-10张），同时有一个和trigger无关的公开数据集。将trigger图片通过随机的 zooming, shearing, and adjusting brightness to simulate different camera distances, viewpoints, and illuminations, 这些操作后贴到数据集中的图片上，作为正样本，负样本就是原始图片。另外，为了避免过拟合，我们将假trigger（随机取样的图片）通过同样的操作后贴到原图片上。最后，图像被随机旋转以模拟不同的相机角度。</p>
+<p><img src="/images/DeepPayload_fig4.png" alt="DeepPayload_fig4.png" / srcset="/images/LoadingImage.gif" data-src="/images/DeepPayload_fig4.png" class="lozad post-image"></p>
+<p>我们使用上图所示的体系结构来学习trigger detector。</p>
+<p>该模型的关键是global maximum pooling layers （GlobalMaxPool）每个GlobalMaxPool通过计算每个channel的最小值将<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>H</mi><mo>×</mo><mi>W</mi><mo>×</mo><mi>C</mi></mrow><annotation encoding="application/x-tex">H \times W \times C</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.76666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault" style="margin-right:0.08125em;">H</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.76666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.07153em;">C</span></span></span></span> feature map 转换到 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>1</mn><mo>×</mo><mi>C</mi></mrow><annotation encoding="application/x-tex">1 \times C</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.07153em;">C</span></span></span></span> 的vector。因此这个vector对feature map中的每个像素都敏感，feature map中的每个像素都表征输入图片的某个部分的信息。不同的 GlobalMaxPool 层负责捕获不同尺度的局部信息。</p>
+<h3 id="3-reverse-engineering-deployed-dnn-models"><a class="markdownIt-Anchor" href="#3-reverse-engineering-deployed-dnn-models"></a> 3. Reverse-engineering deployed DNN models</h3>
+<p>尽管模型存在多种格式，但多数的DNN模型都可以概念地表示为data-flow graph，数据流图中每个节点都是数学操作，节点之间的连线表示数据的传播。这种统一的中间表示是模型转换工具[48]和我们的payload注入技术的理论基础。</p>
+<p>给定一个编译好的 DNN 模型，<strong>我们首先将其反编译为数据流图格式</strong>。通过检查每个节点的入度和出度（输入节点的入度为0，输出节点的出度为0）来识别输入和输出节点。攻击的目标是在输入节点和输出节点之间注入旁路，如下图所示。</p>
+<p><img src="/images/DeepPayload_fig2.png" alt="DeepPayload_fig2.png" / srcset="/images/LoadingImage.gif" data-src="/images/DeepPayload_fig2.png" class="lozad post-image"></p>
+<p>注入的payload包括以下主要组成部分：</p>
+<p>1）<strong>Resize operator.</strong> 由于我们没有原始模型的先验知识(包括原始输入大小)，我们首先需要将原始输入大小调整为 160×160，这是触发检测器的输入大小。幸运的是，大多数现有的 DL 框架都提供了一个 Resize operator，可以将任意大小的图像转换为给定大小。</p>
+<p>2）**Trigger detector.**将预先训练好的trigger detector <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>g</mi></mrow><annotation encoding="application/x-tex">g</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathdefault" style="margin-right:0.03588em;">g</span></span></span></span>放入data-flow graph，定向resize过的input image到detector。当输入<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.65952em;vertical-align:0em;"></span><span class="mord mathdefault">i</span></span></span></span>被喂给模型以后，original model和trigger detector同时被激发，并行计算出<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>i</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(i)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathdefault">i</span><span class="mclose">)</span></span></span></span>和<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>g</mi><mo stretchy="false">(</mo><mi>i</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">g(i)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.03588em;">g</span><span class="mopen">(</span><span class="mord mathdefault">i</span><span class="mclose">)</span></span></span></span></p>
+<p>3）Output selector.攻击者定义的目标输出<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>o</mi><mi>t</mi></msup></mrow><annotation encoding="application/x-tex">o^t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7935559999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">o</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7935559999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">t</span></span></span></span></span></span></span></span></span></span></span>被添加到数据流图中作为常量值节点。后门模型的最终输出是在原始输出 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>i</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(i)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathdefault">i</span><span class="mclose">)</span></span></span></span> 和目标输出<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>o</mi><mi>t</mi></msup></mrow><annotation encoding="application/x-tex">o^t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7935559999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">o</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7935559999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">t</span></span></span></span></span></span></span></span></span></span></span>之间进行选择，基于触发存在概率 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>g</mi><mo stretchy="false">(</mo><mi>i</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">g(i)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.03588em;">g</span><span class="mopen">(</span><span class="mord mathdefault">i</span><span class="mclose">)</span></span></span></span>，即<code>o=if g(i)&gt;0.5 o^t else f(i)</code>。我们在这里使用前面定义的conditional module来实现这个逻辑。</p>
+<p>最后，我们获得了一个新的数据流图，它与原始模型共享相同的输入节点，但具有不同的输出节点。由于某些DL框架可能会使用节点名称访问模型输出，因此我们进一步将输出节点的名称更改为与原始输出节点相同。通过重新编译数据流图，生成的模型可以直接用于替换应用程序中的原始模型。</p>
+<h2 id="结果评估"><a class="markdownIt-Anchor" href="#结果评估"></a> 结果评估</h2>
+<p>研究员们从后门有效性、性能影响和可扩展性方面评估了该方法。</p>
+<p>为了验证 DeepPayload 方法的<strong>有效性</strong>，研究员们使用从30个用户处收集的真实场景图片对攻击方法进行了评估，实现证明该方法能够以97.4%的精确率（precision），89.3%的召回率（recall）触发后门。目前最先进的攻击模型比DeepPlayload的参数要多100倍，而DeepPlayload的表现要优于前者。</p>
+<p>为了评估<strong>注入有效载荷的影响</strong>，我们选择了五种最先进的 DNN 模型，这些模型广泛用于服务器和移动设备，如 ResNet50 [28]、MobileNetV2 [29]。结果表明，后门带来的延迟开销很小（小于 2 毫秒），并且在正常样本上的准确率（accuracy）下降几乎不明显（小于 1.4%）。</p>
+<p>通过分析116个包含深度学习模型的安卓应用，研究员们发现其中54个应用可以被该方法成功攻击。这些应用的领域包括：支付、商业、教育等等，有的下载量达到了千万级别。这表明目前开发者对模型保护的意识还相对薄弱，希望这项工作能唤起广大开发者和市场监管者对软件中神经网络模型的保护意识。</p>
+<h2 id="本文贡献"><a class="markdownIt-Anchor" href="#本文贡献"></a> <strong>本文贡献</strong></h2>
+<ol>
+<li>我们对已部署的 DNN 模型提出了一种新的后门攻击。 该攻击不需要训练原始模型，可以直接对已部署的模型进行操作，针对物理世界场景，因此比以前的攻击更具实用性和危险性。<br />
+2）我们在从30个用户收集的图片数据集上评估了攻击的有效性。 结果表明，后门可以通过现实世界的输入有效地触发。 我们还测试了对最先进 DNN 模型的攻击，并证明后门的性能影响几乎不明显。</li>
+<li>我们对从 Google Play 抓取的真实移动深度学习应用程序进行了研究，展示了对 54 个应用程序的攻击可行性，并讨论了可能的损害。我们还总结了几种可能的缓解措施，供 DL 应用程序开发人员和审计人员使用</li>
+</ol>
+<h2 id="对我有什么启发"><a class="markdownIt-Anchor" href="#对我有什么启发"></a> 对我有什么启发</h2>
+<ul>
+<li>学习一下真正的深度学习模型逆向工程。</li>
+<li>所以说新领域的研究总是需要搬过来一些传统领域的成熟思路，关于这点可以参考一下这篇文章：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/341685279">如何在计算机应用领域寻找研究想法</a></li>
+</ul>
+<p>论文链接：<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2101.06896">https://arxiv.org/abs/2101.06896</a></p>
+<p>参考文章：</p>
+<p><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/53023734/answer/1906459040">https://www.zhihu.com/question/53023734/answer/1906459040</a></p>
+<p>[18] Y. Liu, S. Ma, Y. Aafer, W.-C. Lee, J. Zhai, W. Wang, and X. Zhang,“Trojaning attack on neural networks,” in25th Annual Network andDistributed System Security Symposium (NDSS), 2018, pp. 18–221.</p>
+<p>[25] T. Gu, B. Dolan-Gavitt, and S. Garg, “Badnets: Identifying vulnera-bilities in the machine learning model supply chain,”arXiv preprintarXiv:1708.06733, 2017.</p>
+<p>[48] Microsoft, “Mmdnn is a set of tools to help users inter-operate amongdifferent deep learning frameworks.” <a target="_blank" rel="noopener" href="https://github.com/Microsoft/MMdnn">https://github.com/Microsoft/MMdnn</a>, 2019.</p>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-info copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/about">Ch3nYe</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/Note-DeepPayload-Black-box-Backdoor-Attack-on-Deep-Learning-Models-through-Neural-Payload-Injection/">https://ch3nye.top/Note-DeepPayload-Black-box-Backdoor-Attack-on-Deep-Learning-Models-through-Neural-Payload-Injection/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  
+  <div class="nav-item-next">
+    <a href="/【实战】某交友app的双向认证crack/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">【实战】某交友app的双向认证crack </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="lv-container" data-id="city" data-uid="MTAyMC80NjQ0Ny8yMjk1OA==">
+    <script>
+      (function (d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') {
+          return;
+        }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.defer = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  </div>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#deeppayload-black-box-backdoor-attack-on-deep-learning-models-through-neural-payload-injection"><span class="toc-text"> DeepPayload: Black-box Backdoor Attack on Deep Learning Models through Neural Payload Injection</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="toc-text"> 主要解决什么问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%9A%84%E6%96%B9%E6%B3%95"><span class="toc-text"> 使用的方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-conditional-logic-in-deep-neural-networks"><span class="toc-text"> 1. Conditional logic in deep neural networks</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-trigger-detector"><span class="toc-text"> 2. Trigger detector</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-reverse-engineering-deployed-dnn-models"><span class="toc-text"> 3. Reverse-engineering deployed DNN models</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C%E8%AF%84%E4%BC%B0"><span class="toc-text"> 结果评估</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%AC%E6%96%87%E8%B4%A1%E7%8C%AE"><span class="toc-text"> 本文贡献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%B9%E6%88%91%E6%9C%89%E4%BB%80%E4%B9%88%E5%90%AF%E5%8F%91"><span class="toc-text"> 对我有什么启发</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/images/logo.png" class="author-img">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>29</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>5</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>36</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:sud0su@163.com">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#deeppayload-black-box-backdoor-attack-on-deep-learning-models-through-neural-payload-injection"><span class="toc-text"> DeepPayload: Black-box Backdoor Attack on Deep Learning Models through Neural Payload Injection</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="toc-text"> 主要解决什么问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%9A%84%E6%96%B9%E6%B3%95"><span class="toc-text"> 使用的方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-conditional-logic-in-deep-neural-networks"><span class="toc-text"> 1. Conditional logic in deep neural networks</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-trigger-detector"><span class="toc-text"> 2. Trigger detector</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-reverse-engineering-deployed-dnn-models"><span class="toc-text"> 3. Reverse-engineering deployed DNN models</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C%E8%AF%84%E4%BC%B0"><span class="toc-text"> 结果评估</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%AC%E6%96%87%E8%B4%A1%E7%8C%AE"><span class="toc-text"> 本文贡献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%B9%E6%88%91%E6%9C%89%E4%BB%80%E4%B9%88%E5%90%AF%E5%8F%91"><span class="toc-text"> 对我有什么启发</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/备忘">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/李宏毅机器学习笔记">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">14</span>
+        </div>
+      </a>
+    
+      <a href="/categories/论文阅读">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/笔记">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/实战">
+        <div class="categories-list-item">
+          实战
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
+    
+    <a href="\tags\note" title="note"><div class="tags-list-item">note</div></a>
+    
+    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
+    
+    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="\tags\笔记" title="笔记"><div class="tags-list-item">笔记</div></a>
+    
+    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
+    
+    <a href="\tags\实战" title="实战"><div class="tags-list-item">实战</div></a>
+    
+    <a href="\tags\crack" title="crack"><div class="tags-list-item">crack</div></a>
+    
+    <a href="\tags\总结" title="总结"><div class="tags-list-item">总结</div></a>
+    
+    <a href="\tags\Deep-Learning" title="Deep-Learning"><div class="tags-list-item">Deep-Learning</div></a>
+    
+    <a href="\tags\HTTPS" title="HTTPS"><div class="tags-list-item">HTTPS</div></a>
+    
+    <a href="\tags\学习" title="学习"><div class="tags-list-item">学习</div></a>
+    
+    <a href="\tags\Black-box" title="Black-box"><div class="tags-list-item">Black-box</div></a>
+    
+    <a href="\tags\Backdoor" title="Backdoor"><div class="tags-list-item">Backdoor</div></a>
+    
+    <a href="\tags\Attack" title="Attack"><div class="tags-list-item">Attack</div></a>
+    
+    <a href="\tags\Intrusion-Detection" title="Intrusion-Detection"><div class="tags-list-item">Intrusion-Detection</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#deeppayload-black-box-backdoor-attack-on-deep-learning-models-through-neural-payload-injection"><span class="toc-text"> DeepPayload: Black-box Backdoor Attack on Deep Learning Models through Neural Payload Injection</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="toc-text"> 主要解决什么问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%9A%84%E6%96%B9%E6%B3%95"><span class="toc-text"> 使用的方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-conditional-logic-in-deep-neural-networks"><span class="toc-text"> 1. Conditional logic in deep neural networks</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-trigger-detector"><span class="toc-text"> 2. Trigger detector</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-reverse-engineering-deployed-dnn-models"><span class="toc-text"> 3. Reverse-engineering deployed DNN models</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C%E8%AF%84%E4%BC%B0"><span class="toc-text"> 结果评估</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%AC%E6%96%87%E8%B4%A1%E7%8C%AE"><span class="toc-text"> 本文贡献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%B9%E6%88%91%E6%9C%89%E4%BB%80%E4%B9%88%E5%90%AF%E5%8F%91"><span class="toc-text"> 对我有什么启发</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-05-29</div>
+        <a href="/Note-DeepPayload-Black-box-Backdoor-Attack-on-Deep-Learning-Models-through-Neural-Payload-Injection/"><div class="recent-posts-item-content">Note《DeepPayload Black-box Backdoor Attack on Deep Learning Models through Neural Payload Injection》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-05-06</div>
+        <a href="/【实战】某交友app的双向认证crack/"><div class="recent-posts-item-content">【实战】某交友app的双向认证crack</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-05-01</div>
+        <a href="/Android-HTTPS认证的N种方式和对抗方法总结/"><div class="recent-posts-item-content">Android HTTPS认证的N种方式和对抗方法总结</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-03-06</div>
+        <a href="/Note-Deep-learning-for-cyber-security-intrusion-detection-Approaches-datasets-and-comparative-study/"><div class="recent-posts-item-content">Note 《Deep learning for cyber security intrusion detection Approaches, datasets, and comparative study》</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2021
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">ch3nye's blog </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('data-fslightbox', 'gallery');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+    }
+    refreshFsLightbox();
+  }
+</script>
+<script>loadScript("//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-WHGL11014T');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "G-WHGL11014T", googleAnalytics)</script>
+  
+</body>
+
+</html>
