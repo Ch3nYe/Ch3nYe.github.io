@@ -111,7 +111,7 @@
   
   
   
-  <link rel="prefetch" href="//cdn-city.livere.com/js/embed.dist.js" as="script">
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
   
   
   
@@ -381,20 +381,27 @@
 <div class="card card-content comment-card" style="margin-top: 16px;">
   <div class="comment-card-title">评论</div>
   
-  <div id="lv-container" data-id="city" data-uid="MTAyMC80NjQ0Ny8yMjk1OA==">
-    <script>
-      (function (d, s) {
-        var j, e = d.getElementsByTagName(s)[0];
-        if (typeof LivereTower === 'function') {
-          return;
-        }
-        j = d.createElement(s);
-        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
-        j.defer = true;
-        e.parentNode.insertBefore(j, e);
-      })(document, 'script');
-    </script>
-  </div>
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: '049b30eb10ea05082ef1',
+      clientSecret: 'c33ad95041c69907b3136b895008320f000987db',
+      repo: 'https://github.com/Ch3nYe/Ch3nYe.github.io',
+      owner: 'Ch3nYe',
+      admin: 'Ch3nYe',
+      id: 'location.href',
+      distractionFreeMode: 'false',
+      language: 'navigator.language || navigator.userLanguage',
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
 
 </div>
 
@@ -503,37 +510,37 @@
   <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
   <div class="tags-list">
     
-    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
-    
-    <a href="\tags\流量抓包" title="流量抓包"><div class="tags-list-item">流量抓包</div></a>
-    
-    <a href="\tags\教程" title="教程"><div class="tags-list-item">教程</div></a>
-    
-    <a href="\tags\Fiddler" title="Fiddler"><div class="tags-list-item">Fiddler</div></a>
-    
-    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
+    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
     
     <a href="\tags\note" title="note"><div class="tags-list-item">note</div></a>
     
-    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
+    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
     
-    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
+    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
     
     <a href="\tags\笔记" title="笔记"><div class="tags-list-item">笔记</div></a>
     
-    <a href="\tags\Fuzzing" title="Fuzzing"><div class="tags-list-item">Fuzzing</div></a>
+    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
     
-    <a href="\tags\System-Service" title="System-Service"><div class="tags-list-item">System-Service</div></a>
+    <a href="\tags\Deep-Learning" title="Deep-Learning"><div class="tags-list-item">Deep-Learning</div></a>
     
-    <a href="\tags\漏洞挖掘" title="漏洞挖掘"><div class="tags-list-item">漏洞挖掘</div></a>
+    <a href="\tags\实战" title="实战"><div class="tags-list-item">实战</div></a>
     
-    <a href="\tags\Adversarial-Attack" title="Adversarial-Attack"><div class="tags-list-item">Adversarial-Attack</div></a>
-    
-    <a href="\tags\符号执行" title="符号执行"><div class="tags-list-item">符号执行</div></a>
+    <a href="\tags\crack" title="crack"><div class="tags-list-item">crack</div></a>
     
     <a href="\tags\总结" title="总结"><div class="tags-list-item">总结</div></a>
     
+    <a href="\tags\HTTPS" title="HTTPS"><div class="tags-list-item">HTTPS</div></a>
+    
+    <a href="\tags\二进制" title="二进制"><div class="tags-list-item">二进制</div></a>
+    
     <a href="\tags\学习" title="学习"><div class="tags-list-item">学习</div></a>
+    
+    <a href="\tags\静态分析" title="静态分析"><div class="tags-list-item">静态分析</div></a>
+    
+    <a href="\tags\Reverse-Engineering" title="Reverse-Engineering"><div class="tags-list-item">Reverse-Engineering</div></a>
+    
+    <a href="\tags\Binary" title="Binary"><div class="tags-list-item">Binary</div></a>
     
   </div>
 </div>
