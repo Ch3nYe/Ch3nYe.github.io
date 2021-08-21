@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="网络安全 Android ML CTF">
+  <link rel="icon" href="/images/logo.png">
+  <title>Note 《PalmTree Learning an Assembly Language Model for Instruction Embedding》</title>
+  
+  
+  <meta property="og:title" content="Note 《PalmTree Learning an Assembly Language Model for Instruction Embedding》">
+  
+  
+  <meta property="og:url" content="https://ch3nye.top/Note-PalmTree-CCS2021/index.html">
+  
+  
+  <meta property="og:img" content="/images/logo.png">
+  
+  
+  <meta property="og:img" content="网络安全 Android ML CTF">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2021-08-21">
+  <meta property="og:article:modified_time" content="2021-08-21">
+  <meta property="og:article:author" content="Ch3nYe">
+  
+  
+  <meta property="og:article:tag" content="论文">
+  
+  <meta property="og:article:tag" content="笔记">
+  
+  <meta property="og:article:tag" content="二进制">
+  
+  <meta property="og:article:tag" content="Binary">
+  
+  <meta property="og:article:tag" content="Reverse-Engineering">
+  
+  <meta property="og:article:tag" content="静态分析">
+  
+  <meta property="og:article:tag" content="BERT">
+  
+  <meta property="og:article:tag" content="Instruction-Embedding">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js" as="script">
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+  
+  
+  
+  <link href="/js/lib/prism/prism-tomorrow.min.css" rel="stylesheet" data-prism="prism-tomorrow">
+  
+  
+  
+<link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+
+  
+  
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/images/logo.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/links" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      Note 《PalmTree Learning an Assembly Language Model for Instruction Embedding》
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2021-08-20T16:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2021-08-21</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/论文阅读/" class="post-meta-link">论文阅读</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>1.8k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/论文/" class="post-meta-link">论文</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/笔记/" class="post-meta-link">笔记</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/二进制/" class="post-meta-link">二进制</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Binary/" class="post-meta-link">Binary</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Reverse-Engineering/" class="post-meta-link">Reverse-Engineering</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/静态分析/" class="post-meta-link">静态分析</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/BERT/" class="post-meta-link">BERT</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Instruction-Embedding/" class="post-meta-link">Instruction-Embedding</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="palmtree-learning-an-assembly-language-model-for-instruction-embedding"><a class="markdownIt-Anchor" href="#palmtree-learning-an-assembly-language-model-for-instruction-embedding"></a> PalmTree: Learning an Assembly Language Model for Instruction Embedding</h1>
+<h2 id="主要解决什么问题"><a class="markdownIt-Anchor" href="#主要解决什么问题"></a> 主要解决什么问题</h2>
+<p>在我看来从17年开始用神经网络解决一些传统安全问题的文章就急速增长，这篇文章发表在CCS2021，要解决的问题是<strong>二进制指令嵌入表示</strong>。</p>
+<p>学术界已经试过用各种各样的方法做指令嵌入，比如将指令序列当成自然语言使用Word2Vec做指令嵌入，基于CFG和DFG的图神经网络等等。这篇使用现在比较潮的BERT的指导思想和实践方法进行指令嵌入。</p>
+<h2 id="使用的方法"><a class="markdownIt-Anchor" href="#使用的方法"></a> 使用的方法</h2>
+<p>BERT想必大家都了解了，如果不懂的话可以看我之前写的关于BERT的笔记。</p>
+<p>本文在训练这个指令嵌入模型（PALMTREE）的时候挑选的三个任务是：</p>
+<p>任务一：</p>
+<p>we make use of a recently proposed training task in NLP to train the model: Masked Language Model (<strong>MLM</strong>). This task trains a language model to predict the masked (missing) tokens within instructions.</p>
+<p>Masked Language Model (<strong>MLM</strong>)就和BERT训练时做的任务相同。</p>
+<p><img src="/images/PalmTree.png" alt="PalmTree" / srcset="/images/LoadingImage.gif" data-src="/images/PalmTree.png" class="lozad post-image"></p>
+<p>任务二：</p>
+<p>infer the word/instruction semantics by predicting two instructions’ co-occurrence within a sliding window in control flow. We call this training task Context Window Prediction (<strong>CWP</strong>), which is based on Next Sentence Prediction (NSP) in BERT.</p>
+<p>Essentially, if two instructions 𝑖 and 𝑗 fall within a sliding window in control flow and 𝑖 appears before 𝑗 , we say 𝑖 and 𝑗 have a contextual relation.</p>
+<p>在控制流图中设置一个滑动窗口，在滑动窗口内的两条指令存在上下文关系，也就是说CWP任务的输入是两条指令，输出是True or False.</p>
+<p><img src="/images/PalmTree1.png" alt="PalmTree1" / srcset="/images/LoadingImage.gif" data-src="/images/PalmTree1.png" class="lozad post-image"></p>
+<p>任务三：</p>
+<p>Therefore, the data dependency (or def-use relation) between instructions is clearly specified and will not be tampered by compiler optimizations. Based on these fact, we design another training task called Def-Use Pre-diction (<strong>DUP</strong>) to further improve our assembly language model.</p>
+<p>Essentially, we train this language model to predict if two instructions have a def-use relation.</p>
+<p>原文的意思是指令的两个操作数之间的关系很明确，且不会被编译器干扰，所以可以恢复每条指令每个操作数之间的依赖关系，DUP任务是判断输入的两条指令之间有无数据依赖关系。（原文中只说考虑了registers, memory locations, and function call arguments, as well as implicit dependencies introduced by EFLAGS去恢复依赖关系，但是并没有具体说明如何得到指令间依赖关系</p>
+<p><img src="/images/PalmTree2.png" alt="PalmTree2" / srcset="/images/LoadingImage.gif" data-src="/images/PalmTree2.png" class="lozad post-image"></p>
+<h3 id="架构"><a class="markdownIt-Anchor" href="#架构"></a> 架构</h3>
+<p><img src="/images/PalmTree3.png" alt="PalmTree3" / srcset="/images/LoadingImage.gif" data-src="/images/PalmTree3.png" class="lozad post-image"></p>
+<p>sec3.1 最后对上图架构进行了解释：</p>
+<p>PALMTREE由三个部分组成：Instruction Pair Sampling, Tokenization, and Language Model Training. Assembly Language Model是基于BERT架构的模型.</p>
+<p><strong>Instruction Pair Sampling</strong>: 负责基于control flow &amp; def-use relations，从二进制文件中采样指令对</p>
+<p><strong>Tokenization</strong>: split instructions into tokens, token可以是操作码、寄存器、立即数、字符串、符号等</p>
+<p><strong>Language Model Training</strong>: 训练过程结束后，我们使用BERT模型倒数第二层Hidden states的mean pooling做指令嵌入.</p>
+<p>这里有必要再提一嘴模型输入每个token还会加上<strong>position embedding 和segment embedding</strong>，前者表示token在输入序列中的位置，后者表示两条语句的先后关系. 这两者可以依据指令的位置帮助动态地调整指令嵌入. 如下图所示：</p>
+<p><img src="/images/PalmTree4.png" alt="PalmTree4" / srcset="/images/LoadingImage.gif" data-src="/images/PalmTree4.png" class="lozad post-image"></p>
+<h3 id="输入构造"><a class="markdownIt-Anchor" href="#输入构造"></a> 输入构造</h3>
+<p>使用Ninja辅助逆向，原文中只说考虑了registers, memory locations, and function call arguments, as well as implicit dependencies introduced by EFLAGS去恢复依赖关系，但是并没有具体说明如何得到指令间依赖关系.</p>
+<p><strong>Tokenization</strong></p>
+<p>例如：mov rax,qword [rsp+0x58] 转 “mov”, “rax”, “qword”, “[”,“rsp”, “+”, “0x58”, and “]”</p>
+<p>对于字符串，使用[str]替代</p>
+<p>对于常量数值, 如果常量较大(at least five digitsin hexadecimal), 这样的数值大概率是地址，我们使用[addr]替代，如果是一个相对较小的数值(less than four digits in hexadecimal)，这样的常量值也许是本地变量、函数参数、数据结构等关键信息，会作为token保存成one-hot vectors.</p>
+<p><strong>Assembly Language Model</strong></p>
+<p>这部分详细描述了该模型做的三种任务的Loss Function，整个模型的Loss Function就是三个子任务的Loss求和.</p>
+<p>使用BERT模型倒数第二层Hidden states的mean pooling做指令嵌入. 这么做的原因：</p>
+<ul>
+<li>First, the transformer encoder encodes all the input information into the hidden states. A pooling layer is a good way to utilize the information encoded by transformer</li>
+<li>Second, results in BERT [9]also suggest that hidden states of previous layers before the last layer have offer more generalizability than the last layer for some downstream tasks. 他们也评估了不同的layer对下游任务的提升效果，详细可参考文章附录.</li>
+</ul>
+<h2 id="结果评估"><a class="markdownIt-Anchor" href="#结果评估"></a> 结果评估</h2>
+<p>以前的二进制分析研究通常通过以端到端的方式设计特定实验来评估他们的方法，因为他们的指令嵌入仅适用于单个任务。在本文中，我们专注于评估不同的指令嵌入方案。为此，我们设计并实现了一个广泛的评估框架来评估PALMTREE和baseline approaches。评估可以分为两类：intrinsic evaluation &amp; extrinsic evaluation. 在本节的其余部分，我们首先介绍我们的评估框架和实验配置，然后报告和讨论实验结果.</p>
+<p>我们设计了两个intrinsic evaluation方法：</p>
+<ul>
+<li>instruction outlier detection based on the knowledge of semantic meanings of opcodes and operands from instruction manuals,</li>
+<li>basic block search by leveraging the debug information associated with source code.</li>
+</ul>
+<p>使用三个下游任务做extrinsic evaluation：</p>
+<ul>
+<li>Gemini [40] forbinary codesimilarity detection,</li>
+<li>EKLAVYA [5] forfunction type signatures in-ference,</li>
+<li>DeepVSA [14] forvalue set analysis.</li>
+</ul>
+<h3 id="实验设置"><a class="markdownIt-Anchor" href="#实验设置"></a> 实验设置</h3>
+<p>set embedding dimension as 128</p>
+<p>We implemented these baseline embedding models and PalmTree using PyTorch [30]. PalmTree is based on BERT but has fewer parameters. While in BERT <code>#𝐿𝑎𝑦𝑒𝑟𝑠=12,𝐻𝑒𝑎𝑑=12</code> and <code>𝐻𝑖𝑑𝑑𝑒𝑛_𝑑𝑖𝑚𝑒𝑛𝑠𝑖𝑜𝑛=768</code>, we set <code>#𝐿𝑎𝑦𝑒𝑟𝑠=12,𝐻𝑒𝑎𝑑=8,𝐻𝑖𝑑𝑑𝑒𝑛_𝑑𝑖𝑚𝑒𝑛𝑠𝑖𝑜𝑛=128</code> in PalmTree, for the sake of efficiency and training costs. The ratio between the positive and negative pairs in both CWP and DUP is 1:1.</p>
+<h3 id="datasets"><a class="markdownIt-Anchor" href="#datasets"></a> Datasets</h3>
+<p>The pre-training dataset contains different versions of Binutils, Coreutils, Diffutils, and Findutils on x86-64 platform and compiled with Clang and GCC with different optimization levels.</p>
+<p>The whole pre-training dataset contains 3,266 binaries and 2.25 billion instructions in total. There are about 2.36 billion positive and negative sample pairs during training.</p>
+<h3 id="hardware-configuration"><a class="markdownIt-Anchor" href="#hardware-configuration"></a> Hardware Configuration</h3>
+<p>All the experiments were conducted on a dedicated server with a Ryzen 3900X CPU@3.80GHz×12, one GTX 2080Ti GPU, 64 GB memory, and 500 GB SSD.</p>
+<h3 id="实验结果"><a class="markdownIt-Anchor" href="#实验结果"></a> 实验结果</h3>
+<p>Intrinsic Evaluation - basic block sim search &amp; instruction outlier detection</p>
+<p><img src="/images/PalmTree5.png" alt="PalmTree5" / srcset="/images/LoadingImage.gif" data-src="/images/PalmTree5.png" class="lozad post-image"></p>
+<p>Extrinsic Evaluation - Gemini</p>
+<p><img src="/images/PalmTree6.png" alt="PalmTree6" / srcset="/images/LoadingImage.gif" data-src="/images/PalmTree6.png" class="lozad post-image"></p>
+<p>Extrinsic Evaluation - EKLAVYA</p>
+<p><img src="/images/PalmTree7.png" alt="PalmTree7" / srcset="/images/LoadingImage.gif" data-src="/images/PalmTree7.png" class="lozad post-image"></p>
+<p>Extrinsic Evaluation - DeepVSA</p>
+<p><img src="/images/PalmTree8.png" alt="PalmTree8" / srcset="/images/LoadingImage.gif" data-src="/images/PalmTree8.png" class="lozad post-image"></p>
+<p><img src="/images/PalmTree9.png" alt="PalmTree9" / srcset="/images/LoadingImage.gif" data-src="/images/PalmTree9.png" class="lozad post-image"></p>
+<h3 id="计算效率评估"><a class="markdownIt-Anchor" href="#计算效率评估"></a> 计算效率评估</h3>
+<p><img src="/images/PalmTree10.png" alt="PalmTree10" / srcset="/images/LoadingImage.gif" data-src="/images/PalmTree10.png" class="lozad post-image"></p>
+<h2 id="缺点和不足"><a class="markdownIt-Anchor" href="#缺点和不足"></a> 缺点和不足</h2>
+<p>数据集样本太少，模型词汇表太小，不能很好的覆盖指令集.</p>
+<p>自问自答：</p>
+<ul>
+<li>[x]  任务一MLM input有多长，几条指令</li>
+<li>文中明确没说，根据sec3.4.2和sec3.2第一段结尾，推测三个任务的输入都是指令对，即两条指令</li>
+<li>[ ]  任务二CWP window是怎么提取的，是否是从cfg的某个node中提取</li>
+<li>文中没说，需要看代码</li>
+<li>猜测是按照bbl划分node，然后在cfg上每n个bbl连在一起算作一个window，然后在其中取指令对</li>
+<li>[x]  任务三DUP 仅仅是两个指令的顺序吗，难道不需要先提取DFG吗</li>
+<li>就仅仅是两个指令的顺序。需要提取DFG，从DFG中取样 instruction pair</li>
+<li>[x]  三个任务难道是同时训练的吗，怎么协同，只看到LossFunction是三个相加</li>
+<li>看fig1，三个部分，分别输入，最后loss求和</li>
+<li>[x]  segment 和 position 这两个部分是怎么表示的，如何和token一起输入model</li>
+</ul>
+<p>猜测：</p>
+<ul>
+<li>segment 是使用[0] 和 [1]表示当前指令在指令对中的位置</li>
+<li>position 可以使用[n] 表示当前token在token序列中的位置</li>
+</ul>
+<p>论文链接：<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2103.03809">https://arxiv.org/abs/2103.03809</a></p>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-info copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/about">Ch3nYe</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/Note-PalmTree-CCS2021/">https://ch3nye.top/Note-PalmTree-CCS2021/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  
+  <div class="nav-item-next">
+    <a href="/Note-NFRE/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">Note《A Lightweight Framework for Function Name Reassignment Based on Large-Scale Stripped Binaries》 </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: '049b30eb10ea05082ef1',
+      clientSecret: 'c33ad95041c69907b3136b895008320f000987db',
+      repo: 'Ch3nYe.github.io',
+      owner: 'Ch3nYe',
+      admin: 'Ch3nYe',
+      id: 'location.href',
+      distractionFreeMode: 'false',
+      language: 'navigator.language || navigator.userLanguage',
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#palmtree-learning-an-assembly-language-model-for-instruction-embedding"><span class="toc-text"> PalmTree: Learning an Assembly Language Model for Instruction Embedding</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="toc-text"> 主要解决什么问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%9A%84%E6%96%B9%E6%B3%95"><span class="toc-text"> 使用的方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9E%B6%E6%9E%84"><span class="toc-text"> 架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BE%93%E5%85%A5%E6%9E%84%E9%80%A0"><span class="toc-text"> 输入构造</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C%E8%AF%84%E4%BC%B0"><span class="toc-text"> 结果评估</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%E8%AE%BE%E7%BD%AE"><span class="toc-text"> 实验设置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#datasets"><span class="toc-text"> Datasets</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#hardware-configuration"><span class="toc-text"> Hardware Configuration</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C"><span class="toc-text"> 实验结果</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%A1%E7%AE%97%E6%95%88%E7%8E%87%E8%AF%84%E4%BC%B0"><span class="toc-text"> 计算效率评估</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9%E5%92%8C%E4%B8%8D%E8%B6%B3"><span class="toc-text"> 缺点和不足</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/images/logo.png" class="author-img">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>31</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>5</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>41</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:sud0su@163.com">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#palmtree-learning-an-assembly-language-model-for-instruction-embedding"><span class="toc-text"> PalmTree: Learning an Assembly Language Model for Instruction Embedding</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="toc-text"> 主要解决什么问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%9A%84%E6%96%B9%E6%B3%95"><span class="toc-text"> 使用的方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9E%B6%E6%9E%84"><span class="toc-text"> 架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BE%93%E5%85%A5%E6%9E%84%E9%80%A0"><span class="toc-text"> 输入构造</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C%E8%AF%84%E4%BC%B0"><span class="toc-text"> 结果评估</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%E8%AE%BE%E7%BD%AE"><span class="toc-text"> 实验设置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#datasets"><span class="toc-text"> Datasets</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#hardware-configuration"><span class="toc-text"> Hardware Configuration</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C"><span class="toc-text"> 实验结果</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%A1%E7%AE%97%E6%95%88%E7%8E%87%E8%AF%84%E4%BC%B0"><span class="toc-text"> 计算效率评估</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9%E5%92%8C%E4%B8%8D%E8%B6%B3"><span class="toc-text"> 缺点和不足</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/备忘">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/李宏毅机器学习笔记">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">14</span>
+        </div>
+      </a>
+    
+      <a href="/categories/论文阅读">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">8</span>
+        </div>
+      </a>
+    
+      <a href="/categories/笔记">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/实战">
+        <div class="categories-list-item">
+          实战
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
+    
+    <a href="\tags\note" title="note"><div class="tags-list-item">note</div></a>
+    
+    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
+    
+    <a href="\tags\笔记" title="笔记"><div class="tags-list-item">笔记</div></a>
+    
+    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
+    
+    <a href="\tags\Deep-Learning" title="Deep-Learning"><div class="tags-list-item">Deep-Learning</div></a>
+    
+    <a href="\tags\实战" title="实战"><div class="tags-list-item">实战</div></a>
+    
+    <a href="\tags\crack" title="crack"><div class="tags-list-item">crack</div></a>
+    
+    <a href="\tags\二进制" title="二进制"><div class="tags-list-item">二进制</div></a>
+    
+    <a href="\tags\总结" title="总结"><div class="tags-list-item">总结</div></a>
+    
+    <a href="\tags\静态分析" title="静态分析"><div class="tags-list-item">静态分析</div></a>
+    
+    <a href="\tags\Reverse-Engineering" title="Reverse-Engineering"><div class="tags-list-item">Reverse-Engineering</div></a>
+    
+    <a href="\tags\Binary" title="Binary"><div class="tags-list-item">Binary</div></a>
+    
+    <a href="\tags\HTTPS" title="HTTPS"><div class="tags-list-item">HTTPS</div></a>
+    
+    <a href="\tags\学习" title="学习"><div class="tags-list-item">学习</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#palmtree-learning-an-assembly-language-model-for-instruction-embedding"><span class="toc-text"> PalmTree: Learning an Assembly Language Model for Instruction Embedding</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="toc-text"> 主要解决什么问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%9A%84%E6%96%B9%E6%B3%95"><span class="toc-text"> 使用的方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9E%B6%E6%9E%84"><span class="toc-text"> 架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BE%93%E5%85%A5%E6%9E%84%E9%80%A0"><span class="toc-text"> 输入构造</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C%E8%AF%84%E4%BC%B0"><span class="toc-text"> 结果评估</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%E8%AE%BE%E7%BD%AE"><span class="toc-text"> 实验设置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#datasets"><span class="toc-text"> Datasets</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#hardware-configuration"><span class="toc-text"> Hardware Configuration</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C"><span class="toc-text"> 实验结果</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%A1%E7%AE%97%E6%95%88%E7%8E%87%E8%AF%84%E4%BC%B0"><span class="toc-text"> 计算效率评估</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9%E5%92%8C%E4%B8%8D%E8%B6%B3"><span class="toc-text"> 缺点和不足</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-08-21</div>
+        <a href="/Note-PalmTree-CCS2021/"><div class="recent-posts-item-content">Note 《PalmTree Learning an Assembly Language Model for Instruction Embedding》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-07-06</div>
+        <a href="/Note-NFRE/"><div class="recent-posts-item-content">Note《A Lightweight Framework for Function Name Reassignment Based on Large-Scale Stripped Binaries》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-05-29</div>
+        <a href="/Note-DeepPayload-Black-box-Backdoor-Attack-on-Deep-Learning-Models-through-Neural-Payload-Injection/"><div class="recent-posts-item-content">Note《DeepPayload Black-box Backdoor Attack on Deep Learning Models through Neural Payload Injection》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-05-06</div>
+        <a href="/【实战】某交友app的双向认证crack/"><div class="recent-posts-item-content">【实战】某交友app的双向认证crack</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2021
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">ch3nye's blog </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('data-fslightbox', 'gallery');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+    }
+    refreshFsLightbox();
+  }
+</script>
+<script>loadScript("//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-WHGL11014T');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "G-WHGL11014T", googleAnalytics)</script>
+  
+</body>
+
+</html>
