@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="网络安全 Android ML CTF">
+  <link rel="icon" href="/images/logo.png">
+  <title>Graph Neural Network</title>
+  
+  
+  <meta property="og:title" content="Graph Neural Network">
+  
+  
+  <meta property="og:url" content="https://ch3nye.top/Graph-Neural-Network/index.html">
+  
+  
+  <meta property="og:img" content="/images/logo.png">
+  
+  
+  <meta property="og:img" content="网络安全 Android ML CTF">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2021-08-25">
+  <meta property="og:article:modified_time" content="2021-08-25">
+  <meta property="og:article:author" content="Ch3nYe">
+  
+  
+  <meta property="og:article:tag" content="ML">
+  
+  <meta property="og:article:tag" content="note">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js" as="script">
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+  
+  
+  
+  <link href="/js/lib/prism/prism-tomorrow.min.css" rel="stylesheet" data-prism="prism-tomorrow">
+  
+  
+  
+<link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+
+  
+  
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/images/logo.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/links" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      Graph Neural Network
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2021-08-24T16:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2021-08-25</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/李宏毅机器学习笔记/" class="post-meta-link">李宏毅机器学习笔记</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>1.9k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/ML/" class="post-meta-link">ML</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/note/" class="post-meta-link">note</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="graph-neural-network"><a class="markdownIt-Anchor" href="#graph-neural-network"></a> Graph Neural Network</h1>
+<p>slides: <a target="_blank" rel="noopener" href="http://speech.ee.ntu.edu.tw/~tlkagk/courses/ML2020/GNN.pdf">http://speech.ee.ntu.edu.tw/~tlkagk/courses/ML2020/GNN.pdf</a></p>
+<h2 id="introduction"><a class="markdownIt-Anchor" href="#introduction"></a> Introduction</h2>
+<h3 id="定义"><a class="markdownIt-Anchor" href="#定义"></a> 定义</h3>
+<p>GNN 图神经网络 就是把图作为神经网络的输入，识别图结构，提取图信息，或生成特定结构的图的神经网络模型。</p>
+<p>这里的“图”是指图论中的图，即由边和节点构成的图，比如下图中化学分子结构图，二叉树、台湾省地铁线路图：</p>
+<p><img src="/images/image-20210825132844977.png" alt="image-20210825132844977" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825132844977.png" class="lozad post-image"></p>
+<h3 id="训练gnn将遇到的问题"><a class="markdownIt-Anchor" href="#训练gnn将遇到的问题"></a> 训练GNN将遇到的问题</h3>
+<p>如何利用图的结构和节点之间的关系信息训练模型（即模型如何吃Graph）？</p>
+<p>如果图非常大怎么办？</p>
+<p>图非常大的时候通常我们没有所有node的label information，怎么办？</p>
+<p>首先第一个问题，model如何吃graph的问题：</p>
+<p>convolution？</p>
+<p><img src="/images/image-20210825133600768.png" alt="image-20210825133600768" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825133600768.png" class="lozad post-image"></p>
+<p>如何把CNN里卷积的方法移植到图神经网络？</p>
+<p>所以如何使用convolution将node 嵌入到一个feature space？</p>
+<ul>
+<li>Solution 1: Generalize the concept of convolution (corelation) to graph &gt;&gt; Spatial-based convolution</li>
+<li>Solution 2: Back to the definition of convolution in signal processing &gt;&gt; Spectral-based convolution</li>
+</ul>
+<h2 id="roadmap"><a class="markdownIt-Anchor" href="#roadmap"></a> Roadmap</h2>
+<p><img src="/images/image-20210825133933199.png" alt="image-20210825133933199" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825133933199.png" class="lozad post-image"></p>
+<p><strong>本节会讲的是：GAT和GCN</strong>.</p>
+<h2 id="tasks-dataset-and-benchmark"><a class="markdownIt-Anchor" href="#tasks-dataset-and-benchmark"></a> Tasks, Dataset, and Benchmark</h2>
+<p>Tasks</p>
+<ul>
+<li>Semi-supervised node classification</li>
+<li>Regression</li>
+<li>Graph classification</li>
+<li>Graph representation learning</li>
+<li>Link prediction</li>
+</ul>
+<p>Common dataset</p>
+<ul>
+<li>CORA: citation network. 2.7k nodes and 5. 4k links</li>
+<li>TU-MUTAG: 188 molecules with 18 nodes on average</li>
+</ul>
+<p>这些benchmark的task和dataset用来评估GNN模型好坏，建议先看完下一节Spatial-based GNN再回来看这些任务</p>
+<p><img src="/images/image-20210825201500302.png" alt="image-20210825201500302" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825201500302.png" class="lozad post-image"></p>
+<p>这个数据集通过某种算法将原始MNIST和CIFAR10的图片转成graph，GNNs的任务就是graph classification</p>
+<p><img src="/images/image-20210825201516958.png" alt="image-20210825201516958" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825201516958.png" class="lozad post-image"></p>
+<p>ZINC 是通过分子graph 计算分子溶解度，属于回归任务</p>
+<p>Stochastic Block Model dataset 是给出一个pattern，model要是别这个pattern是否出现在一个graph中</p>
+<p>这个数据集还可以做另一个任务：每个图由不同的community或者说cluster，model要判断一个node属于哪个cluster</p>
+<p><img src="/images/image-20210825201531817.png" alt="image-20210825201531817" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825201531817.png" class="lozad post-image"></p>
+<p>TSP 路径规划问题，就不用赘述了.</p>
+<p><img src="/images/image-20210825201339418.png" alt="image-20210825201339418" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825201339418.png" class="lozad post-image"></p>
+<h2 id="spatial-based-gnn"><a class="markdownIt-Anchor" href="#spatial-based-gnn"></a> Spatial-based GNN</h2>
+<p>复习以下CNN的Convolution：</p>
+<p><img src="/images/image-20210825135159937.png" alt="image-20210825135159937" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825135159937.png" class="lozad post-image"></p>
+<p>CNN在layer i上通过kernel计算feature得到layer i+1层的feature，类比到Graph上：</p>
+<p><img src="/images/image-20210825135252653.png" alt="image-20210825135252653" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825135252653.png" class="lozad post-image"></p>
+<p>以 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>h</mi><mn>3</mn><mn>0</mn></msubsup></mrow><annotation encoding="application/x-tex">h_3^0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0622159999999998em;vertical-align:-0.24810799999999997em;"></span><span class="mord"><span class="mord mathdefault">h</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-2.4518920000000004em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.24810799999999997em;"><span></span></span></span></span></span></span></span></span></span> 为例，0表示第0 layer，3表示第3个node，它的邻居是黄色圈起来的三个几点，我们就用这三个邻居的hidden feature 来算出下一层的hidden layer，这一招叫做<strong>Aggregation</strong>.</p>
+<p>如果我们还想同时计算出某一层整个graph的representation，预测一个分子是否会变异，就把所有node的feature集合起来，这个操作叫做<strong>readout</strong>.</p>
+<h3 id="nn4gneural-networks-for-graph"><a class="markdownIt-Anchor" href="#nn4gneural-networks-for-graph"></a> NN4G(Neural Networks for Graph)</h3>
+<p><img src="/images/image-20210825140209075.png" alt="image-20210825140209075" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825140209075.png" class="lozad post-image"></p>
+<blockquote>
+<p>ref: <a target="_blank" rel="noopener" href="https://ieeexplore.ieee.org/document/4773279">https://ieeexplore.ieee.org/document/4773279</a></p>
+</blockquote>
+<p>NN4G这个模型的做法如上图所示，每个节点v都用一个特征向量x表示，对每个节点做embedding，即乘一个矩阵w，得到h，然后从一个hidden layer到下一个hidden layer做Aggregation，具体做法就是将一个节点的邻居的h加起来乘上一个w，就得到这个节点在下一个hidden layer的h.</p>
+<p><img src="/images/image-20210825140301593.png" alt="image-20210825140301593" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825140301593.png" class="lozad post-image"></p>
+<p>NN4G这个模型Readout的做法如上图所示，无需多言.</p>
+<h3 id="dcnndiffusion-convolution-neural-network"><a class="markdownIt-Anchor" href="#dcnndiffusion-convolution-neural-network"></a> DCNN(Diffusion-Convolution Neural Network)</h3>
+<p><img src="/images/image-20210825141223625.png" alt="image-20210825141223625" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825141223625.png" class="lozad post-image"></p>
+<blockquote>
+<p>ref: <a target="_blank" rel="noopener" href="https://arxiv.org/abs/1511.02136">https://arxiv.org/abs/1511.02136</a></p>
+</blockquote>
+<p>这个模型的Aggregation的做法是：每一层都从第一层计算得来，算是这样算的：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>h</mi><mn>0</mn><mn>3</mn></msubsup><mo>=</mo><msubsup><mi>w</mi><mn>3</mn><mn>0</mn></msubsup><mi>M</mi><mi>E</mi><mi>A</mi><mi>N</mi><mo stretchy="false">(</mo><mi>d</mi><mo stretchy="false">(</mo><mn>3</mn><mo separator="true">,</mo><mo>⋅</mo><mo stretchy="false">)</mo><mo>=</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">h_0^3 = w_3^0 MEAN(d(3, \cdot )=1)
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1111079999999998em;vertical-align:-0.247em;"></span><span class="mord"><span class="mord mathdefault">h</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8641079999999999em;"><span style="top:-2.4530000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.1141079999999999em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02691em;">w</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8641079999999999em;"><span style="top:-2.4530000000000003em;margin-left:-0.02691em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mord mathdefault" style="margin-right:0.10903em;">M</span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="mord mathdefault">A</span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span><span class="mopen">(</span><span class="mord mathdefault">d</span><span class="mopen">(</span><span class="mord">3</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">⋅</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">)</span></span></span></span></span></p>
+<p>这是说和<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>v</mi><mn>3</mn></msub></mrow><annotation encoding="application/x-tex">v_3</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">v</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>距离为1的节点取平均，乘上一个权重矩阵<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>w</mi><mn>3</mn><mn>0</mn></msubsup></mrow><annotation encoding="application/x-tex">w_3^0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0622159999999998em;vertical-align:-0.24810799999999997em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02691em;">w</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-2.4518920000000004em;margin-left:-0.02691em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.24810799999999997em;"><span></span></span></span></span></span></span></span></span></span>. 即节点v0 v2 v4</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>h</mi><mn>1</mn><mn>3</mn></msubsup><mo>=</mo><msubsup><mi>w</mi><mn>3</mn><mn>1</mn></msubsup><mi>M</mi><mi>E</mi><mi>A</mi><mi>N</mi><mo stretchy="false">(</mo><mi>d</mi><mo stretchy="false">(</mo><mn>3</mn><mo separator="true">,</mo><mo>⋅</mo><mo stretchy="false">)</mo><mo>=</mo><mn>2</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">h_1^3 = w_3^1 MEAN(d(3, \cdot )=2)
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1111079999999998em;vertical-align:-0.247em;"></span><span class="mord"><span class="mord mathdefault">h</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8641079999999999em;"><span style="top:-2.4530000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.1141079999999999em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02691em;">w</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8641079999999999em;"><span style="top:-2.4530000000000003em;margin-left:-0.02691em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mord mathdefault" style="margin-right:0.10903em;">M</span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="mord mathdefault">A</span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span><span class="mopen">(</span><span class="mord mathdefault">d</span><span class="mopen">(</span><span class="mord">3</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">⋅</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">2</span><span class="mclose">)</span></span></span></span></span></p>
+<p>这是说和<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>v</mi><mn>3</mn></msub></mrow><annotation encoding="application/x-tex">v_3</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">v</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>距离为2的节点取平均，乘上一个权重矩阵<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>w</mi><mn>3</mn><mn>1</mn></msubsup></mrow><annotation encoding="application/x-tex">w_3^1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0622159999999998em;vertical-align:-0.24810799999999997em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02691em;">w</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-2.4518920000000004em;margin-left:-0.02691em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.24810799999999997em;"><span></span></span></span></span></span></span></span></span></span>. 即节点v1 v3</p>
+<p><img src="/images/image-20210825141820745.png" alt="image-20210825141820745" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825141820745.png" class="lozad post-image"></p>
+<p><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>H</mi><mi>k</mi></msup></mrow><annotation encoding="application/x-tex">H^k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.849108em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.08125em;">H</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span></span></span></span></span></span></span></span> 是将每层的h一行一行放在一起，叠成一个矩阵.</p>
+<p><img src="/images/image-20210825141913198.png" alt="image-20210825141913198" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825141913198.png" class="lozad post-image"></p>
+<p>readout的做法如上图所示，无需多言.</p>
+<h3 id="monet-mixture-model-networks"><a class="markdownIt-Anchor" href="#monet-mixture-model-networks"></a> MoNET (Mixture Model Networks)</h3>
+<p><img src="/images/image-20210825142018057.png" alt="image-20210825142018057" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825142018057.png" class="lozad post-image"></p>
+<blockquote>
+<p>ref↙️↙️<a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1611.08402.pdf">https://arxiv.org/pdf/1611.08402.pdf</a></p>
+</blockquote>
+<p>MoNET 对图中的边定义了距离权重，这篇文章中距离是由公式定义的，是可以直接计算的，也有的模型（GAT ）是通过graph data学出的.</p>
+<p>MoNET 将weighted sum neighbor features取代了简单的相加.</p>
+<h3 id="gat-graph-attention-networks"><a class="markdownIt-Anchor" href="#gat-graph-attention-networks"></a> GAT (Graph Attention Networks)</h3>
+<p><img src="/images/image-20210825143113296.png" alt="image-20210825143113296" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825143113296.png" class="lozad post-image"></p>
+<blockquote>
+<p>ref: <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1710.10903.pdf">https://arxiv.org/pdf/1710.10903.pdf</a></p>
+</blockquote>
+<p><img src="/images/image-20210825143142451.png" alt="image-20210825143142451" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825143142451.png" class="lozad post-image"></p>
+<h3 id="gin-graph-isomorphism-network"><a class="markdownIt-Anchor" href="#gin-graph-isomorphism-network"></a> GIN (Graph Isomorphism Network)</h3>
+<p>前面的方法我们就直接用了，也没有问为什么它们会work，GIN这篇paper给出了一些证明，告诉你什么样的GNN model会work</p>
+<blockquote>
+<p>ref: <a target="_blank" rel="noopener" href="https://openreview.net/forum%3Fid=ryGs6iA5Km">https://openreview.net/forum%3Fid=ryGs6iA5Km</a></p>
+</blockquote>
+<ul>
+<li>A GNN can be at most as powerful as WL isomorphic test</li>
+<li>Theoretical proofs were provided</li>
+</ul>
+<p><strong>结论</strong>：</p>
+<p><img src="/images/image-20210825143355820.png" alt="image-20210825143355820" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825143355820.png" class="lozad post-image"></p>
+<p>上图公式：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>h</mi><mi>v</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msubsup><mo>=</mo><mi>M</mi><mi>L</mi><msup><mi>P</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msup><mo stretchy="false">(</mo><mo stretchy="false">(</mo><mn>1</mn><mo>+</mo><msup><mi>ϵ</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msup><mo stretchy="false">)</mo><mo>⋅</mo><msubsup><mi>h</mi><mi>v</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo></mrow></msubsup><mo>+</mo><munder><mo>∑</mo><mrow><mi>u</mi><mo>∈</mo><mi>N</mi><mo stretchy="false">(</mo><mi>v</mi><mo stretchy="false">)</mo></mrow></munder><msubsup><mi>h</mi><mi>v</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo></mrow></msubsup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">h_v^{(k)} = MLP^{(k)} ((1 + \epsilon^{(k)} )\cdot h_v^{(k-1)} + \sum_{u \in N(v)} h_v^{(k-1)})
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.185em;vertical-align:-0.247em;"></span><span class="mord"><span class="mord mathdefault">h</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.938em;"><span style="top:-2.4530000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.03588em;">v</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.188em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">M</span><span class="mord mathdefault">L</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.938em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span><span class="mopen">(</span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1.188em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault">ϵ</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.938em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1.185em;vertical-align:-0.247em;"></span><span class="mord"><span class="mord mathdefault">h</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.938em;"><span style="top:-2.4530000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.03588em;">v</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mbin mtight">−</span><span class="mord mtight">1</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:2.5660100000000003em;vertical-align:-1.516005em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.050005em;"><span style="top:-1.808995em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">u</span><span class="mrel mtight">∈</span><span class="mord mathdefault mtight" style="margin-right:0.10903em;">N</span><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03588em;">v</span><span class="mclose mtight">)</span></span></span></span><span style="top:-3.0500049999999996em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.516005em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault">h</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.938em;"><span style="top:-2.4530000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.03588em;">v</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="mbin mtight">−</span><span class="mord mtight">1</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></span></p>
+<p>k是layer，v是node id，h update的方式应该要先将neighbor 全都加起来，而不能用max pooling也不能用mean pooling，然后加上某个constant 乘以 自己的feature，这个constant就是 $1 + \epsilon^{(k)} $ 这里的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>ϵ</mi></mrow><annotation encoding="application/x-tex">\epsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">ϵ</span></span></span></span> 是可以学出来的但是paper中也说了这里设为0也没太大差别.</p>
+<p>为什么不能用max pooling也不能用mean pooling，看上图下面一排：</p>
+<p>a告诉我们，max or mean 无法区分a中的两个graph；</p>
+<p>max无法分辨b中的两个graph；</p>
+<p>max和mean也无法分辨c中的两个graph；</p>
+<p>MLP是multi layer perceptron</p>
+<p><img src="/images/image-20210825145058111.png" alt="image-20210825145058111" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825145058111.png" class="lozad post-image"></p>
+<h2 id="graph-signal-processing-and-spectral-based-gnn"><a class="markdownIt-Anchor" href="#graph-signal-processing-and-spectral-based-gnn"></a> Graph Signal Processing and Spectral-based GNN</h2>
+<p><img src="/images/image-20210825162358429.png" alt="image-20210825162358429" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825162358429.png" class="lozad post-image"></p>
+<p>Spectral-based GNN 要做的事情就是将graph 和kernel 都转换到傅里叶域中，在傅里叶域中做multiplication，再转换回去，就是得到下一个layer.</p>
+<p>问题是这个傅里叶变换要怎么做呢，要回答这个问题要引入很多信号与系统的东西</p>
+<h3 id="warning-of-math-signal-and-system"><a class="markdownIt-Anchor" href="#warning-of-math-signal-and-system"></a> Warning of  <s>Math</s> Signal And System</h3>
+<p>没学过信号与系统，听不懂，但不影响对整个GNN的理解（大概</p>
+<p>如果想很好的理解下面讲的Spectral-based GNN的话，建议还是好好理解一下Warning of  Signal And System这一部分.</p>
+<h3 id="chebnet"><a class="markdownIt-Anchor" href="#chebnet"></a> ChebNet</h3>
+<p><img src="/images/image-20210825185406872.png" alt="image-20210825185406872" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825185406872.png" class="lozad post-image"></p>
+<p>主打特性是快，且localize</p>
+<blockquote>
+<p>ref: <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1606.09375.pdf">https://arxiv.org/pdf/1606.09375.pdf</a></p>
+</blockquote>
+<p><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>L</mi><mi>k</mi></msup></mrow><annotation encoding="application/x-tex">L^k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.849108em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">L</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span></span></span></span></span></span></span></span> 是拉普拉斯算子Laplacian的一个多项式函数，通过你选择让 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>g</mi><mi>θ</mi></msub><mo stretchy="false">(</mo><mi>L</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">g_\theta(L)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">g</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.02778em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathdefault">L</span><span class="mclose">)</span></span></span></span> 是多项式函数的方式，你就可以让他是K-localized，因为根据上一节原理中讲的，如果你让g函数只到k次方，它就只能看到k-neighbor.</p>
+<p>用Chebyshev 多项式解决时间复杂度太高的问题：</p>
+<p><img src="/images/image-20210825190846513.png" alt="image-20210825190846513" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825190846513.png" class="lozad post-image"></p>
+<p><img src="/images/image-20210825190927438.png" alt="image-20210825190927438" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825190927438.png" class="lozad post-image"></p>
+<p>所以原本的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>g</mi><mi>θ</mi></msub><mo stretchy="false">(</mo><mi mathvariant="normal">Λ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">g_\theta(\Lambda)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">g</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.02778em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord">Λ</span><span class="mclose">)</span></span></span></span>  变为 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>g</mi><msup><mi>θ</mi><mo mathvariant="normal">′</mo></msup></msub><mo stretchy="false">(</mo><mover accent="true"><mi mathvariant="normal">Λ</mi><mo stretchy="true">~</mo></mover><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">g_{\theta&#x27;}(\widetilde\Lambda)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.19333em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">g</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6828285714285715em;"><span style="top:-2.786em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.94333em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord">Λ</span></span><span class="svg-align" style="top:-3.6833299999999998em;"><span class="pstrut" style="height:3em;"></span><span style="height:0.26em;"><svg width='100%' height='0.26em' viewBox='0 0 600 260' preserveAspectRatio='none'><path d='M200 55.538c-77 0-168 73.953-177 73.953-3 0-7
+-2.175-9-5.437L2 97c-1-2-2-4-2-6 0-4 2-7 5-9l20-12C116 12 171 0 207 0c86 0
+ 114 68 191 68 78 0 168-68 177-68 4 0 7 2 9 5l12 19c1 2.175 2 4.35 2 6.525 0
+ 4.35-2 7.613-5 9.788l-19 13.05c-92 63.077-116.937 75.308-183 76.128
+-68.267.847-113-73.952-191-73.952z'/></svg></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> ，怎么理解这个转换的作用，为什么要把一个多项式组合换成另一个多项式组合呢？你可以参考下面这个高中数学题：</p>
+<p><img src="/images/image-20210825191315600.png" alt="image-20210825191315600" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825191315600.png" class="lozad post-image"></p>
+<p>你可以把 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>g</mi><mi>θ</mi></msub><mo stretchy="false">(</mo><mi mathvariant="normal">Λ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">g_\theta(\Lambda)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">g</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.02778em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord">Λ</span><span class="mclose">)</span></span></span></span>  看成<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>3</mn><msup><mi>x</mi><mn>4</mn></msup><mo>−</mo><mn>7</mn><msup><mi>x</mi><mn>3</mn></msup><mo>−</mo><mn>2</mn><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><mn>2</mn><mi>x</mi><mo>+</mo><mn>18</mn></mrow><annotation encoding="application/x-tex">3x^4-7x^3-2x^2+2x+18</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.897438em;vertical-align:-0.08333em;"></span><span class="mord">3</span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">4</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.897438em;vertical-align:-0.08333em;"></span><span class="mord">7</span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.897438em;vertical-align:-0.08333em;"></span><span class="mord">2</span><span class="mord"><span class="mord mathdefault">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">2</span><span class="mord mathdefault">x</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord">8</span></span></span></span> 把 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>g</mi><msup><mi>θ</mi><mo mathvariant="normal">′</mo></msup></msub><mo stretchy="false">(</mo><mover accent="true"><mi mathvariant="normal">Λ</mi><mo stretchy="true">~</mo></mover><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">g_{\theta&#x27;}(\widetilde\Lambda)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.19333em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">g</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6828285714285715em;"><span style="top:-2.786em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.94333em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord">Λ</span></span><span class="svg-align" style="top:-3.6833299999999998em;"><span class="pstrut" style="height:3em;"></span><span style="height:0.26em;"><svg width='100%' height='0.26em' viewBox='0 0 600 260' preserveAspectRatio='none'><path d='M200 55.538c-77 0-168 73.953-177 73.953-3 0-7
+-2.175-9-5.437L2 97c-1-2-2-4-2-6 0-4 2-7 5-9l20-12C116 12 171 0 207 0c86 0
+ 114 68 191 68 78 0 168-68 177-68 4 0 7 2 9 5l12 19c1 2.175 2 4.35 2 6.525 0
+ 4.35-2 7.613-5 9.788l-19 13.05c-92 63.077-116.937 75.308-183 76.128
+-68.267.847-113-73.952-191-73.952z'/></svg></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> 看作后面的形式，这个转换使得 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mn>1.99</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(1.99)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord">1</span><span class="mord">.</span><span class="mord">9</span><span class="mord">9</span><span class="mclose">)</span></span></span></span> 更容易计算了.</p>
+<p>所以最后模型要学的东西就是 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>g</mi><msup><mi>θ</mi><mo mathvariant="normal">′</mo></msup></msub><mo stretchy="false">(</mo><mover accent="true"><mi mathvariant="normal">Λ</mi><mo stretchy="true">~</mo></mover><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">g_{\theta&#x27;}(\widetilde\Lambda)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.19333em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">g</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6828285714285715em;"><span style="top:-2.786em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.94333em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord">Λ</span></span><span class="svg-align" style="top:-3.6833299999999998em;"><span class="pstrut" style="height:3em;"></span><span style="height:0.26em;"><svg width='100%' height='0.26em' viewBox='0 0 600 260' preserveAspectRatio='none'><path d='M200 55.538c-77 0-168 73.953-177 73.953-3 0-7
+-2.175-9-5.437L2 97c-1-2-2-4-2-6 0-4 2-7 5-9l20-12C116 12 171 0 207 0c86 0
+ 114 68 191 68 78 0 168-68 177-68 4 0 7 2 9 5l12 19c1 2.175 2 4.35 2 6.525 0
+ 4.35-2 7.613-5 9.788l-19 13.05c-92 63.077-116.937 75.308-183 76.128
+-68.267.847-113-73.952-191-73.952z'/></svg></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> 中的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>θ</mi><mi>k</mi><mo mathvariant="normal">′</mo></msubsup></mrow><annotation encoding="application/x-tex">\theta_k&#x27;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.035em;vertical-align:-0.2831079999999999em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.751892em;"><span style="top:-2.4168920000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2831079999999999em;"><span></span></span></span></span></span></span></span></span></span> .</p>
+<p><img src="/images/image-20210825193100042.png" alt="image-20210825193100042" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825193100042.png" class="lozad post-image"></p>
+<p><img src="/images/image-20210825193106316.png" alt="image-20210825193106316" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825193106316.png" class="lozad post-image"></p>
+<h3 id="gcn"><a class="markdownIt-Anchor" href="#gcn"></a> GCN</h3>
+<p>这是比较受喜欢的，被大家广泛使用的模型.</p>
+<p><img src="/images/image-20210825194615556.png" alt="image-20210825194615556" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825194615556.png" class="lozad post-image"></p>
+<blockquote>
+<p>ref: <a target="_blank" rel="noopener" href="https://openreview.net/pdf%3Fid=SJU4ayYgl">https://openreview.net/pdf%3Fid=SJU4ayYgl</a></p>
+</blockquote>
+<p><img src="/images/image-20210825195722261.png" alt="image-20210825195722261" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825195722261.png" class="lozad post-image"></p>
+<p>GCN对每个layer中的node <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>h</mi><mi>v</mi></msub></mrow><annotation encoding="application/x-tex">h_v</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">h</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.03588em;">v</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 计算就是将所有neighbor包括他自己乘一个weight，再加起来，，再加上一个bias，再经过一个nonlinear activation，就结束.</p>
+<p><img src="/images/image-20210825195729483.png" alt="image-20210825195729483" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825195729483.png" class="lozad post-image"></p>
+<h2 id="graph-generation"><a class="markdownIt-Anchor" href="#graph-generation"></a> Graph Generation</h2>
+<ul>
+<li>VAE-based model: Generate a whole graph in one step</li>
+<li>GAN-based model: Generate a whole graph in one step</li>
+<li>Auto-regressive- based model: Generate a node or an edge in one step</li>
+</ul>
+<h3 id="vae-based-model"><a class="markdownIt-Anchor" href="#vae-based-model"></a> VAE-based model</h3>
+<p><img src="/images/image-20210825203336854.png" alt="image-20210825203336854" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825203336854.png" class="lozad post-image"></p>
+<blockquote>
+<p>ref: <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1802.03480.pdf">https://arxiv.org/pdf/1802.03480.pdf</a></p>
+</blockquote>
+<p>左边是encoder，右边是decoder，input是一个adjacency matrix，Edge Feature 和node Feature，生成一样是一个adjacency matrix，Edge Feature 和node Feature.</p>
+<p><img src="/images/image-20210825203530752.png" alt="image-20210825203530752" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825203530752.png" class="lozad post-image"></p>
+<blockquote>
+<p>ref: <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1901.00596.pdf">https://arxiv.org/pdf/1901.00596.pdf</a></p>
+</blockquote>
+<p>GAN的输入是adjacency matrix和feature matrix</p>
+<p><img src="/images/image-20210825203546254.png" alt="image-20210825203546254" / srcset="/images/LoadingImage.gif" data-src="/images/image-20210825203546254.png" class="lozad post-image"></p>
+<blockquote>
+<p>ref: <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1803.03324.pdf">https://arxiv.org/pdf/1803.03324.pdf</a></p>
+</blockquote>
+<h2 id="online-resources"><a class="markdownIt-Anchor" href="#online-resources"></a> Online Resources</h2>
+<p>PyTorch Geometric: <a target="_blank" rel="noopener" href="https://github.com/rusty1s/pytorch_geometric">https://github.com/rusty1s/pytorch_geometric</a></p>
+<p>Deep Graph Library: <a target="_blank" rel="noopener" href="http://dgl.ai/">http://dgl.ai/</a></p>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-info copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/about">Ch3nYe</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/Graph-Neural-Network/">https://ch3nye.top/Graph-Neural-Network/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  
+  <div class="nav-item-next">
+    <a href="/Note-PalmTree-CCS2021/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">Note 《PalmTree Learning an Assembly Language Model for Instruction Embedding》 </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: '049b30eb10ea05082ef1',
+      clientSecret: 'c33ad95041c69907b3136b895008320f000987db',
+      repo: 'Ch3nYe.github.io',
+      owner: 'Ch3nYe',
+      admin: 'Ch3nYe',
+      id: 'location.href',
+      distractionFreeMode: 'false',
+      language: 'navigator.language || navigator.userLanguage',
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#graph-neural-network"><span class="toc-text"> Graph Neural Network</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#introduction"><span class="toc-text"> Introduction</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9A%E4%B9%89"><span class="toc-text"> 定义</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%AD%E7%BB%83gnn%E5%B0%86%E9%81%87%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-text"> 训练GNN将遇到的问题</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#roadmap"><span class="toc-text"> Roadmap</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tasks-dataset-and-benchmark"><span class="toc-text"> Tasks, Dataset, and Benchmark</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#spatial-based-gnn"><span class="toc-text"> Spatial-based GNN</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#nn4gneural-networks-for-graph"><span class="toc-text"> NN4G(Neural Networks for Graph)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#dcnndiffusion-convolution-neural-network"><span class="toc-text"> DCNN(Diffusion-Convolution Neural Network)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#monet-mixture-model-networks"><span class="toc-text"> MoNET (Mixture Model Networks)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#gat-graph-attention-networks"><span class="toc-text"> GAT (Graph Attention Networks)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#gin-graph-isomorphism-network"><span class="toc-text"> GIN (Graph Isomorphism Network)</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#graph-signal-processing-and-spectral-based-gnn"><span class="toc-text"> Graph Signal Processing and Spectral-based GNN</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#warning-of-math-signal-and-system"><span class="toc-text"> Warning of  Math Signal And System</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#chebnet"><span class="toc-text"> ChebNet</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#gcn"><span class="toc-text"> GCN</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#graph-generation"><span class="toc-text"> Graph Generation</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#vae-based-model"><span class="toc-text"> VAE-based model</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#online-resources"><span class="toc-text"> Online Resources</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/images/logo.png" class="author-img">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>32</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>5</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>41</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:sud0su@163.com">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#graph-neural-network"><span class="toc-text"> Graph Neural Network</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#introduction"><span class="toc-text"> Introduction</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9A%E4%B9%89"><span class="toc-text"> 定义</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%AD%E7%BB%83gnn%E5%B0%86%E9%81%87%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-text"> 训练GNN将遇到的问题</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#roadmap"><span class="toc-text"> Roadmap</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tasks-dataset-and-benchmark"><span class="toc-text"> Tasks, Dataset, and Benchmark</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#spatial-based-gnn"><span class="toc-text"> Spatial-based GNN</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#nn4gneural-networks-for-graph"><span class="toc-text"> NN4G(Neural Networks for Graph)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#dcnndiffusion-convolution-neural-network"><span class="toc-text"> DCNN(Diffusion-Convolution Neural Network)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#monet-mixture-model-networks"><span class="toc-text"> MoNET (Mixture Model Networks)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#gat-graph-attention-networks"><span class="toc-text"> GAT (Graph Attention Networks)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#gin-graph-isomorphism-network"><span class="toc-text"> GIN (Graph Isomorphism Network)</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#graph-signal-processing-and-spectral-based-gnn"><span class="toc-text"> Graph Signal Processing and Spectral-based GNN</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#warning-of-math-signal-and-system"><span class="toc-text"> Warning of  Math Signal And System</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#chebnet"><span class="toc-text"> ChebNet</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#gcn"><span class="toc-text"> GCN</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#graph-generation"><span class="toc-text"> Graph Generation</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#vae-based-model"><span class="toc-text"> VAE-based model</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#online-resources"><span class="toc-text"> Online Resources</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/备忘">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/李宏毅机器学习笔记">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">15</span>
+        </div>
+      </a>
+    
+      <a href="/categories/论文阅读">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">8</span>
+        </div>
+      </a>
+    
+      <a href="/categories/笔记">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/实战">
+        <div class="categories-list-item">
+          实战
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="\tags\note" title="note"><div class="tags-list-item">note</div></a>
+    
+    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
+    
+    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
+    
+    <a href="\tags\笔记" title="笔记"><div class="tags-list-item">笔记</div></a>
+    
+    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
+    
+    <a href="\tags\Deep-Learning" title="Deep-Learning"><div class="tags-list-item">Deep-Learning</div></a>
+    
+    <a href="\tags\实战" title="实战"><div class="tags-list-item">实战</div></a>
+    
+    <a href="\tags\crack" title="crack"><div class="tags-list-item">crack</div></a>
+    
+    <a href="\tags\二进制" title="二进制"><div class="tags-list-item">二进制</div></a>
+    
+    <a href="\tags\总结" title="总结"><div class="tags-list-item">总结</div></a>
+    
+    <a href="\tags\静态分析" title="静态分析"><div class="tags-list-item">静态分析</div></a>
+    
+    <a href="\tags\Reverse-Engineering" title="Reverse-Engineering"><div class="tags-list-item">Reverse-Engineering</div></a>
+    
+    <a href="\tags\Binary" title="Binary"><div class="tags-list-item">Binary</div></a>
+    
+    <a href="\tags\HTTPS" title="HTTPS"><div class="tags-list-item">HTTPS</div></a>
+    
+    <a href="\tags\学习" title="学习"><div class="tags-list-item">学习</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#graph-neural-network"><span class="toc-text"> Graph Neural Network</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#introduction"><span class="toc-text"> Introduction</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9A%E4%B9%89"><span class="toc-text"> 定义</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%AD%E7%BB%83gnn%E5%B0%86%E9%81%87%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-text"> 训练GNN将遇到的问题</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#roadmap"><span class="toc-text"> Roadmap</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tasks-dataset-and-benchmark"><span class="toc-text"> Tasks, Dataset, and Benchmark</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#spatial-based-gnn"><span class="toc-text"> Spatial-based GNN</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#nn4gneural-networks-for-graph"><span class="toc-text"> NN4G(Neural Networks for Graph)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#dcnndiffusion-convolution-neural-network"><span class="toc-text"> DCNN(Diffusion-Convolution Neural Network)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#monet-mixture-model-networks"><span class="toc-text"> MoNET (Mixture Model Networks)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#gat-graph-attention-networks"><span class="toc-text"> GAT (Graph Attention Networks)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#gin-graph-isomorphism-network"><span class="toc-text"> GIN (Graph Isomorphism Network)</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#graph-signal-processing-and-spectral-based-gnn"><span class="toc-text"> Graph Signal Processing and Spectral-based GNN</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#warning-of-math-signal-and-system"><span class="toc-text"> Warning of  Math Signal And System</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#chebnet"><span class="toc-text"> ChebNet</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#gcn"><span class="toc-text"> GCN</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#graph-generation"><span class="toc-text"> Graph Generation</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#vae-based-model"><span class="toc-text"> VAE-based model</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#online-resources"><span class="toc-text"> Online Resources</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-08-25</div>
+        <a href="/Graph-Neural-Network/"><div class="recent-posts-item-content">Graph Neural Network</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-08-21</div>
+        <a href="/Note-PalmTree-CCS2021/"><div class="recent-posts-item-content">Note 《PalmTree Learning an Assembly Language Model for Instruction Embedding》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-07-06</div>
+        <a href="/Note-NFRE/"><div class="recent-posts-item-content">Note《A Lightweight Framework for Function Name Reassignment Based on Large-Scale Stripped Binaries》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-05-29</div>
+        <a href="/Note-DeepPayload-Black-box-Backdoor-Attack-on-Deep-Learning-Models-through-Neural-Payload-Injection/"><div class="recent-posts-item-content">Note《DeepPayload Black-box Backdoor Attack on Deep Learning Models through Neural Payload Injection》</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2021
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">ch3nye's blog </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('data-fslightbox', 'gallery');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+    }
+    refreshFsLightbox();
+  }
+</script>
+<script>loadScript("//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-WHGL11014T');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "G-WHGL11014T", googleAnalytics)</script>
+  
+</body>
+
+</html>
