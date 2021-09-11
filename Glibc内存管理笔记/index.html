@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="网络安全 Android ML CTF">
+  <link rel="icon" href="/images/logo.png">
+  <title>Glibc内存管理笔记</title>
+  
+  
+  <meta property="og:title" content="Glibc内存管理笔记">
+  
+  
+  <meta property="og:url" content="https://ch3nye.top/Glibc%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E7%AC%94%E8%AE%B0/index.html">
+  
+  
+  <meta property="og:img" content="/images/logo.png">
+  
+  
+  <meta property="og:img" content="网络安全 Android ML CTF">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2021-09-05">
+  <meta property="og:article:modified_time" content="2021-09-11">
+  <meta property="og:article:author" content="Ch3nYe">
+  
+  
+  <meta property="og:article:tag" content="总结">
+  
+  <meta property="og:article:tag" content="学习">
+  
+  <meta property="og:article:tag" content="内存管理 - Glibc">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js" as="script">
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+  
+  
+  
+  <link href="/js/lib/prism/prism-tomorrow.min.css" rel="stylesheet" data-prism="prism-tomorrow">
+  
+  
+  
+<link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+
+  
+  
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/images/logo.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/links" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      Glibc内存管理笔记
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2021-09-04T16:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2021-09-05</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/笔记/" class="post-meta-link">笔记</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>2.7k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/总结/" class="post-meta-link">总结</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/学习/" class="post-meta-link">学习</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/内存管理-Glibc/" class="post-meta-link">内存管理 - Glibc</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="glibc内存管理笔记"><a class="markdownIt-Anchor" href="#glibc内存管理笔记"></a> Glibc内存管理笔记</h1>
+<h2 id="0x0-胡话"><a class="markdownIt-Anchor" href="#0x0-胡话"></a> 0x0 胡话</h2>
+<p>计划：</p>
+<ul>
+<li>Linux 下的内存管理：Glibc</li>
+<li>Windows 下的内存管理：HeapApi</li>
+<li>Double Free</li>
+<li>UAF</li>
+</ul>
+<p>windows 闭源，所以从Linux的内存管理开始学习</p>
+<h2 id="0x1-这篇笔记在写什么鬼"><a class="markdownIt-Anchor" href="#0x1-这篇笔记在写什么鬼"></a> 0x1 这篇笔记在写什么鬼</h2>
+<p>这篇文章主要目的是，记录我在学习Glibc内存管理的过程中阅读的优秀参考文章，遇到的问题和对应的自主解答（见经典自问自答环节）。对读者的作用仅仅是推荐一些学习这部分知识的优秀参考文章，顶多再参考下我遇到的问题。并不是详细讲解Glibc的源码，也没有对Glibc内存管理策略的系统性描述。为什么不写？因为不想重复造轮，我写的怎么可能超过拥有多年内核层经验的前辈。</p>
+<blockquote>
+<p><strong>Glibc</strong>就是<strong>GNU C库</strong>，是GNU计划所实现的C标准库。尽管其名字中带有“C库”，但它现在也直接支持C++（以及间接支持其他编程语言）。它为<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/GNU_Hurd">GNU系统</a>，<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/GNU/Linux">GNU/Linux</a>系统和一些其他的<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E7%B1%BBUnix%E7%B3%BB%E7%BB%9F">类Unix系统</a>提供了系统核心库。这些库提供了关键的API，包括ISO C11、POSIX.1-2008和BSD所规定的API和一些底层API，包括open、read、write、malloc、printf、getaddrinfo、dlopen、pthread_create、crypt、login、exit等。</p>
+<p>ref: <a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/GNU_C%E5%87%BD%E5%BC%8F%E5%BA%AB">GNU C库 - 维基百科，自由的百科全书 (wikipedia.org)</a></p>
+</blockquote>
+<p>像这种底层内核源码库，乍一看感觉很难读懂，实际上就是不懂的知识点太多了，使用了大量的自定义的数据结构，眼花缭乱的宏定义，让人一下子抓不住要点，理解不了整体框架。就好像刚学完高中英语4500词，给我一篇二进制学术论文，没见过的单词太多了，当然理解不了文章。所以说不要着急，从别人的分析文章开始看，最后读一读源码，这样的过程多反复进行几遍就能对它有个很好的理解了。我是属于天资愚钝的那类人😥，这种源码阅读一般都要耗费个把月，但是沃觉得很值，也是必要的，毕竟基本功要打扎实。</p>
+<h2 id="0x2-知识点"><a class="markdownIt-Anchor" href="#0x2-知识点"></a> 0x2 知识点?</h2>
+<p>主要内容有三点：</p>
+<ul>
+<li>
+<p>一是几种结构体的介绍：malloc_state， malloc_chunk，heap_info，和chunk的结构 ||| fast_bins，small_bins，large_bins，unsorted_bin。</p>
+</li>
+<li>
+<p>二是arena的介绍，多线程堆是如何管理的，malloc中mmap和brk的区别，main_arena和thread_arena的区别。（这一点在第一篇文章有详细介绍）</p>
+</li>
+<li>
+<p>三是内存的分配与回收，这一点最难也最重要，又全部围绕怎么让这个过程变得高效来设计（主要在于large chunk的分配需要进行碎片合并和整理的大循环）：</p>
+</li>
+</ul>
+<p>ref: <a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_43449190/article/details/89077847">https://blog.csdn.net/qq_43449190/article/details/89077847</a></p>
+<h3 id="chunk-相关"><a class="markdownIt-Anchor" href="#chunk-相关"></a> chunk 相关</h3>
+<p>ref: <a target="_blank" rel="noopener" href="https://blog.csdn.net/dongyu_1989/article/details/81631271">(22条消息) linux堆内存管理malloc分析（3）_dongyu_1989的博客-CSDN博客</a></p>
+<ul>
+<li>
+<p>samll bins &amp; large bins 中chunk的申请与释放</p>
+</li>
+<li>
+<p>large bins中每个双向循环链表chunk size的大小区间</p>
+</li>
+<li>
+<p>给出一张较为详细且清晰的Bins snapshot</p>
+</li>
+<li>
+<p>Bins的初始化</p>
+</li>
+</ul>
+<p><img src="images/20180813175037328" alt="img" / srcset="/images/LoadingImage.gif" data-src="images/20180813175037328" class="lozad post-image"></p>
+<p>这是一个系列，感觉这个作者写的比较易懂，且语病相对较少，可以读一读同系列其他文章。</p>
+<p>glibc内存管理ptmalloc源代码分析.pdf – 华庭（庄明强）</p>
+<ul>
+<li>系统讲解了Glibc的内存管理，附带Ptmalloc2的源码分析</li>
+</ul>
+<h3 id="核心结构体"><a class="markdownIt-Anchor" href="#核心结构体"></a> 核心结构体</h3>
+<p>malloc_state</p>
+<p>每个分配区是struct malloc_state的一个实例，ptmalloc使用malloc_state来管理分配区，而参数管理使用struct malloc_par，全局拥有一个唯一的malloc_par实例。</p>
+<h2 id="0x-1经典自问自答环节"><a class="markdownIt-Anchor" href="#0x-1经典自问自答环节"></a> 0x-1经典自问自答环节</h2>
+<h3 id="chunk-大小的计算公式"><a class="markdownIt-Anchor" href="#chunk-大小的计算公式"></a> Chunk 大小的计算公式？</h3>
+<ul>
+<li>
+<p>一个使用中的chunk的大小：in_use_size  =  (用户请求大小+2*SIZE_SZ-SIZE_SZ)  align to 8B，准确来说是malloc分配的bins上的chunk</p>
+<p>参见：<a target="_blank" rel="noopener" href="https://github.com/lattera/glibc/blob/master/malloc/malloc.c#L1072">glibc/malloc.c at master · lattera/glibc (github.com)</a></p>
+<p>mmap分配时没有相邻的上下chunk，此时in_use_size  =  (用户请求大小+2*SIZE_SZ) align to 8B</p>
+</li>
+<li>
+<p>空闲chunk至少需要4个SIZE_SZ的大小，用于存储prev_size，size，fd和bk</p>
+<p>参见：<a target="_blank" rel="noopener" href="https://github.com/lattera/glibc/blob/master/malloc/malloc.c#L1098">glibc/malloc.c at master · lattera/glibc (github.com)</a></p>
+</li>
+<li>
+<p>由于空闲chunk和使用中的chunk使用同一块空间，所以肯定要取两者最大的一个作为最终的分配空间：chunk_size  =  max(in_use_size, 16)</p>
+</li>
+</ul>
+<h3 id="为什么使用中的chunk可以占用下一个chunk的prev_size域"><a class="markdownIt-Anchor" href="#为什么使用中的chunk可以占用下一个chunk的prev_size域"></a> 为什么使用中的Chunk可以占用下一个chunk的prev_size域？</h3>
+<p>prev_size字段虽然在当前chunk块结构体内，记录的却是前一个邻接chunk块的信息，这样做的好处，或者说目的，就是<strong>我们通过本块chunk结构体就可以直接获取到前一chunk块的地址</strong>，从而方便做进一步的处理操作。相对的，当前chunk块的foot信息就存在于下一个邻接chunk块的结构体内。字段prev_size记录的信息，有两种情况：</p>
+<p>1）如果前一个邻接chunk块空闲，那么当前chunk块结构体内的prev_size字段记录的是前一个邻接chunk块的大小。这就是由当前chunk指针获得前一个空闲chunk地址的依据。宏prev_chunk§就是依赖这个假设实现的。</p>
+<p>2）如果前一个邻接chunk在使用中，则当前chunk的prev_size的空间被前一个chunk借用中，其中的值是前一个chunk的内存内容，对当前chunk没有任何意义。此时上一个chunk不能用作分配，管理器不需要获取上一个chunk的地址，所以这个prev_size也就没有用了。字段size记录了本chunk的大小，无论下一个chunk是空闲状态或是被使用状态，都可以通过本chunk的地址加上本chunk的大小，得到下一个chunk的地址，由于size的低3个bit记录了控制信息，需要屏蔽掉这些控制信息，取出实际的size在进行计算下一个chunk地址，这是next_chunk§的实现原理。</p>
+<pre class="line-numbers language-C" data-language="C"><code class="language-C">&#x2F;* Ptr to previous physical malloc_chunk.  Only valid if !prev_inuse (P).  *&#x2F;
+#define prev_chunk(p) ((mchunkptr) (((char *) (p)) - prev_size (p)))<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-C" data-language="C"><code class="language-C">&#x2F;* Ptr to next physical malloc_chunk. *&#x2F;
+#define next_chunk(p) ((mchunkptr) (((char *) (p)) + chunksize (p)))<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>宏chunksize§用于获得chunk的实际大小，需要屏蔽掉size中的控制信息。</p>
+<pre class="line-numbers language-C" data-language="C"><code class="language-C">&#x2F;* Get size, ignoring use bits *&#x2F;
+#define chunksize(p) (chunksize_nomask (p) &amp; ~(SIZE_BITS))<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>宏chunk_at_offset(p, s)将p+s的地址强制看作一个chunk。</p>
+<pre class="line-numbers language-C" data-language="C"><code class="language-C">&#x2F;* Treat space at ptr + offset as a chunk *&#x2F;
+#define chunk_at_offset(p, s)  ((mchunkptr) (((char *) (p)) + (s)))<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h3 id="为什么chunk的size域低三位可以复用"><a class="markdownIt-Anchor" href="#为什么chunk的size域低三位可以复用"></a> 为什么Chunk的size域低三位可以复用？</h3>
+<p>chunk在分割时总是以地址对齐，默认是8字节对齐，对齐值可以自定义，但是必须比默认值大且是<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mn>2</mn><mi>n</mi></msup></mrow><annotation encoding="application/x-tex">2^n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.664392em;vertical-align:0em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.664392em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">n</span></span></span></span></span></span></span></span></span></span></span>，这样的话低三位总是0，就可以复用。</p>
+<ul>
+<li>
+<p>以第0位作为P状态位，标记前一chunk块是否在使用中，为1表示使用，为0表示空闲。</p>
+</li>
+<li>
+<p>以第1位作为M状态位，标记本chunk块是否是使用mmap()直接从进程的mmap映射区域分配的，为1表示是，为0表示否。</p>
+</li>
+<li>
+<p>以第2位作为A状态位，标记本chunk是否属于非主分配区，为1表示是，为0表示否。</p>
+</li>
+</ul>
+<h3 id="chunk-bins-如何初始化"><a class="markdownIt-Anchor" href="#chunk-bins-如何初始化"></a> Chunk Bins 如何初始化？</h3>
+<h3 id="分配区arena怎么理解"><a class="markdownIt-Anchor" href="#分配区arena怎么理解"></a> 分配区(arena)怎么理解？</h3>
+<p>并发条件下，<code>main_arena</code>引发的竞争将会成为限制程序性能的瓶颈所在，因此glibc采用了多arena机制，线程A分配内存时获取<code>main_arena</code>锁成功，将在<code>main_arena</code>所管理的内存中分配；此时线程B获取<code>main_arena</code>失败，glibc会新建一个arena1，此次内存分配从arena1中进行。<br />
+这种策略，一定程度上解决了多线程下竞争的问题；但是随着arena的增多，内存碎片出现的可能性也变大了。例如，main_arena中有10k、20k的空闲内存，线程B要获取20k的空闲内存，但是获取main_arena锁失败，导致留下20k的碎片，降低了内存使用率。</p>
+<p>普通arena的内部结构:</p>
+<p><img src="images/10681867-82a67604bbf771cb.png" alt="普通arena结构" / srcset="/images/LoadingImage.gif" data-src="images/10681867-82a67604bbf771cb.png" class="lozad post-image"></p>
+<ol>
+<li><strong>一个arena由多个Heap构成</strong></li>
+<li>每个Heap通过mmap获得，最大为1M，多个Heap间可能不相邻</li>
+<li>Heap由<code>_heap_info</code>结构体组织，Heap之间有<code>struct _heap_info *prev</code>指针指向前一个Heap</li>
+<li>最上面的Heap，也有top chunk</li>
+</ol>
+<p>每个Heap里面也是由chunk组成，使用和main_arena完全相同的管理方式管理空闲chunk。<br />
+arena使用<code>malloc_state</code>结构体描述，多个arena之间是通过<code>struct malloc_state *next</code>以链表连接的。如下图:</p>
+<p><img src="images/10681867-ebbad1ec41e46282.png" alt="arena链表" / srcset="/images/LoadingImage.gif" data-src="images/10681867-ebbad1ec41e46282.png" class="lozad post-image"></p>
+<p>ref: <a target="_blank" rel="noopener" href="https://www.jianshu.com/p/2fedeacfa797">glibc内存管理那些事儿 - 简书 (jianshu.com)</a></p>
+<h3 id="main-arena主分配区non-main-arena-非主分配区普通arena如何区分"><a class="markdownIt-Anchor" href="#main-arena主分配区non-main-arena-非主分配区普通arena如何区分"></a> main arena主分配区&amp;non main arena 非主分配区（普通arena）如何区分？</h3>
+<p>主分配区&amp;非主分配区</p>
+<p>main_arena&amp;non_main_arena</p>
+<p>我猜应该是下面的定义：</p>
+<blockquote>
+<p><strong>1. Primary / Main memory:</strong><br />
+Primary memory is the computer memory that is directly accessible by CPU. It is comprised of DRAM and provides the actual working space to the processor. It holds the data and instructions that the processor is currently working on.</p>
+<p><strong>2. Secondary Memory / Mass Storage:</strong><br />
+The contents of the secondary memory first get transferred to the primary memory and then are accessed by the processor, this is because the processor does not directly interact with the secondary memory.</p>
+<p>ref: <a target="_blank" rel="noopener" href="https://www.geeksforgeeks.org/difference-between-primary-and-secondary-memory/">Difference between Primary and Secondary Memory - GeeksforGeeks</a></p>
+</blockquote>
+<p>区别：</p>
+<p>每个进程只有一个主分配区，但可能存在多个非主分配区，ptmalloc根据系统对分配区的争用情况动态增加非主分配区的数量，分配区的数量一旦增加，就不会再减少了。主分配区可以访问进程的heap区域和mmap映射区域，也就是说主分配区可以使用brk和mmap向操作系统申请虚拟内存。而非主分配区只能访问进程的mmap映射区域，非主分配区每次使用mmap()向操作系统“批发”HEAP_MAX_SIZE（32位系统上默认为1MB，64位系统默认为64MB）大小的虚拟内存，当用户向非主分配区请求分配内存时再切割成小块“零售”出去，毕竟系统调用是相对低效的，直接从用户空间分配内存快多了。所以ptmalloc在必要的情况下才会调用mmap()函数向操作系统申请虚拟内存。</p>
+<p>ref: glibc内存管理ptmalloc源代码分析.pdf – 华庭（庄明强）</p>
+<p><strong>main arena和普通arena(non main arena)的区别</strong></p>
+<blockquote>
+<p><code>main_arena</code>是为一个使用brk指针的arena，由于brk是堆顶指针，一个进程中只可能有一个，因此普通arena无法使用brk进行内存分配。普通arena建立在mmap的机制上，内存管理方式和<code>main_arena</code>类似，只有一点区别，普通arena只有在整个arena都空闲时，才会调用<code>munmap</code>把内存还给操作系统。</p>
+<p>ref: <a target="_blank" rel="noopener" href="https://www.jianshu.com/p/2fedeacfa797">glibc内存管理那些事儿 - 简书 (jianshu.com)</a></p>
+</blockquote>
+<h2 id="内存碎片出现的原因"><a class="markdownIt-Anchor" href="#内存碎片出现的原因"></a> 内存碎片出现的原因</h2>
+<p>top chunk不收缩，内存就无法归还给操作系统，导致内存碎片的出现.</p>
+<h2 id="推荐顺序阅读"><a class="markdownIt-Anchor" href="#推荐顺序阅读"></a> 推荐顺序阅读：</h2>
+<p><a target="_blank" rel="noopener" href="https://paper.seebug.org/papers/Archive/refs/heap/glibc%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86ptmalloc%E6%BA%90%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90.pdf">Glibc内存管理Ptmalloc2源代码分析华庭（庄明强）2011/4/17.pdf</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/2fedeacfa797">glibc内存管理那些事儿 - 简书 (jianshu.com)</a></p>
+<p>源码：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/lattera/glibc/blob/master/malloc/malloc.c">source code: glibc/malloc.c at master · lattera/glibc (github.com)</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/lattera/glibc/blob/master/malloc/arena.c">source code: glibc/arena.c at master · lattera/glibc (github.com)</a></p>
+<p>附加参考：</p>
+<p><a target="_blank" rel="noopener" href="https://www.anquanke.com/post/id/149782">linux_ptmalloc下malloc()的过程：有 ptmalloc 源码 - 安全客，安全资讯平台 (anquanke.com)</a></p>
+<p><a target="_blank" rel="noopener" href="https://paper.seebug.org/445/#pwnfastbin">glibc malloc学习笔记之fastbin (seebug.org) #在Pwn题中fastbin的利用</a></p>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-info copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/about">Ch3nYe</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://ch3nye.top/Glibc%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E7%AC%94%E8%AE%B0/">https://ch3nye.top/Glibc%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E7%AC%94%E8%AE%B0/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  
+  <div class="nav-item-next">
+    <a href="/Graph-Neural-Network/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">Graph Neural Network </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: '049b30eb10ea05082ef1',
+      clientSecret: 'c33ad95041c69907b3136b895008320f000987db',
+      repo: 'Ch3nYe.github.io',
+      owner: 'Ch3nYe',
+      admin: 'Ch3nYe',
+      id: 'location.href',
+      distractionFreeMode: 'false',
+      language: 'navigator.language || navigator.userLanguage',
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#glibc%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E7%AC%94%E8%AE%B0"><span class="toc-text"> Glibc内存管理笔记</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x0-%E8%83%A1%E8%AF%9D"><span class="toc-text"> 0x0 胡话</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-%E8%BF%99%E7%AF%87%E7%AC%94%E8%AE%B0%E5%9C%A8%E5%86%99%E4%BB%80%E4%B9%88%E9%AC%BC"><span class="toc-text"> 0x1 这篇笔记在写什么鬼</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-%E7%9F%A5%E8%AF%86%E7%82%B9"><span class="toc-text"> 0x2 知识点?</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-%E7%9B%B8%E5%85%B3"><span class="toc-text"> chunk 相关</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%93%E6%9E%84%E4%BD%93"><span class="toc-text"> 核心结构体</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x-1%E7%BB%8F%E5%85%B8%E8%87%AA%E9%97%AE%E8%87%AA%E7%AD%94%E7%8E%AF%E8%8A%82"><span class="toc-text"> 0x-1经典自问自答环节</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-%E5%A4%A7%E5%B0%8F%E7%9A%84%E8%AE%A1%E7%AE%97%E5%85%AC%E5%BC%8F"><span class="toc-text"> Chunk 大小的计算公式？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8%E4%B8%AD%E7%9A%84chunk%E5%8F%AF%E4%BB%A5%E5%8D%A0%E7%94%A8%E4%B8%8B%E4%B8%80%E4%B8%AAchunk%E7%9A%84prev_size%E5%9F%9F"><span class="toc-text"> 为什么使用中的Chunk可以占用下一个chunk的prev_size域？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88chunk%E7%9A%84size%E5%9F%9F%E4%BD%8E%E4%B8%89%E4%BD%8D%E5%8F%AF%E4%BB%A5%E5%A4%8D%E7%94%A8"><span class="toc-text"> 为什么Chunk的size域低三位可以复用？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-bins-%E5%A6%82%E4%BD%95%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text"> Chunk Bins 如何初始化？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E9%85%8D%E5%8C%BAarena%E6%80%8E%E4%B9%88%E7%90%86%E8%A7%A3"><span class="toc-text"> 分配区(arena)怎么理解？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#main-arena%E4%B8%BB%E5%88%86%E9%85%8D%E5%8C%BAnon-main-arena-%E9%9D%9E%E4%B8%BB%E5%88%86%E9%85%8D%E5%8C%BA%E6%99%AE%E9%80%9Aarena%E5%A6%82%E4%BD%95%E5%8C%BA%E5%88%86"><span class="toc-text"> main arena主分配区&amp;non main arena 非主分配区（普通arena）如何区分？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E7%A2%8E%E7%89%87%E5%87%BA%E7%8E%B0%E7%9A%84%E5%8E%9F%E5%9B%A0"><span class="toc-text"> 内存碎片出现的原因</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A8%E8%8D%90%E9%A1%BA%E5%BA%8F%E9%98%85%E8%AF%BB"><span class="toc-text"> 推荐顺序阅读：</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/images/logo.png" class="author-img">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>33</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>5</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>42</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:sud0su@163.com">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#glibc%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E7%AC%94%E8%AE%B0"><span class="toc-text"> Glibc内存管理笔记</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x0-%E8%83%A1%E8%AF%9D"><span class="toc-text"> 0x0 胡话</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-%E8%BF%99%E7%AF%87%E7%AC%94%E8%AE%B0%E5%9C%A8%E5%86%99%E4%BB%80%E4%B9%88%E9%AC%BC"><span class="toc-text"> 0x1 这篇笔记在写什么鬼</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-%E7%9F%A5%E8%AF%86%E7%82%B9"><span class="toc-text"> 0x2 知识点?</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-%E7%9B%B8%E5%85%B3"><span class="toc-text"> chunk 相关</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%93%E6%9E%84%E4%BD%93"><span class="toc-text"> 核心结构体</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x-1%E7%BB%8F%E5%85%B8%E8%87%AA%E9%97%AE%E8%87%AA%E7%AD%94%E7%8E%AF%E8%8A%82"><span class="toc-text"> 0x-1经典自问自答环节</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-%E5%A4%A7%E5%B0%8F%E7%9A%84%E8%AE%A1%E7%AE%97%E5%85%AC%E5%BC%8F"><span class="toc-text"> Chunk 大小的计算公式？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8%E4%B8%AD%E7%9A%84chunk%E5%8F%AF%E4%BB%A5%E5%8D%A0%E7%94%A8%E4%B8%8B%E4%B8%80%E4%B8%AAchunk%E7%9A%84prev_size%E5%9F%9F"><span class="toc-text"> 为什么使用中的Chunk可以占用下一个chunk的prev_size域？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88chunk%E7%9A%84size%E5%9F%9F%E4%BD%8E%E4%B8%89%E4%BD%8D%E5%8F%AF%E4%BB%A5%E5%A4%8D%E7%94%A8"><span class="toc-text"> 为什么Chunk的size域低三位可以复用？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-bins-%E5%A6%82%E4%BD%95%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text"> Chunk Bins 如何初始化？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E9%85%8D%E5%8C%BAarena%E6%80%8E%E4%B9%88%E7%90%86%E8%A7%A3"><span class="toc-text"> 分配区(arena)怎么理解？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#main-arena%E4%B8%BB%E5%88%86%E9%85%8D%E5%8C%BAnon-main-arena-%E9%9D%9E%E4%B8%BB%E5%88%86%E9%85%8D%E5%8C%BA%E6%99%AE%E9%80%9Aarena%E5%A6%82%E4%BD%95%E5%8C%BA%E5%88%86"><span class="toc-text"> main arena主分配区&amp;non main arena 非主分配区（普通arena）如何区分？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E7%A2%8E%E7%89%87%E5%87%BA%E7%8E%B0%E7%9A%84%E5%8E%9F%E5%9B%A0"><span class="toc-text"> 内存碎片出现的原因</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A8%E8%8D%90%E9%A1%BA%E5%BA%8F%E9%98%85%E8%AF%BB"><span class="toc-text"> 推荐顺序阅读：</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/备忘">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/李宏毅机器学习笔记">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">15</span>
+        </div>
+      </a>
+    
+      <a href="/categories/论文阅读">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">8</span>
+        </div>
+      </a>
+    
+      <a href="/categories/笔记">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/实战">
+        <div class="categories-list-item">
+          实战
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="\tags\note" title="note"><div class="tags-list-item">note</div></a>
+    
+    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
+    
+    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
+    
+    <a href="\tags\笔记" title="笔记"><div class="tags-list-item">笔记</div></a>
+    
+    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
+    
+    <a href="\tags\总结" title="总结"><div class="tags-list-item">总结</div></a>
+    
+    <a href="\tags\Deep-Learning" title="Deep-Learning"><div class="tags-list-item">Deep-Learning</div></a>
+    
+    <a href="\tags\实战" title="实战"><div class="tags-list-item">实战</div></a>
+    
+    <a href="\tags\crack" title="crack"><div class="tags-list-item">crack</div></a>
+    
+    <a href="\tags\二进制" title="二进制"><div class="tags-list-item">二进制</div></a>
+    
+    <a href="\tags\学习" title="学习"><div class="tags-list-item">学习</div></a>
+    
+    <a href="\tags\静态分析" title="静态分析"><div class="tags-list-item">静态分析</div></a>
+    
+    <a href="\tags\Reverse-Engineering" title="Reverse-Engineering"><div class="tags-list-item">Reverse-Engineering</div></a>
+    
+    <a href="\tags\Binary" title="Binary"><div class="tags-list-item">Binary</div></a>
+    
+    <a href="\tags\HTTPS" title="HTTPS"><div class="tags-list-item">HTTPS</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#glibc%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E7%AC%94%E8%AE%B0"><span class="toc-text"> Glibc内存管理笔记</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x0-%E8%83%A1%E8%AF%9D"><span class="toc-text"> 0x0 胡话</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-%E8%BF%99%E7%AF%87%E7%AC%94%E8%AE%B0%E5%9C%A8%E5%86%99%E4%BB%80%E4%B9%88%E9%AC%BC"><span class="toc-text"> 0x1 这篇笔记在写什么鬼</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-%E7%9F%A5%E8%AF%86%E7%82%B9"><span class="toc-text"> 0x2 知识点?</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-%E7%9B%B8%E5%85%B3"><span class="toc-text"> chunk 相关</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%93%E6%9E%84%E4%BD%93"><span class="toc-text"> 核心结构体</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x-1%E7%BB%8F%E5%85%B8%E8%87%AA%E9%97%AE%E8%87%AA%E7%AD%94%E7%8E%AF%E8%8A%82"><span class="toc-text"> 0x-1经典自问自答环节</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-%E5%A4%A7%E5%B0%8F%E7%9A%84%E8%AE%A1%E7%AE%97%E5%85%AC%E5%BC%8F"><span class="toc-text"> Chunk 大小的计算公式？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8%E4%B8%AD%E7%9A%84chunk%E5%8F%AF%E4%BB%A5%E5%8D%A0%E7%94%A8%E4%B8%8B%E4%B8%80%E4%B8%AAchunk%E7%9A%84prev_size%E5%9F%9F"><span class="toc-text"> 为什么使用中的Chunk可以占用下一个chunk的prev_size域？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88chunk%E7%9A%84size%E5%9F%9F%E4%BD%8E%E4%B8%89%E4%BD%8D%E5%8F%AF%E4%BB%A5%E5%A4%8D%E7%94%A8"><span class="toc-text"> 为什么Chunk的size域低三位可以复用？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-bins-%E5%A6%82%E4%BD%95%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text"> Chunk Bins 如何初始化？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E9%85%8D%E5%8C%BAarena%E6%80%8E%E4%B9%88%E7%90%86%E8%A7%A3"><span class="toc-text"> 分配区(arena)怎么理解？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#main-arena%E4%B8%BB%E5%88%86%E9%85%8D%E5%8C%BAnon-main-arena-%E9%9D%9E%E4%B8%BB%E5%88%86%E9%85%8D%E5%8C%BA%E6%99%AE%E9%80%9Aarena%E5%A6%82%E4%BD%95%E5%8C%BA%E5%88%86"><span class="toc-text"> main arena主分配区&amp;non main arena 非主分配区（普通arena）如何区分？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E7%A2%8E%E7%89%87%E5%87%BA%E7%8E%B0%E7%9A%84%E5%8E%9F%E5%9B%A0"><span class="toc-text"> 内存碎片出现的原因</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A8%E8%8D%90%E9%A1%BA%E5%BA%8F%E9%98%85%E8%AF%BB"><span class="toc-text"> 推荐顺序阅读：</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-09-05</div>
+        <a href="/Glibc内存管理笔记/"><div class="recent-posts-item-content">Glibc内存管理笔记</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-08-25</div>
+        <a href="/Graph-Neural-Network/"><div class="recent-posts-item-content">Graph Neural Network</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-08-21</div>
+        <a href="/Note-PalmTree-CCS2021/"><div class="recent-posts-item-content">Note 《PalmTree Learning an Assembly Language Model for Instruction Embedding》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-07-06</div>
+        <a href="/Note-NFRE/"><div class="recent-posts-item-content">Note《A Lightweight Framework for Function Name Reassignment Based on Large-Scale Stripped Binaries》</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2021
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">ch3nye's blog </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('data-fslightbox', 'gallery');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+    }
+    refreshFsLightbox();
+  }
+</script>
+<script>loadScript("//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-WHGL11014T');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "G-WHGL11014T", googleAnalytics)</script>
+  
+</body>
+
+</html>
