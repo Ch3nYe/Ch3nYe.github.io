@@ -297,7 +297,7 @@
 <p>Bins的初始化</p>
 </li>
 </ul>
-<p><img src="images/20180813175037328" alt="img" / srcset="/images/LoadingImage.gif" data-src="images/20180813175037328" class="lozad post-image"></p>
+<p><img src="/images/20180813175037328" alt="img" / srcset="/images/LoadingImage.gif" data-src="/images/20180813175037328" class="lozad post-image"></p>
 <p>这是一个系列，感觉这个作者写的比较易懂，且语病相对较少，可以读一读同系列其他文章。</p>
 <p>glibc内存管理ptmalloc源代码分析.pdf – 华庭（庄明强）</p>
 <ul>
@@ -354,7 +354,7 @@
 <p>并发条件下，<code>main_arena</code>引发的竞争将会成为限制程序性能的瓶颈所在，因此glibc采用了多arena机制，线程A分配内存时获取<code>main_arena</code>锁成功，将在<code>main_arena</code>所管理的内存中分配；此时线程B获取<code>main_arena</code>失败，glibc会新建一个arena1，此次内存分配从arena1中进行。<br />
 这种策略，一定程度上解决了多线程下竞争的问题；但是随着arena的增多，内存碎片出现的可能性也变大了。例如，main_arena中有10k、20k的空闲内存，线程B要获取20k的空闲内存，但是获取main_arena锁失败，导致留下20k的碎片，降低了内存使用率。</p>
 <p>普通arena的内部结构:</p>
-<p><img src="images/10681867-82a67604bbf771cb.png" alt="普通arena结构" / srcset="/images/LoadingImage.gif" data-src="images/10681867-82a67604bbf771cb.png" class="lozad post-image"></p>
+<p><img src="/images/10681867-82a67604bbf771cb.png" alt="普通arena结构" / srcset="/images/LoadingImage.gif" data-src="/images/10681867-82a67604bbf771cb.png" class="lozad post-image"></p>
 <ol>
 <li><strong>一个arena由多个Heap构成</strong></li>
 <li>每个Heap通过mmap获得，最大为1M，多个Heap间可能不相邻</li>
@@ -363,7 +363,7 @@
 </ol>
 <p>每个Heap里面也是由chunk组成，使用和main_arena完全相同的管理方式管理空闲chunk。<br />
 arena使用<code>malloc_state</code>结构体描述，多个arena之间是通过<code>struct malloc_state *next</code>以链表连接的。如下图:</p>
-<p><img src="images/10681867-ebbad1ec41e46282.png" alt="arena链表" / srcset="/images/LoadingImage.gif" data-src="images/10681867-ebbad1ec41e46282.png" class="lozad post-image"></p>
+<p><img src="/images/10681867-ebbad1ec41e46282.png" alt="arena链表" / srcset="/images/LoadingImage.gif" data-src="/images/10681867-ebbad1ec41e46282.png" class="lozad post-image"></p>
 <p>ref: <a target="_blank" rel="noopener" href="https://www.jianshu.com/p/2fedeacfa797">glibc内存管理那些事儿 - 简书 (jianshu.com)</a></p>
 <h3 id="main-arena主分配区non-main-arena-非主分配区普通arena如何区分"><a class="markdownIt-Anchor" href="#main-arena主分配区non-main-arena-非主分配区普通arena如何区分"></a> main arena主分配区&amp;non main arena 非主分配区（普通arena）如何区分？</h3>
 <p>主分配区&amp;非主分配区</p>
