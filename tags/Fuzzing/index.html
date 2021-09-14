@@ -1,28 +1,104 @@
 <!DOCTYPE html>
-<html  lang="zh-CN" >
-<head>
+<html lang="zh-CN">
+  <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
+  <meta 
+    name="viewport"
     content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <meta name="theme-color" content="#fff" id="theme-color">
-  <meta name="description" content="网络安全 Android ML CTF">
-  <link rel="icon" href="/images/logo.png">
+  <meta 
+    http-equiv="X-UA-Compatible" 
+    content="ie=edge">
+  <meta 
+    name="theme-color" 
+    content="#fff" 
+    id="theme-color">
+  <meta 
+    name="description" 
+    content="网络安全 Android ML CTF">
+  <link 
+    rel="icon" 
+    href="/images/logo.png">
   <title>标签</title>
   
+    
+      <meta 
+        property="og:title" 
+        content="标签">
+    
+    
+      <meta 
+        property="og:url" 
+        content="https://ch3nye.top/tags/Fuzzing/index.html">
+    
+    
+      <meta 
+        property="og:img" 
+        content="/images/logo.png">
+    
+    
+      <meta 
+        property="og:img" 
+        content="网络安全 Android ML CTF">
+    
+    
   
-  <meta property="og:title" content="标签">
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+    function loadCSS(href, data, attr) {
+      var sheet = document.createElement('link');
+      sheet.ref = 'stylesheet';
+      sheet.href = href;
+      sheet.dataset[data] = attr;
+      document.head.appendChild(sheet);
+    }
+    function changeCSS(cssFile, data, attr) {
+      var oldlink = document.querySelector(data);
+      var newlink = document.createElement("link");
+      newlink.setAttribute("rel", "stylesheet");
+      newlink.setAttribute("href", cssFile);
+      newlink.dataset.prism = attr;
+      document.head.replaceChild(newlink, oldlink);
+    }
+  </script>
   
-  
-  <meta property="og:url" content="https://ch3nye.top/tags/Fuzzing/index.html">
-  
-  
-  <meta property="og:img" content="/images/logo.png">
-  
-  
-  <meta property="og:img" content="网络安全 Android ML CTF">
-  
-  
+    
+      
+      
+      
+      
+        
+        
+        
+        <script>
+          function prismThemeChange() {
+            if(document.getElementById('theme-color').dataset.mode === 'dark') {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism-tomorrow.min.css', '[data-prism]', 'prism-tomorrow');
+              } else {
+                loadCSS('/js/lib/prism/prism-tomorrow.min.css', 'prism', 'prism-tomorrow');
+              }
+            } else {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism.min.css', '[data-prism]', 'prism');
+              } else {
+                loadCSS('/js/lib/prism/prism.min.css', 'prism', 'prism');
+              }
+            }
+          }
+          prismThemeChange()
+        </script>
+      
+      
+        
+        <link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+      
+    
   
   <script>
     // control reverse button
@@ -52,145 +128,169 @@
       return setting;
     };
     // apply current darkmode setting
-    var setDarkmode = function(mode) {
+  </script>
+  
+    <script>
+      var setDarkmode = function(mode) {
       var setting = mode || localStorage.getItem('user-color-scheme');
       if(setting === getCssMediaQuery()) {
         document.documentElement.removeAttribute('data-user-color-scheme');
         localStorage.removeItem('user-color-scheme');
         document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
       } else if(reverseDarkList[setting]) {
         document.documentElement.setAttribute('data-user-color-scheme', setting);
         document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
       } else {
         document.documentElement.removeAttribute('data-user-color-scheme');
         localStorage.removeItem('user-color-scheme');
         document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+        document.getElementById('theme-color').dataset.mode = getCssMediaQuery();
+        prismThemeChange();
       }
     };
     setDarkmode();
-  </script>
-  <script>
-    function loadScript(url, cb) {
-      var script = document.createElement('script');
-      script.src = url;
-      if (cb) script.onload = cb;
-      script.async = true;
-      document.body.appendChild(script);
-    }
-  </script>
+    </script>
   
-  <link rel="preload" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css" as="style" >
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
   <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
   
-  <link rel="preload" href="//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js" as="script">
+  
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
   
   
-  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
-  
-  
-  
-  
-  
-  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
-  
-  
-  
-  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+    <link rel="preload" href="/js/lib/lozad.min.js" as="script">
   
   
   
   
-<link rel="stylesheet" href="/css/main.css">
-
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
   
   
-<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_f7g5jnuftcf.css">
-
-  
-  
-<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
-
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
   
   
   
+  <link rel="stylesheet" href="/css/main.css">
   
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
   
-  <link href="/js/lib/prism/prism-tomorrow.min.css" rel="stylesheet" data-prism="prism-tomorrow">
-  
-  
-  
-<link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
-
-  
-  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
   
 <meta name="generator" content="Hexo 5.3.0"></head>
 
-
-<body>
-  <div class="wrapper">
-    
-    <nav class="navbar">
+  <body>
+    <div class="wrapper">
+       
+      <nav class="navbar">
   <div class="navbar-logo">
     <span class="navbar-logo-main">
       
-      <img class="navbar-logo-img" src="/images/logo.png" alt="logo">
+        <img 
+          class="navbar-logo-img"
+          width="32"
+          height="32"
+          src="/images/logo.png" 
+          alt="blog logo">
       
       <span class="navbar-logo-dsc">ch3nye's blog</span>
     </span>
   </div>
   <div class="navbar-menu">
     
-    <a href="/" class="navbar-menu-item">
+      <a 
+        href="/" 
+        class="navbar-menu-item">
+        
+          首页
+        
+      </a>
     
-    首页
+      <a 
+        href="/archives" 
+        class="navbar-menu-item">
+        
+          归档
+        
+      </a>
     
+      <a 
+        href="/tags" 
+        class="navbar-menu-item">
+        
+          标签
+        
+      </a>
+    
+      <a 
+        href="/categories" 
+        class="navbar-menu-item">
+        
+          分类
+        
+      </a>
+    
+      <a 
+        href="/about" 
+        class="navbar-menu-item">
+        
+          关于
+        
+      </a>
+    
+      <a 
+        href="/links" 
+        class="navbar-menu-item">
+        
+          友链
+        
+      </a>
+    
+      <a 
+        href="/shuoshuo" 
+        class="navbar-menu-item">
+        
+          说说
+        
+      </a>
+    
+    <a 
+      class="navbar-menu-item darknavbar" 
+      id="dark">
+      <i class="iconfont icon-weather"></i>
     </a>
-    
-    <a href="/archives" class="navbar-menu-item">
-    
-    归档
-    
+    <a 
+      class="navbar-menu-item searchnavbar" 
+      id="search">
+      <i 
+        class="iconfont icon-search" 
+        style="font-size: 1.2rem; font-weight: 400;">
+      </i>
     </a>
-    
-    <a href="/tags" class="navbar-menu-item">
-    
-    标签
-    
-    </a>
-    
-    <a href="/categories" class="navbar-menu-item">
-    
-    分类
-    
-    </a>
-    
-    <a href="/about" class="navbar-menu-item">
-    
-    关于
-    
-    </a>
-    
-    <a href="/links" class="navbar-menu-item">
-    
-    友链
-    
-    </a>
-    
-    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
-    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
   </div>
-</nav>
-    
-    <div id="local-search" style="display: none;">
-      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
-      <div id="search-content"></div>
-    </div>
-    
-    <div class="section-wrap">
-      <div class="container">
-        <div class="columns">
-          <main class="main-column">
+</nav> 
+      
+      <div 
+        id="local-search" 
+        style="display: none">
+        <input
+          class="navbar-menu-item"
+          id="search-input"
+          placeholder="请输入搜索内容..." />
+        <div id="search-content"></div>
+      </div>
+      
+      <div class="section-wrap">
+        <div class="container">
+          <div class="columns">
+            <main class="main-column">
 <div class="card card-content tag-page-card">
   <div class="tags-page-title">标签&nbsp-&nbspFuzzing</div>
 </div>
@@ -205,98 +305,119 @@
       <div class="archive-timeline-post">
         <div class="card card-content">
           <div class="archive-timeline-post-date">2021-01-20</div>
-          <div class="archive-timeline-post-content"><a href="/Note-FANS-Fuzzing-Android-Native-System-Services/" class="archive-timeline-post-item">Note《FANS Fuzzing Android Native System Services via Automated Interface Analysis》</a></div>
+          <div class="archive-timeline-post-content">
+            <a 
+              href="/Note-FANS-Fuzzing-Android-Native-System-Services/" 
+              class="archive-timeline-post-item">
+              Note《FANS Fuzzing Android Native System Services via Automated Interface Analysis》
+            </a>
+          </div>
         </div>
       </div>
     </div>
   
 </div></main>
-          <aside class="left-column">
-            
-            <div class="card card-author">
+            <aside class="left-column">
               
-<img src="/images/logo.png" class="author-img">
+              <div class="card card-author">
+                
+  <img 
+    src="/images/logo.png" 
+    class="author-img"
+    width="88"
+    height="88"
+    alt="author avatar">
 
 <p class="author-name">Ch3nYe</p>
 <p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
 <div class="author-message">
-  <a class="author-posts-count" href="/archives">
+  <a 
+    class="author-posts-count" 
+    href="/archives">
     <span>34</span>
     <span>文章</span>
   </a>
-  <a class="author-categories-count" href="/categories">
+  <a 
+    class="author-categories-count" 
+    href="/categories">
     <span>6</span>
     <span>分类</span>
   </a>
-  <a class="author-tags-count" href="/tags">
+  <a 
+    class="author-tags-count" 
+    href="/tags">
     <span>44</span>
     <span>标签</span>
   </a>
 </div>
 
-<div class="author-card-society">
-  
-    <div class="author-card-society-icon">
-      <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
-        <i class="iconfont icon-github society-icon"></i>
-      </a>
-    </div>
-  
-    <div class="author-card-society-icon">
-      <a href="mailto:sud0su@163.com">
-        <i class="iconfont icon-mail society-icon"></i>
-      </a>
-    </div>
-  
-</div>
+  <div class="author-card-society">
+    
+      <div class="author-card-society-icon">
+        <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+          <i class="iconfont icon-github society-icon"></i>
+        </a>
+      </div>
+    
+      <div class="author-card-society-icon">
+        <a href="mailto:sud0su@163.com">
+          <i class="iconfont icon-mail society-icon"></i>
+        </a>
+      </div>
+    
+  </div>
 
-            </div>
-            
-            <div class="sticky-tablet">
+              </div>
+               <div class="sticky-tablet">
   
   
   
   <article class="card card-content categories-widget">
     <div class="categories-card">
-  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-header">
+    <i 
+      class="iconfont icon-fenlei" 
+      style="padding-right: 2px;">
+    </i>分类
+  </div>
   <div class="categories-list">
     
-      <a href="/categories/备忘">
+      <a href="/categories/%E5%A4%87%E5%BF%98/">
         <div class="categories-list-item">
           备忘
           <span class="categories-list-item-badge">1</span>
         </div>
       </a>
     
-      <a href="/categories/李宏毅机器学习笔记">
+      <a href="/categories/%E6%9D%8E%E5%AE%8F%E6%AF%85%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
         <div class="categories-list-item">
           李宏毅机器学习笔记
           <span class="categories-list-item-badge">15</span>
         </div>
       </a>
     
-      <a href="/categories/论文阅读">
-        <div class="categories-list-item">
-          论文阅读
-          <span class="categories-list-item-badge">8</span>
-        </div>
-      </a>
-    
-      <a href="/categories/笔记">
+      <a href="/categories/%E7%AC%94%E8%AE%B0/">
         <div class="categories-list-item">
           笔记
           <span class="categories-list-item-badge">6</span>
         </div>
       </a>
     
-      <a href="/categories/实战">
+      <a href="/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">8</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E5%AE%9E%E6%88%98/">
         <div class="categories-list-item">
           实战
           <span class="categories-list-item-badge">3</span>
         </div>
       </a>
     
-      <a href="/categories/生活">
+      <a href="/categories/%E7%94%9F%E6%B4%BB/">
         <div class="categories-list-item">
           生活
           <span class="categories-list-item-badge">1</span>
@@ -309,49 +430,123 @@
   
   <article class="card card-content tags-widget">
     <div class="tags-card">
-  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-header">
+    <i 
+      class="iconfont icon-biaoqian" 
+      style="padding-right: 2px;">
+    </i>热门标签
+  </div>
   <div class="tags-list">
     
-    <a href="\tags\note" title="note"><div class="tags-list-item">note</div></a>
+      <a 
+        href="/tags/note/" 
+        title="note">
+        <div class="tags-list-item">note</div>
+      </a>
     
-    <a href="\tags\ML" title="ML"><div class="tags-list-item">ML</div></a>
+      <a 
+        href="/tags/ML/" 
+        title="ML">
+        <div class="tags-list-item">ML</div>
+      </a>
     
-    <a href="\tags\Next-Step-of-ML" title="Next-Step-of-ML"><div class="tags-list-item">Next-Step-of-ML</div></a>
+      <a 
+        href="/tags/Next-Step-of-ML/" 
+        title="Next-Step-of-ML">
+        <div class="tags-list-item">Next-Step-of-ML</div>
+      </a>
     
-    <a href="\tags\笔记" title="笔记"><div class="tags-list-item">笔记</div></a>
+      <a 
+        href="/tags/%E7%AC%94%E8%AE%B0/" 
+        title="笔记">
+        <div class="tags-list-item">笔记</div>
+      </a>
     
-    <a href="\tags\Android" title="Android"><div class="tags-list-item">Android</div></a>
+      <a 
+        href="/tags/Android/" 
+        title="Android">
+        <div class="tags-list-item">Android</div>
+      </a>
     
-    <a href="\tags\论文" title="论文"><div class="tags-list-item">论文</div></a>
+      <a 
+        href="/tags/%E8%AE%BA%E6%96%87/" 
+        title="论文">
+        <div class="tags-list-item">论文</div>
+      </a>
     
-    <a href="\tags\总结" title="总结"><div class="tags-list-item">总结</div></a>
+      <a 
+        href="/tags/%E6%80%BB%E7%BB%93/" 
+        title="总结">
+        <div class="tags-list-item">总结</div>
+      </a>
     
-    <a href="\tags\Deep-Learning" title="Deep-Learning"><div class="tags-list-item">Deep-Learning</div></a>
+      <a 
+        href="/tags/%E5%AE%9E%E6%88%98/" 
+        title="实战">
+        <div class="tags-list-item">实战</div>
+      </a>
     
-    <a href="\tags\实战" title="实战"><div class="tags-list-item">实战</div></a>
+      <a 
+        href="/tags/crack/" 
+        title="crack">
+        <div class="tags-list-item">crack</div>
+      </a>
     
-    <a href="\tags\crack" title="crack"><div class="tags-list-item">crack</div></a>
+      <a 
+        href="/tags/%E4%BA%8C%E8%BF%9B%E5%88%B6/" 
+        title="二进制">
+        <div class="tags-list-item">二进制</div>
+      </a>
     
-    <a href="\tags\二进制" title="二进制"><div class="tags-list-item">二进制</div></a>
+      <a 
+        href="/tags/Deep-Learning/" 
+        title="Deep-Learning">
+        <div class="tags-list-item">Deep-Learning</div>
+      </a>
     
-    <a href="\tags\学习" title="学习"><div class="tags-list-item">学习</div></a>
+      <a 
+        href="/tags/%E5%AD%A6%E4%B9%A0/" 
+        title="学习">
+        <div class="tags-list-item">学习</div>
+      </a>
     
-    <a href="\tags\静态分析" title="静态分析"><div class="tags-list-item">静态分析</div></a>
+      <a 
+        href="/tags/HTTPS/" 
+        title="HTTPS">
+        <div class="tags-list-item">HTTPS</div>
+      </a>
     
-    <a href="\tags\Reverse-Engineering" title="Reverse-Engineering"><div class="tags-list-item">Reverse-Engineering</div></a>
+      <a 
+        href="/tags/%E9%9D%99%E6%80%81%E5%88%86%E6%9E%90/" 
+        title="静态分析">
+        <div class="tags-list-item">静态分析</div>
+      </a>
     
-    <a href="\tags\Binary" title="Binary"><div class="tags-list-item">Binary</div></a>
+      <a 
+        href="/tags/Reverse-Engineering/" 
+        title="Reverse-Engineering">
+        <div class="tags-list-item">Reverse-Engineering</div>
+      </a>
     
-    <a href="\tags\HTTPS" title="HTTPS"><div class="tags-list-item">HTTPS</div></a>
+      <a 
+        href="/tags/Binary/" 
+        title="Binary">
+        <div class="tags-list-item">Binary</div>
+      </a>
     
   </div>
 </div>
   </article>
   
   
-  <article class="card card-content widescreen-archive archive-widget">
-    <div class="archive-card">
-  <div class="archive-card-header"><i class="iconfont icon-wodebaobiao" style="padding-right: 2px;"></i>归档</div>
+    <article class="card card-content widescreen-archive archive-widget">
+      <div class="archive-card">
+  <div class="archive-card-header">
+    <i 
+      class="iconfont icon-wodebaobiao" 
+      style="padding-right: 2px;">
+    </i>归档
+  </div>
   <div class="archive-card-list">
     
     
@@ -448,9 +643,11 @@
     
       
         
-          <a href="/archives/2021" class="archive-card-list-item">
-              2021
-              <span class="archive-card-list-item-badge">22</span>
+          <a 
+            href="/archives/2021" 
+            class="archive-card-list-item">
+            2021
+            <span class="archive-card-list-item-badge">22</span>
           </a>
         
         
@@ -502,35 +699,42 @@
       
     
     
-      <a href="/archives/2020" class="archive-card-list-item">
-          2020
-          <span class="archive-card-list-item-badge">12</span>
+      <a 
+        href="/archives/2020" 
+        class="archive-card-list-item">
+        2020
+        <span class="archive-card-list-item-badge">12</span>
       </a>
     
   </div>
 </div>
-  </article>
+    </article>
   
 </div>
-          </aside>
-          <aside class="right-column">
-            <div class="sticky-widescreen">
+            </aside>
+            <aside class="right-column">
+              <div class="sticky-widescreen">
   
   
   
   <article class="card card-content">
     <div class="recent-posts-card">
-  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-header">
+    <i 
+      class="iconfont icon-wenzhang_huaban" 
+      style="padding-right: 2px;">
+    </i>最近文章
+  </div>
   <div class="recent-posts-list">
     
       <div class="recent-posts-item">
         <div class="recent-posts-item-title">2021-09-13</div>
-        <a href="/USTC宿舍装修理论与应用/"><div class="recent-posts-item-content">USTC宿舍装修理论与应用</div></a>
+        <a href="/USTC%E5%AE%BF%E8%88%8D%E8%A3%85%E4%BF%AE%E7%90%86%E8%AE%BA%E4%B8%8E%E5%BA%94%E7%94%A8/"><div class="recent-posts-item-content">USTC宿舍装修理论与应用</div></a>
       </div>
     
       <div class="recent-posts-item">
         <div class="recent-posts-item-title">2021-09-05</div>
-        <a href="/Glibc内存管理笔记/"><div class="recent-posts-item-content">Glibc内存管理笔记</div></a>
+        <a href="/Glibc%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E7%AC%94%E8%AE%B0/"><div class="recent-posts-item-content">Glibc内存管理笔记</div></a>
       </div>
     
       <div class="recent-posts-item">
@@ -548,9 +752,14 @@
   </article>
   
   
-  <article class="card card-content">
-    <div class="archive-card">
-  <div class="archive-card-header"><i class="iconfont icon-wodebaobiao" style="padding-right: 2px;"></i>归档</div>
+    <article class="card card-content">
+      <div class="archive-card">
+  <div class="archive-card-header">
+    <i 
+      class="iconfont icon-wodebaobiao" 
+      style="padding-right: 2px;">
+    </i>归档
+  </div>
   <div class="archive-card-list">
     
     
@@ -647,9 +856,11 @@
     
       
         
-          <a href="/archives/2021" class="archive-card-list-item">
-              2021
-              <span class="archive-card-list-item-badge">22</span>
+          <a 
+            href="/archives/2021" 
+            class="archive-card-list-item">
+            2021
+            <span class="archive-card-list-item-badge">22</span>
           </a>
         
         
@@ -701,144 +912,179 @@
       
     
     
-      <a href="/archives/2020" class="archive-card-list-item">
-          2020
-          <span class="archive-card-list-item-badge">12</span>
+      <a 
+        href="/archives/2020" 
+        class="archive-card-list-item">
+        2020
+        <span class="archive-card-list-item-badge">12</span>
       </a>
     
   </div>
 </div>
-  </article>
+    </article>
   
 </div>
-          </aside>
+            </aside>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  
-  <footer class="footer">
+     
+    <footer class="footer">
   <div class="footer-container">
     <div>
       <div class="footer-dsc">
-        <span>Copyright ©
+        <span>
+          Copyright ©
           
-          2020 -
+            2020 -
           
           2021
         </span>
         &nbsp;
-        <a href="/" class="footer-link">ch3nye's blog </a>
+        <a 
+          href="/" 
+          class="footer-link">
+          ch3nye's blog
+        </a>
       </div>
     </div>
 
     
-    <div class="footer-dsc">
-      
-      Powered by
-      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
-      
-      
-      <span>&nbsp;|&nbsp;</span>
-      
-      
-      Theme -
-      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
-        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
-      
-    </div>
+      <div class="footer-dsc">
+        
+          Powered by
+          <a 
+            href="https://hexo.io/" 
+            class="footer-link" 
+            target="_blank" 
+            rel="nofollow noopener noreferrer">
+            &nbsp;Hexo
+          </a>
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          Theme -
+          <a 
+            href="https://github.com/theme-kaze" 
+            class="footer-link" 
+            target="_blank"
+            rel="nofollow noopener noreferrer">
+            &nbsp;Kaze
+          </a>
+        
+      </div>
     
     
     
     
       <div class="footer-dsc">
         
-        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+          本站总访问量<span id="busuanzi_value_site_pv"></span>次
         
         
-        <span>&nbsp;|&nbsp;</span>
+          <span>&nbsp;|&nbsp;</span>
         
         
-        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+          本站总访客数<span id="busuanzi_value_site_uv"></span>次
         
       </div>
       
     
-</footer>
-  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
-  <i class="iconfont icon-arrowleft button-icon"></i>
-</a>
-<a role="button" id="menubutton" class="basebutton">
+</footer> 
+    
+  <a 
+    role="button" 
+    id="scrollbutton" 
+    class="basebutton" 
+    aria-label="回到顶部">
+    <i class="iconfont icon-arrowleft button-icon"></i>
+  </a>
+
+<a 
+  role="button" 
+  id="menubutton"
+  aria-label="menu button"
+  class="basebutton">
   <i class="iconfont icon-menu button-icon"></i>
 </a>
-<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+<a 
+  role="button" 
+  id="popbutton" 
+  class="basebutton" 
+  aria-label="控制中心">
   <i class="iconfont icon-expand button-icon"></i>
 </a>
-<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+<a 
+  role="button" 
+  id="darkbutton" 
+  class="basebutton darkwidget" 
+  aria-label="夜色模式">
   <i class="iconfont icon-weather button-icon"></i>
 </a>
-<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+<a 
+  role="button" 
+  id="searchbutton" 
+  class="basebutton searchwidget" 
+  aria-label="搜索">
   <i class="iconfont icon-search button-icon"></i>
-</a>
-
-  
-  
-  
-
-  
-  
-  <script>
-  var addImgLayout = function () {
-    var img = document.querySelectorAll('.post-content img');
-    var i;
-    for (i = 0; i < img.length; i++) {
-      var wrapper = document.createElement('a');
-      wrapper.setAttribute('data-fslightbox', 'gallery');
-      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
-      wrapper.setAttribute('aria-label', 'illustration');
-      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
-      img[i].before(wrapper);
-      wrapper.append(img[i]);
-    }
-    refreshFsLightbox();
-  }
-</script>
-<script>loadScript("//cdn.jsdelivr.net/npm/fslightbox@3.1.0/index.min.js", addImgLayout)</script>
-  
-  
-  
-<script src="/js/main.js"></script>
-
-  
-  <script>loadScript("/js/lib/busuanzi.min.js")</script>
-  
-  
-  <script>
-    var addLazyload = function () {
-      var observer = lozad('.lozad', {
-        load: function (el) {
-          el.srcset = el.getAttribute('data-src');
-        },
-        loaded: function (el) {
-          el.classList.add('loaded');
+</a> 
+     
+     
+      
+ 
+     
+     
+     
+    <script src="/js/main.js"></script> 
+    
+      <script> 
+        loadScript('/js/lib/busuanzi.min.js') 
+      </script>
+     
+    
+      <script>
+        var addLazyload = function () {
+          var observer = lozad('.lozad', {
+            load: function (el) {
+              el.srcset = el.getAttribute('data-src')
+            },
+            loaded: function (el) {
+              el.classList.add('loaded')
+            },
+          })
+          observer.observe()
         }
-      });
-      observer.observe();
-    }
-  </script>
-  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
-  
-  
-  <script>
-    var googleAnalytics = function() {
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-WHGL11014T');
-    }
-  </script>
-  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "G-WHGL11014T", googleAnalytics)</script>
-  
-</body>
-
+      </script>
+      <script>
+        loadScript('/js/lib/lozad.min.js', addLazyload)
+      </script>
+     
+    
+      <script>
+        var googleAnalytics = function () {
+          window.dataLayer = window.dataLayer || []
+          function gtag() {
+            dataLayer.push(arguments)
+          }
+          gtag('js', new Date())
+          gtag('config', 'G-WHGL11014T')
+        }
+    </script>
+      <script>
+        loadScript(
+          'https://www.googletagmanager.com/gtag/js?id=' +
+            'G-WHGL11014T',
+          googleAnalytics
+        )
+      </script>
+    
+    
+      <script>
+        setTimeout(() => {localSearch("search.json")}, 0)
+      </script>
+    
+  </body>
 </html>
