@@ -49,15 +49,11 @@
         content="2021-09-05">
       <meta 
         property="og:article:modified_time" 
-        content="2021-09-11">
+        content="2021-09-14">
       <meta 
         property="og:article:author" 
         content="Ch3nYe">
       
-        
-          <meta 
-            property="og:article:tag" 
-            content="内存管理 - Glibc">
         
           <meta 
             property="og:article:tag" 
@@ -66,6 +62,14 @@
           <meta 
             property="og:article:tag" 
             content="学习">
+        
+          <meta 
+            property="og:article:tag" 
+            content="内存管理">
+        
+          <meta 
+            property="og:article:tag" 
+            content="Glibc">
         
       
     
@@ -347,7 +351,7 @@
     
     
       <span class="dot"></span>
-      <span>2.7k 字</span>
+      <span>3.6k 字</span>
     
   </div>
   
@@ -362,15 +366,6 @@
         
           
           <a 
-            href="/tags/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86-Glibc/" 
-            class="post-meta-link">
-            内存管理 - Glibc
-          </a>
-        
-          
-            <span class="dot"></span>
-          
-          <a 
             href="/tags/%E6%80%BB%E7%BB%93/" 
             class="post-meta-link">
             总结
@@ -383,6 +378,24 @@
             href="/tags/%E5%AD%A6%E4%B9%A0/" 
             class="post-meta-link">
             学习
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/" 
+            class="post-meta-link">
+            内存管理
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/Glibc/" 
+            class="post-meta-link">
+            Glibc
           </a>
         
       </div>
@@ -410,21 +423,9 @@
 </blockquote>
 <p>像这种底层内核源码库，乍一看感觉很难读懂，实际上就是不懂的知识点太多了，使用了大量的自定义的数据结构，眼花缭乱的宏定义，让人一下子抓不住要点，理解不了整体框架。就好像刚学完高中英语4500词，给我一篇二进制学术论文，没见过的单词太多了，当然理解不了文章。所以说不要着急，从别人的分析文章开始看，最后读一读源码，这样的过程多反复进行几遍就能对它有个很好的理解了。我是属于天资愚钝的那类人😥，这种源码阅读一般都要耗费个把月，但是沃觉得很值，也是必要的，毕竟基本功要打扎实。</p>
 <h2 id="0x2-知识点"><a class="markdownIt-Anchor" href="#0x2-知识点"></a> 0x2 知识点?</h2>
-<p>主要内容有三点：</p>
-<ul>
-<li>
-<p>一是几种结构体的介绍：malloc_state， malloc_chunk，heap_info，和chunk的结构 ||| fast_bins，small_bins，large_bins，unsorted_bin。</p>
-</li>
-<li>
-<p>二是arena的介绍，多线程堆是如何管理的，malloc中mmap和brk的区别，main_arena和thread_arena的区别。（这一点在第一篇文章有详细介绍）</p>
-</li>
-<li>
-<p>三是内存的分配与回收，这一点最难也最重要，又全部围绕怎么让这个过程变得高效来设计（主要在于large chunk的分配需要进行碎片合并和整理的大循环）：</p>
-</li>
-</ul>
-<p>ref: <a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_43449190/article/details/89077847">https://blog.csdn.net/qq_43449190/article/details/89077847</a></p>
 <h3 id="chunk-相关"><a class="markdownIt-Anchor" href="#chunk-相关"></a> chunk 相关</h3>
 <p>ref: <a target="_blank" rel="noopener" href="https://blog.csdn.net/dongyu_1989/article/details/81631271">(22条消息) linux堆内存管理malloc分析（3）_dongyu_1989的博客-CSDN博客</a></p>
+<p>文章内容：</p>
 <ul>
 <li>
 <p>samll bins &amp; large bins 中chunk的申请与释放</p>
@@ -441,13 +442,116 @@
 </ul>
 <p><img src="/images/20180813175037328" alt="img" / srcset="/images/LoadingImage.gif" data-src="/images/20180813175037328" class="lozad post-image"></p>
 <p>这是一个系列，感觉这个作者写的比较易懂，且语病相对较少，可以读一读同系列其他文章。</p>
-<p>glibc内存管理ptmalloc源代码分析.pdf – 华庭（庄明强）</p>
-<ul>
-<li>系统讲解了Glibc的内存管理，附带Ptmalloc2的源码分析</li>
-</ul>
 <h3 id="核心结构体"><a class="markdownIt-Anchor" href="#核心结构体"></a> 核心结构体</h3>
-<p>malloc_state</p>
-<p>每个分配区是struct malloc_state的一个实例，ptmalloc使用malloc_state来管理分配区，而参数管理使用struct malloc_par，全局拥有一个唯一的malloc_par实例。</p>
+<p><strong>malloc_state</strong></p>
+<p>每个分配区是struct malloc_state的一个实例，ptmalloc使用malloc_state来管理分配区.</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">struct</span> <span class="token class-name">malloc_state</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token comment">/* Serialize access.  */</span>
+  <span class="token function">__libc_lock_define</span> <span class="token punctuation">(</span><span class="token punctuation">,</span> mutex<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/* Flags (formerly in max_fast).  */</span>
+  <span class="token keyword">int</span> flags<span class="token punctuation">;</span>
+
+  <span class="token comment">/* Set if the fastbin chunks contain recently inserted free blocks.  */</span>
+  <span class="token comment">/* Note this is a bool but not all targets support atomics on booleans.  */</span>
+  <span class="token keyword">int</span> have_fastchunks<span class="token punctuation">;</span>
+
+  <span class="token comment">/* Fastbins */</span>
+  mfastbinptr fastbinsY<span class="token punctuation">[</span>NFASTBINS<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/* Base of the topmost chunk -- not otherwise kept in a bin */</span>
+  mchunkptr top<span class="token punctuation">;</span>
+
+  <span class="token comment">/* The remainder from the most recent split of a small request */</span>
+  mchunkptr last_remainder<span class="token punctuation">;</span>
+
+  <span class="token comment">/* Normal bins packed as described above */</span>
+  mchunkptr bins<span class="token punctuation">[</span>NBINS <span class="token operator">*</span> <span class="token number">2</span> <span class="token operator">-</span> <span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/* Bitmap of bins */</span>
+  <span class="token keyword">unsigned</span> <span class="token keyword">int</span> binmap<span class="token punctuation">[</span>BINMAPSIZE<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/* Linked list */</span>
+  <span class="token keyword">struct</span> <span class="token class-name">malloc_state</span> <span class="token operator">*</span>next<span class="token punctuation">;</span>
+
+  <span class="token comment">/* Linked list for free arenas.  Access to this field is serialized
+     by free_list_lock in arena.c.  */</span>
+  <span class="token keyword">struct</span> <span class="token class-name">malloc_state</span> <span class="token operator">*</span>next_free<span class="token punctuation">;</span>
+
+  <span class="token comment">/* Number of threads attached to this arena.  0 if the arena is on
+     the free list.  Access to this field is serialized by
+     free_list_lock in arena.c.  */</span>
+  INTERNAL_SIZE_T attached_threads<span class="token punctuation">;</span>
+
+  <span class="token comment">/* Memory allocated from the system in this arena.  */</span>
+  INTERNAL_SIZE_T system_mem<span class="token punctuation">;</span>
+  INTERNAL_SIZE_T max_system_mem<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>malloc_par</strong></p>
+<p>参数管理使用struct malloc_par，全局拥有一个唯一的malloc_par实例.</p>
+<pre class="line-numbers language-C" data-language="C"><code class="language-C">struct malloc_par
+&#123;
+  &#x2F;* Tunable parameters *&#x2F;
+  unsigned long trim_threshold;
+  INTERNAL_SIZE_T top_pad;
+  INTERNAL_SIZE_T mmap_threshold;
+  INTERNAL_SIZE_T arena_test;
+  INTERNAL_SIZE_T arena_max;
+
+  &#x2F;* Memory map support *&#x2F;
+  int n_mmaps;
+  int n_mmaps_max;
+  int max_n_mmaps;
+  &#x2F;* the mmap_threshold is dynamic, until the user sets
+     it manually, at which point we need to disable any
+     dynamic behavior. *&#x2F;
+  int no_dyn_threshold;
+
+  &#x2F;* Statistics *&#x2F;
+  INTERNAL_SIZE_T mmapped_mem;
+  INTERNAL_SIZE_T max_mmapped_mem;
+
+  &#x2F;* First address handed out by MORECORE&#x2F;sbrk.  *&#x2F;
+  char *sbrk_base;
+
+#if USE_TCACHE
+  &#x2F;* Maximum number of buckets to use.  *&#x2F;
+  size_t tcache_bins;
+  size_t tcache_max_bytes;
+  &#x2F;* Maximum number of chunks in each bucket.  *&#x2F;
+  size_t tcache_count;
+  &#x2F;* Maximum number of chunks to remove from the unsorted list, which
+     aren&#39;t used to prefill the cache.  *&#x2F;
+  size_t tcache_unsorted_limit;
+#endif
+&#125;;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>malloc_chunk</strong></p>
+<pre class="line-numbers language-C" data-language="C"><code class="language-C">struct malloc_chunk &#123;
+
+  INTERNAL_SIZE_T      mchunk_prev_size;  &#x2F;* Size of previous chunk (if free).  *&#x2F;
+  INTERNAL_SIZE_T      mchunk_size;       &#x2F;* Size in bytes, including overhead. *&#x2F;
+
+  struct malloc_chunk* fd;         &#x2F;* double links -- used only if free. *&#x2F;
+  struct malloc_chunk* bk;
+
+  &#x2F;* Only used for large blocks: pointer to next larger size.  *&#x2F;
+  struct malloc_chunk* fd_nextsize; &#x2F;* double links -- used only if free. *&#x2F;
+  struct malloc_chunk* bk_nextsize;
+&#125;;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>heap_info</strong></p>
+<pre class="line-numbers language-C" data-language="C"><code class="language-C">typedef struct _heap_info
+&#123;
+  mstate ar_ptr; &#x2F;* Arena for this heap. *&#x2F;
+  struct _heap_info *prev; &#x2F;* Previous heap. *&#x2F;
+  size_t size;   &#x2F;* Current size in bytes. *&#x2F;
+  size_t mprotect_size; &#x2F;* Size in bytes that has been mprotected
+                           PROT_READ|PROT_WRITE.  *&#x2F;
+  &#x2F;* Make sure the following data is properly aligned, particularly
+     that sizeof (heap_info) + 2 * SIZE_SZ is a multiple of
+     MALLOC_ALIGNMENT. *&#x2F;
+  char pad[-6 * SIZE_SZ &amp; MALLOC_ALIGN_MASK];
+&#125; heap_info;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <h2 id="0x-1经典自问自答环节"><a class="markdownIt-Anchor" href="#0x-1经典自问自答环节"></a> 0x-1经典自问自答环节</h2>
 <h3 id="chunk-大小的计算公式"><a class="markdownIt-Anchor" href="#chunk-大小的计算公式"></a> Chunk 大小的计算公式？</h3>
 <ul>
@@ -492,6 +596,44 @@
 </li>
 </ul>
 <h3 id="chunk-bins-如何初始化"><a class="markdownIt-Anchor" href="#chunk-bins-如何初始化"></a> Chunk Bins 如何初始化？</h3>
+<p>分配区main_arena初始化函数:</p>
+<pre class="line-numbers language-C" data-language="C"><code class="language-C">static void
+malloc_init_state (mstate av)&#x2F;&#x2F;mstate &#x3D;&#x3D; malloc_state
+&#123;
+  int i;
+  mbinptr bin;
+
+  &#x2F;* Establish circular links for normal bins *&#x2F;
+  for (i &#x3D; 1; i &lt; NBINS; ++i)
+    &#123;
+      bin &#x3D; bin_at (av, i);
+      bin-&gt;fd &#x3D; bin-&gt;bk &#x3D; bin;
+    &#125;
+
+#if MORECORE_CONTIGUOUS
+  if (av !&#x3D; &amp;main_arena)
+#endif
+  set_noncontiguous (av);&#x2F;&#x2F;对于非主分配区 设置为分配非连续虚拟地址空间
+  if (av &#x3D;&#x3D; &amp;main_arena)
+    set_max_fast (DEFAULT_MXFAST);&#x2F;&#x2F;设置fastbins中最大chunk大小
+  atomic_store_relaxed (&amp;av-&gt;have_fastchunks, false);&#x2F;&#x2F;分配区中是否有fastchunk 初始化置非
+
+  av-&gt;top &#x3D; initial_top (av);
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>上述代码中<code>bin_at(m, i)</code>是取分配区的实例m中第i个bin:</p>
+<pre class="line-numbers language-C" data-language="C"><code class="language-C">typedef struct malloc_chunk *mbinptr;
+
+&#x2F;* addressing -- note that bin_at(0) does not exist *&#x2F;
+#define bin_at(m, i) \
+  (mbinptr) (((char *) &amp;((m)-&gt;bins[((i) - 1) * 2]))			      \
+             - offsetof (struct malloc_chunk, fd))<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-C" data-language="C"><code class="language-C">#define NONCONTIGUOUS_BIT     (2U)
+
+#define contiguous(M)          (((M)-&gt;flags &amp; NONCONTIGUOUS_BIT) &#x3D;&#x3D; 0)
+#define noncontiguous(M)       (((M)-&gt;flags &amp; NONCONTIGUOUS_BIT) !&#x3D; 0)
+#define set_noncontiguous(M)   ((M)-&gt;flags |&#x3D; NONCONTIGUOUS_BIT)
+#define set_contiguous(M)      ((M)-&gt;flags &amp;&#x3D; ~NONCONTIGUOUS_BIT)<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>分配区的初始化函数默认分配区的实例av是全局静态变量或是已经将av中的所有字段都清0了。初始化函数做的工作比较简单，首先遍历所有的bins，初始化每个bin的空闲链表为空，即将bin的fb和bk都指向bin本身。由于av中所有字段默认为0，即默认分配连续的虚拟地址空间，但只有主分配区才能分配连续的虚拟地址空间，所以对于非主分配区，需要设置为分配非连续虚拟地址空间。如果初始化的是主分配区，需要设置fastbins中最大chunk大小，由于主分配区只有一个，并且一定是最先初始化，这就保证了对全局变量global_max_fast只初始化了一次，只要该全局变量的值非0，也就意味着主分配区初始化了。最后初始化top chunk.</p>
 <h3 id="分配区arena怎么理解"><a class="markdownIt-Anchor" href="#分配区arena怎么理解"></a> 分配区(arena)怎么理解？</h3>
 <p>并发条件下，<code>main_arena</code>引发的竞争将会成为限制程序性能的瓶颈所在，因此glibc采用了多arena机制，线程A分配内存时获取<code>main_arena</code>锁成功，将在<code>main_arena</code>所管理的内存中分配；此时线程B获取<code>main_arena</code>失败，glibc会新建一个arena1，此次内存分配从arena1中进行。<br />
 这种策略，一定程度上解决了多线程下竞争的问题；但是随着arena的增多，内存碎片出现的可能性也变大了。例如，main_arena中有10k、20k的空闲内存，线程B要获取20k的空闲内存，但是获取main_arena锁失败，导致留下20k的碎片，降低了内存使用率。</p>
@@ -526,7 +668,14 @@ The contents of the secondary memory first get transferred to the primary memory
 <p><code>main_arena</code>是为一个使用brk指针的arena，由于brk是堆顶指针，一个进程中只可能有一个，因此普通arena无法使用brk进行内存分配。普通arena建立在mmap的机制上，内存管理方式和<code>main_arena</code>类似，只有一点区别，普通arena只有在整个arena都空闲时，才会调用<code>munmap</code>把内存还给操作系统。</p>
 <p>ref: <a target="_blank" rel="noopener" href="https://www.jianshu.com/p/2fedeacfa797">glibc内存管理那些事儿 - 简书 (jianshu.com)</a></p>
 </blockquote>
-<h2 id="内存碎片出现的原因"><a class="markdownIt-Anchor" href="#内存碎片出现的原因"></a> 内存碎片出现的原因</h2>
+<h3 id="malloc中mmap和brk的区别"><a class="markdownIt-Anchor" href="#malloc中mmap和brk的区别"></a> malloc中mmap和brk的区别</h3>
+<p>从操作系统角度来看，进程分配内存有两种方式，分别由两个系统调用完成：brk和mmap（不考虑共享内存）。</p>
+<p>1、brk是将数据段(.data)的最高地址指针_edata往高地址推；</p>
+<p>2、mmap是在进程的虚拟地址空间中（堆和栈中间，称为文件映射区域的地方）找一块空闲的虚拟内存。</p>
+<p>注意这两种方式分配的都是虚拟内存，如果在第一次访问已分配的虚拟内存时发生中断，则由OS负责分配物理内存.</p>
+<p>ref: <a target="_blank" rel="noopener" href="https://www.huaweicloud.com/articles/914992dae65b7f7c6635c93e10d3ae1c.html">https://www.huaweicloud.com/articles/914992dae65b7f7c6635c93e10d3ae1c.html</a></p>
+<p>ref: <a target="_blank" rel="noopener" href="https://leviathan.vip/2019/01/13/mmap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">https://leviathan.vip/2019/01/13/mmap源码分析/</a></p>
+<h3 id="内存碎片出现的原因"><a class="markdownIt-Anchor" href="#内存碎片出现的原因"></a> 内存碎片出现的原因</h3>
 <p>top chunk不收缩，内存就无法归还给操作系统，导致内存碎片的出现.</p>
 <h2 id="推荐顺序阅读"><a class="markdownIt-Anchor" href="#推荐顺序阅读"></a> 推荐顺序阅读：</h2>
 <p><a target="_blank" rel="noopener" href="https://paper.seebug.org/papers/Archive/refs/heap/glibc%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86ptmalloc%E6%BA%90%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90.pdf">Glibc内存管理Ptmalloc2源代码分析华庭（庄明强）2011/4/17.pdf</a></p>
@@ -641,7 +790,7 @@ The contents of the secondary memory first get transferred to the primary memory
     style="padding-right: 2px;">
   </i>目录
 </div>
-<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#glibc%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E7%AC%94%E8%AE%B0"><span class="toc-text"> Glibc内存管理笔记</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x0-%E8%83%A1%E8%AF%9D"><span class="toc-text"> 0x0 胡话</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-%E8%BF%99%E7%AF%87%E7%AC%94%E8%AE%B0%E5%9C%A8%E5%86%99%E4%BB%80%E4%B9%88%E9%AC%BC"><span class="toc-text"> 0x1 这篇笔记在写什么鬼</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-%E7%9F%A5%E8%AF%86%E7%82%B9"><span class="toc-text"> 0x2 知识点?</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-%E7%9B%B8%E5%85%B3"><span class="toc-text"> chunk 相关</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%93%E6%9E%84%E4%BD%93"><span class="toc-text"> 核心结构体</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x-1%E7%BB%8F%E5%85%B8%E8%87%AA%E9%97%AE%E8%87%AA%E7%AD%94%E7%8E%AF%E8%8A%82"><span class="toc-text"> 0x-1经典自问自答环节</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-%E5%A4%A7%E5%B0%8F%E7%9A%84%E8%AE%A1%E7%AE%97%E5%85%AC%E5%BC%8F"><span class="toc-text"> Chunk 大小的计算公式？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8%E4%B8%AD%E7%9A%84chunk%E5%8F%AF%E4%BB%A5%E5%8D%A0%E7%94%A8%E4%B8%8B%E4%B8%80%E4%B8%AAchunk%E7%9A%84prev_size%E5%9F%9F"><span class="toc-text"> 为什么使用中的Chunk可以占用下一个chunk的prev_size域？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88chunk%E7%9A%84size%E5%9F%9F%E4%BD%8E%E4%B8%89%E4%BD%8D%E5%8F%AF%E4%BB%A5%E5%A4%8D%E7%94%A8"><span class="toc-text"> 为什么Chunk的size域低三位可以复用？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-bins-%E5%A6%82%E4%BD%95%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text"> Chunk Bins 如何初始化？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E9%85%8D%E5%8C%BAarena%E6%80%8E%E4%B9%88%E7%90%86%E8%A7%A3"><span class="toc-text"> 分配区(arena)怎么理解？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#main-arena%E4%B8%BB%E5%88%86%E9%85%8D%E5%8C%BAnon-main-arena-%E9%9D%9E%E4%B8%BB%E5%88%86%E9%85%8D%E5%8C%BA%E6%99%AE%E9%80%9Aarena%E5%A6%82%E4%BD%95%E5%8C%BA%E5%88%86"><span class="toc-text"> main arena主分配区&amp;non main arena 非主分配区（普通arena）如何区分？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E7%A2%8E%E7%89%87%E5%87%BA%E7%8E%B0%E7%9A%84%E5%8E%9F%E5%9B%A0"><span class="toc-text"> 内存碎片出现的原因</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A8%E8%8D%90%E9%A1%BA%E5%BA%8F%E9%98%85%E8%AF%BB"><span class="toc-text"> 推荐顺序阅读：</span></a></li></ol></li></ol>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#glibc%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E7%AC%94%E8%AE%B0"><span class="toc-text"> Glibc内存管理笔记</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x0-%E8%83%A1%E8%AF%9D"><span class="toc-text"> 0x0 胡话</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-%E8%BF%99%E7%AF%87%E7%AC%94%E8%AE%B0%E5%9C%A8%E5%86%99%E4%BB%80%E4%B9%88%E9%AC%BC"><span class="toc-text"> 0x1 这篇笔记在写什么鬼</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-%E7%9F%A5%E8%AF%86%E7%82%B9"><span class="toc-text"> 0x2 知识点?</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-%E7%9B%B8%E5%85%B3"><span class="toc-text"> chunk 相关</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%93%E6%9E%84%E4%BD%93"><span class="toc-text"> 核心结构体</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x-1%E7%BB%8F%E5%85%B8%E8%87%AA%E9%97%AE%E8%87%AA%E7%AD%94%E7%8E%AF%E8%8A%82"><span class="toc-text"> 0x-1经典自问自答环节</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-%E5%A4%A7%E5%B0%8F%E7%9A%84%E8%AE%A1%E7%AE%97%E5%85%AC%E5%BC%8F"><span class="toc-text"> Chunk 大小的计算公式？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8%E4%B8%AD%E7%9A%84chunk%E5%8F%AF%E4%BB%A5%E5%8D%A0%E7%94%A8%E4%B8%8B%E4%B8%80%E4%B8%AAchunk%E7%9A%84prev_size%E5%9F%9F"><span class="toc-text"> 为什么使用中的Chunk可以占用下一个chunk的prev_size域？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88chunk%E7%9A%84size%E5%9F%9F%E4%BD%8E%E4%B8%89%E4%BD%8D%E5%8F%AF%E4%BB%A5%E5%A4%8D%E7%94%A8"><span class="toc-text"> 为什么Chunk的size域低三位可以复用？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-bins-%E5%A6%82%E4%BD%95%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text"> Chunk Bins 如何初始化？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E9%85%8D%E5%8C%BAarena%E6%80%8E%E4%B9%88%E7%90%86%E8%A7%A3"><span class="toc-text"> 分配区(arena)怎么理解？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#main-arena%E4%B8%BB%E5%88%86%E9%85%8D%E5%8C%BAnon-main-arena-%E9%9D%9E%E4%B8%BB%E5%88%86%E9%85%8D%E5%8C%BA%E6%99%AE%E9%80%9Aarena%E5%A6%82%E4%BD%95%E5%8C%BA%E5%88%86"><span class="toc-text"> main arena主分配区&amp;non main arena 非主分配区（普通arena）如何区分？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#malloc%E4%B8%ADmmap%E5%92%8Cbrk%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-text"> malloc中mmap和brk的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E7%A2%8E%E7%89%87%E5%87%BA%E7%8E%B0%E7%9A%84%E5%8E%9F%E5%9B%A0"><span class="toc-text"> 内存碎片出现的原因</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A8%E8%8D%90%E9%A1%BA%E5%BA%8F%E9%98%85%E8%AF%BB"><span class="toc-text"> 推荐顺序阅读：</span></a></li></ol></li></ol>
 </div></main>
             <aside class="left-column">
               
@@ -672,7 +821,7 @@ The contents of the secondary memory first get transferred to the primary memory
   <a 
     class="author-tags-count" 
     href="/tags">
-    <span>44</span>
+    <span>45</span>
     <span>标签</span>
   </a>
 </div>
@@ -705,7 +854,7 @@ The contents of the secondary memory first get transferred to the primary memory
     style="padding-right: 2px;">
   </i>目录
 </div>
-<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#glibc%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E7%AC%94%E8%AE%B0"><span class="toc-text"> Glibc内存管理笔记</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x0-%E8%83%A1%E8%AF%9D"><span class="toc-text"> 0x0 胡话</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-%E8%BF%99%E7%AF%87%E7%AC%94%E8%AE%B0%E5%9C%A8%E5%86%99%E4%BB%80%E4%B9%88%E9%AC%BC"><span class="toc-text"> 0x1 这篇笔记在写什么鬼</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-%E7%9F%A5%E8%AF%86%E7%82%B9"><span class="toc-text"> 0x2 知识点?</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-%E7%9B%B8%E5%85%B3"><span class="toc-text"> chunk 相关</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%93%E6%9E%84%E4%BD%93"><span class="toc-text"> 核心结构体</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x-1%E7%BB%8F%E5%85%B8%E8%87%AA%E9%97%AE%E8%87%AA%E7%AD%94%E7%8E%AF%E8%8A%82"><span class="toc-text"> 0x-1经典自问自答环节</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-%E5%A4%A7%E5%B0%8F%E7%9A%84%E8%AE%A1%E7%AE%97%E5%85%AC%E5%BC%8F"><span class="toc-text"> Chunk 大小的计算公式？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8%E4%B8%AD%E7%9A%84chunk%E5%8F%AF%E4%BB%A5%E5%8D%A0%E7%94%A8%E4%B8%8B%E4%B8%80%E4%B8%AAchunk%E7%9A%84prev_size%E5%9F%9F"><span class="toc-text"> 为什么使用中的Chunk可以占用下一个chunk的prev_size域？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88chunk%E7%9A%84size%E5%9F%9F%E4%BD%8E%E4%B8%89%E4%BD%8D%E5%8F%AF%E4%BB%A5%E5%A4%8D%E7%94%A8"><span class="toc-text"> 为什么Chunk的size域低三位可以复用？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-bins-%E5%A6%82%E4%BD%95%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text"> Chunk Bins 如何初始化？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E9%85%8D%E5%8C%BAarena%E6%80%8E%E4%B9%88%E7%90%86%E8%A7%A3"><span class="toc-text"> 分配区(arena)怎么理解？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#main-arena%E4%B8%BB%E5%88%86%E9%85%8D%E5%8C%BAnon-main-arena-%E9%9D%9E%E4%B8%BB%E5%88%86%E9%85%8D%E5%8C%BA%E6%99%AE%E9%80%9Aarena%E5%A6%82%E4%BD%95%E5%8C%BA%E5%88%86"><span class="toc-text"> main arena主分配区&amp;non main arena 非主分配区（普通arena）如何区分？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E7%A2%8E%E7%89%87%E5%87%BA%E7%8E%B0%E7%9A%84%E5%8E%9F%E5%9B%A0"><span class="toc-text"> 内存碎片出现的原因</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A8%E8%8D%90%E9%A1%BA%E5%BA%8F%E9%98%85%E8%AF%BB"><span class="toc-text"> 推荐顺序阅读：</span></a></li></ol></li></ol>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#glibc%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E7%AC%94%E8%AE%B0"><span class="toc-text"> Glibc内存管理笔记</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x0-%E8%83%A1%E8%AF%9D"><span class="toc-text"> 0x0 胡话</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-%E8%BF%99%E7%AF%87%E7%AC%94%E8%AE%B0%E5%9C%A8%E5%86%99%E4%BB%80%E4%B9%88%E9%AC%BC"><span class="toc-text"> 0x1 这篇笔记在写什么鬼</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-%E7%9F%A5%E8%AF%86%E7%82%B9"><span class="toc-text"> 0x2 知识点?</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-%E7%9B%B8%E5%85%B3"><span class="toc-text"> chunk 相关</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%93%E6%9E%84%E4%BD%93"><span class="toc-text"> 核心结构体</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x-1%E7%BB%8F%E5%85%B8%E8%87%AA%E9%97%AE%E8%87%AA%E7%AD%94%E7%8E%AF%E8%8A%82"><span class="toc-text"> 0x-1经典自问自答环节</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-%E5%A4%A7%E5%B0%8F%E7%9A%84%E8%AE%A1%E7%AE%97%E5%85%AC%E5%BC%8F"><span class="toc-text"> Chunk 大小的计算公式？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8%E4%B8%AD%E7%9A%84chunk%E5%8F%AF%E4%BB%A5%E5%8D%A0%E7%94%A8%E4%B8%8B%E4%B8%80%E4%B8%AAchunk%E7%9A%84prev_size%E5%9F%9F"><span class="toc-text"> 为什么使用中的Chunk可以占用下一个chunk的prev_size域？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88chunk%E7%9A%84size%E5%9F%9F%E4%BD%8E%E4%B8%89%E4%BD%8D%E5%8F%AF%E4%BB%A5%E5%A4%8D%E7%94%A8"><span class="toc-text"> 为什么Chunk的size域低三位可以复用？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-bins-%E5%A6%82%E4%BD%95%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text"> Chunk Bins 如何初始化？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E9%85%8D%E5%8C%BAarena%E6%80%8E%E4%B9%88%E7%90%86%E8%A7%A3"><span class="toc-text"> 分配区(arena)怎么理解？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#main-arena%E4%B8%BB%E5%88%86%E9%85%8D%E5%8C%BAnon-main-arena-%E9%9D%9E%E4%B8%BB%E5%88%86%E9%85%8D%E5%8C%BA%E6%99%AE%E9%80%9Aarena%E5%A6%82%E4%BD%95%E5%8C%BA%E5%88%86"><span class="toc-text"> main arena主分配区&amp;non main arena 非主分配区（普通arena）如何区分？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#malloc%E4%B8%ADmmap%E5%92%8Cbrk%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-text"> malloc中mmap和brk的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E7%A2%8E%E7%89%87%E5%87%BA%E7%8E%B0%E7%9A%84%E5%8E%9F%E5%9B%A0"><span class="toc-text"> 内存碎片出现的原因</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A8%E8%8D%90%E9%A1%BA%E5%BA%8F%E9%98%85%E8%AF%BB"><span class="toc-text"> 推荐顺序阅读：</span></a></li></ol></li></ol>
       </div>
     </article>
   
@@ -890,7 +1039,7 @@ The contents of the secondary memory first get transferred to the primary memory
     style="padding-right: 2px;">
   </i>目录
 </div>
-<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#glibc%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E7%AC%94%E8%AE%B0"><span class="toc-text"> Glibc内存管理笔记</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x0-%E8%83%A1%E8%AF%9D"><span class="toc-text"> 0x0 胡话</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-%E8%BF%99%E7%AF%87%E7%AC%94%E8%AE%B0%E5%9C%A8%E5%86%99%E4%BB%80%E4%B9%88%E9%AC%BC"><span class="toc-text"> 0x1 这篇笔记在写什么鬼</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-%E7%9F%A5%E8%AF%86%E7%82%B9"><span class="toc-text"> 0x2 知识点?</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-%E7%9B%B8%E5%85%B3"><span class="toc-text"> chunk 相关</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%93%E6%9E%84%E4%BD%93"><span class="toc-text"> 核心结构体</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x-1%E7%BB%8F%E5%85%B8%E8%87%AA%E9%97%AE%E8%87%AA%E7%AD%94%E7%8E%AF%E8%8A%82"><span class="toc-text"> 0x-1经典自问自答环节</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-%E5%A4%A7%E5%B0%8F%E7%9A%84%E8%AE%A1%E7%AE%97%E5%85%AC%E5%BC%8F"><span class="toc-text"> Chunk 大小的计算公式？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8%E4%B8%AD%E7%9A%84chunk%E5%8F%AF%E4%BB%A5%E5%8D%A0%E7%94%A8%E4%B8%8B%E4%B8%80%E4%B8%AAchunk%E7%9A%84prev_size%E5%9F%9F"><span class="toc-text"> 为什么使用中的Chunk可以占用下一个chunk的prev_size域？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88chunk%E7%9A%84size%E5%9F%9F%E4%BD%8E%E4%B8%89%E4%BD%8D%E5%8F%AF%E4%BB%A5%E5%A4%8D%E7%94%A8"><span class="toc-text"> 为什么Chunk的size域低三位可以复用？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-bins-%E5%A6%82%E4%BD%95%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text"> Chunk Bins 如何初始化？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E9%85%8D%E5%8C%BAarena%E6%80%8E%E4%B9%88%E7%90%86%E8%A7%A3"><span class="toc-text"> 分配区(arena)怎么理解？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#main-arena%E4%B8%BB%E5%88%86%E9%85%8D%E5%8C%BAnon-main-arena-%E9%9D%9E%E4%B8%BB%E5%88%86%E9%85%8D%E5%8C%BA%E6%99%AE%E9%80%9Aarena%E5%A6%82%E4%BD%95%E5%8C%BA%E5%88%86"><span class="toc-text"> main arena主分配区&amp;non main arena 非主分配区（普通arena）如何区分？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E7%A2%8E%E7%89%87%E5%87%BA%E7%8E%B0%E7%9A%84%E5%8E%9F%E5%9B%A0"><span class="toc-text"> 内存碎片出现的原因</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A8%E8%8D%90%E9%A1%BA%E5%BA%8F%E9%98%85%E8%AF%BB"><span class="toc-text"> 推荐顺序阅读：</span></a></li></ol></li></ol>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#glibc%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E7%AC%94%E8%AE%B0"><span class="toc-text"> Glibc内存管理笔记</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x0-%E8%83%A1%E8%AF%9D"><span class="toc-text"> 0x0 胡话</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-%E8%BF%99%E7%AF%87%E7%AC%94%E8%AE%B0%E5%9C%A8%E5%86%99%E4%BB%80%E4%B9%88%E9%AC%BC"><span class="toc-text"> 0x1 这篇笔记在写什么鬼</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-%E7%9F%A5%E8%AF%86%E7%82%B9"><span class="toc-text"> 0x2 知识点?</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-%E7%9B%B8%E5%85%B3"><span class="toc-text"> chunk 相关</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%93%E6%9E%84%E4%BD%93"><span class="toc-text"> 核心结构体</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x-1%E7%BB%8F%E5%85%B8%E8%87%AA%E9%97%AE%E8%87%AA%E7%AD%94%E7%8E%AF%E8%8A%82"><span class="toc-text"> 0x-1经典自问自答环节</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-%E5%A4%A7%E5%B0%8F%E7%9A%84%E8%AE%A1%E7%AE%97%E5%85%AC%E5%BC%8F"><span class="toc-text"> Chunk 大小的计算公式？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8%E4%B8%AD%E7%9A%84chunk%E5%8F%AF%E4%BB%A5%E5%8D%A0%E7%94%A8%E4%B8%8B%E4%B8%80%E4%B8%AAchunk%E7%9A%84prev_size%E5%9F%9F"><span class="toc-text"> 为什么使用中的Chunk可以占用下一个chunk的prev_size域？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88chunk%E7%9A%84size%E5%9F%9F%E4%BD%8E%E4%B8%89%E4%BD%8D%E5%8F%AF%E4%BB%A5%E5%A4%8D%E7%94%A8"><span class="toc-text"> 为什么Chunk的size域低三位可以复用？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#chunk-bins-%E5%A6%82%E4%BD%95%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text"> Chunk Bins 如何初始化？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E9%85%8D%E5%8C%BAarena%E6%80%8E%E4%B9%88%E7%90%86%E8%A7%A3"><span class="toc-text"> 分配区(arena)怎么理解？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#main-arena%E4%B8%BB%E5%88%86%E9%85%8D%E5%8C%BAnon-main-arena-%E9%9D%9E%E4%B8%BB%E5%88%86%E9%85%8D%E5%8C%BA%E6%99%AE%E9%80%9Aarena%E5%A6%82%E4%BD%95%E5%8C%BA%E5%88%86"><span class="toc-text"> main arena主分配区&amp;non main arena 非主分配区（普通arena）如何区分？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#malloc%E4%B8%ADmmap%E5%92%8Cbrk%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-text"> malloc中mmap和brk的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E7%A2%8E%E7%89%87%E5%87%BA%E7%8E%B0%E7%9A%84%E5%8E%9F%E5%9B%A0"><span class="toc-text"> 内存碎片出现的原因</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A8%E8%8D%90%E9%A1%BA%E5%BA%8F%E9%98%85%E8%AF%BB"><span class="toc-text"> 推荐顺序阅读：</span></a></li></ol></li></ol>
     </article>
   
   
