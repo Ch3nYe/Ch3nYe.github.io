@@ -343,7 +343,7 @@
     
     
       <span class="dot"></span>
-      <span>2k 字</span>
+      <span>10 字</span>
     
   </div>
   
@@ -380,145 +380,7 @@
     id="section" 
     class="post-content">
     <h1 id="2021年终总结"><a class="markdownIt-Anchor" href="#2021年终总结"></a> 2021年终总结</h1>
-<blockquote>
-<p>对2021年进行一个复盘，检查年初计划的完成情况，总结得失，everything for building better self.</p>
-</blockquote>
-<h2 id="年度目标实现情况"><a class="markdownIt-Anchor" href="#年度目标实现情况"></a> 年度目标实现情况</h2>
-<ul>
-<li>[x] Android逆向相关的实习经历</li>
-<li>[x] Blog建设，至少发布20篇内容</li>
-<li>[x] 学习方向修正，向二进制方向发展</li>
-<li>[x] 阅读《深入理解Android Java虚拟机ART》</li>
-<li>[x] 《学习观》系列视频</li>
-<li>[ ] Android系统原理学习</li>
-<li>[ ] 《软件分析》课程</li>
-<li>[ ] 学会写C++</li>
-</ul>
-<p>软件分析的课程来学校前看了一半，由于实验室项目和随之而来的课程就放置了，寒假一定要补完。</p>
-<p>关于Android系统原理的学习，当时还刚开始学移动安全，想着了解一些系统层面的知识，为以后做系统底层和二进制安全做铺垫，预期是年内看完<a target="_blank" rel="noopener" href="http://gityuan.com/android/">Android 操作系统架构开篇 - Gityuan博客 | 袁辉辉的技术博客</a> 袁老师的这一系列文章，后来由于和上面同样的原因搁置了.</p>
-<p>C++因为没有时间和契机用它写项目，就… 最近利用两周较为空闲的时间把RUST文档看了一遍，也写了一些demo，算是入门了.</p>
-<h3 id="查漏补缺"><a class="markdownIt-Anchor" href="#查漏补缺"></a> 查漏补缺</h3>
-<p>现在我的研究方向可能要偏向编译器和PL，之前SJ师傅也说不是人人都能挖洞，所以出于稳健一点的考虑，先把<strong>正向编译</strong>和<strong>逆向分析</strong>流程梳理清楚，这样就算以后挖不出洞，还能写点调试和分析相关的东西，不至于完全失业.</p>
-<h2 id="作为研究生"><a class="markdownIt-Anchor" href="#作为研究生"></a> 作为研究生</h2>
-<h3 id="组会分享文献"><a class="markdownIt-Anchor" href="#组会分享文献"></a> 组会分享文献</h3>
-<p><img src="/images/image-20220101231036056.png" alt="image-20220101231036056" / srcset="/images/LoadingImage.gif" data-src="/images/image-20220101231036056.png" class="lozad post-image"></p>
-<p>共计分享6篇文章，主要关键词Android，深度学习，虚拟化.</p>
-<h3 id="阅读文献"><a class="markdownIt-Anchor" href="#阅读文献"></a> 阅读文献</h3>
-<p><img src="/images/image-20220101231405686.png" alt="image-20220101231405686" / srcset="/images/LoadingImage.gif" data-src="/images/image-20220101231405686.png" class="lozad post-image"></p>
-<p>共计阅读22篇文章，主要关键词Android，深度学习，虚拟化，静态分析，动态分析，恶意软件.</p>
-<p>多数文章涉及Android和机器学习，前者是因为来读研之前对Android了解多一些，后者是因为现在很多做安全的文章都扯点机器学习，读了这些文章其实有这样的感觉，如果一篇文章<strong>主要</strong>使用机器学习的方法解决二进制安全问题的话，就可以不用看了.</p>
-<p>以后希望自己能<strong>多读一些传统二进制分析的文章</strong>（但愿我能看懂）.</p>
-<h3 id="项目"><a class="markdownIt-Anchor" href="#项目"></a> 项目</h3>
-<p>实验室接的二进制分析的项目，本来是我和另外两个师兄一共三个人负责，但是有一个师兄毕业了，所以就变成我接盘两个子项目+我自己做一个子项目.</p>
-<p>最后我负责的内容包括：</p>
-<ul>
-<li>Windows 恶意软件家族分类</li>
-<li>Android 恶意软件家族分类</li>
-<li>函数名恢复（NFRE可以参考之前我发的论文阅读内容）</li>
-</ul>
-<p>以上项目的总结文档（120页大都是抄的😂），项目整理和封装等等一系列工作，确实搞得挺累.</p>
-<p>关于函数名恢复的项目，最近在做增强实验，寒假一定要做完，冲！</p>
-<h3 id="参加会议"><a class="markdownIt-Anchor" href="#参加会议"></a> 参加会议</h3>
-<p>今年主要参加了两个会议：</p>
-<h4 id="202107-上海交通大学系统安全暑期学校"><a class="markdownIt-Anchor" href="#202107-上海交通大学系统安全暑期学校"></a> 2021.07 上海交通大学系统安全暑期学校</h4>
-<p>持续5天的分享会，涉及的主题包括：</p>
-<p>移动安全，fuzzing，内存漏洞追踪，智能化漏洞检测和利用，硬件特性安全，数据库安全，软件安全开发实践，系统隔离，二进制程序分析等.</p>
-<p>这是我第一次参加安全圈的分享会，还是能获得很多信息的，比如ai-fuzzing现在还很拉跨，比如软硬件接口层的安全是怎么做的，比如auto-漏洞挖掘距离成熟还差很远等等. 很多老师都很实诚，体验良好.👍</p>
-<h4 id="20211023-sdc看雪安全开发者峰会"><a class="markdownIt-Anchor" href="#20211023-sdc看雪安全开发者峰会"></a> 2021.10.23 SDC看雪安全开发者峰会</h4>
-<p>一天的会议，设计的主题还是很硬核的，多数都是纯逆向领域的议题：</p>
-<p>Qemu做的调试器，代码混淆，houdini逆向，Chrome远远不断贡献漏洞等等.</p>
-<p>议题很硬核，体验良好，只能听懂个大概，下次还来.🤤</p>
-<h2 id="财富"><a class="markdownIt-Anchor" href="#财富"></a> 财富？</h2>
-<p>今年开始尝试记账，看看自己本科毕业能不能靠自己生活。今年3月出来实习，大约3个月，6月在本科学校答辩，处理毕业事宜，6.26离校。7月1号就来实验室打工了。以上打工的时间段都是有工资拿，通过记账结果来看，勉强够活.</p>
-<p>在北京实习期间租房比较贵，多数工资都拿来租房了，三个月最后还剩了4k多点. 来实验室这边以后工资少点，不过因为在做项目，所以相对其他同学来说还是比较多的，虽然但是，即使工资多点，也遭不住我能花，买了两个显示器，买了运动相机，买了sony xm4，买了blue yeti麦克风，买了很多零零碎碎的东西… 也亏了这些东西，即使项目和课业压力比较大，生活也还过的去.</p>
-<p>今年只在工作的时间记账，有中断，明年要<strong>坚持记账</strong>.</p>
-<h3 id="运动相机"><a class="markdownIt-Anchor" href="#运动相机"></a> 运动相机</h3>
-<p>买了个insta360 one x2 全景相机，本来想出去玩拍些生活记录的视频，tnnd到现在也没找到时间出去玩…🤡</p>
-<h3 id="blue-yeti麦克风"><a class="markdownIt-Anchor" href="#blue-yeti麦克风"></a> blue yeti麦克风</h3>
-<p>闲鱼买了个二手. 本来以为可以用罗技的G HUB驱动这个麦克风，但是不行，只有blue yeti x才能用G HUB，焯！🤡</p>
-<h2 id="不足"><a class="markdownIt-Anchor" href="#不足"></a> 不足</h2>
-<p><strong>缺乏体育锻炼</strong>，尤其是读研这半年多，根本就没咋运动过，明年开始跟师兄学打篮球，要变成阳光中年人，不能再做阿宅了.</p>
-<h2 id="意外收获"><a class="markdownIt-Anchor" href="#意外收获"></a> 意外收获</h2>
-<p>值得分享的一些：</p>
-<ul>
-<li>网易云10级了（🤡）</li>
-<li>入坑黑胶，太有味儿了🤤</li>
-<li>学了RUST的基本语法和高级特性</li>
-<li>痘痘快治好了，在除痘印阶段了</li>
-</ul>
-<h2 id="娱乐"><a class="markdownIt-Anchor" href="#娱乐"></a> 娱乐</h2>
-<p><strong>书籍 ：</strong></p>
-<ul>
-<li>《三体》三部曲三刷</li>
-</ul>
-<p><strong>电影：</strong></p>
-<ul>
-<li>
-<p>《<a target="_blank" rel="noopener" href="https://www.bilibili.com/bangumi/play/ss35384">八佰</a>》</p>
-</li>
-<li>
-<p>《来了》日本恐怖片</p>
-</li>
-<li>
-<p>《让子弹飞》N刷</p>
-</li>
-<li>
-<p>《<a target="_blank" rel="noopener" href="https://www.bilibili.com/bangumi/media/md28229810/">我是谁：没有绝对安全的系统</a>》二刷</p>
-</li>
-<li>
-<p>《<a target="_blank" rel="noopener" href="https://www.bilibili.com/bangumi/play/ss33358">流浪地球</a>》</p>
-</li>
-</ul>
-<p><strong>年度印象深刻番剧：</strong></p>
-<p><a target="_blank" rel="noopener" href="https://www.bilibili.com/bangumi/play/ss34430/">咒术回战</a></p>
-<p><a target="_blank" rel="noopener" href="https://www.bilibili.com/bangumi/play/ss38214/">致不灭的你</a></p>
-<p><a target="_blank" rel="noopener" href="https://www.bilibili.com/bangumi/play/ss36198/">堀与宫村</a></p>
-<p><a target="_blank" rel="noopener" href="https://www.bilibili.com/bangumi/media/md28222618">动物狂想曲</a></p>
-<p><a target="_blank" rel="noopener" href="https://www.bilibili.com/bangumi/play/ss2572/">Charlotte</a> 二刷</p>
-<p><a target="_blank" rel="noopener" href="https://www.bilibili.com/bangumi/play/ss6311/">笨女孩</a></p>
-<p>我向来不看电视剧，唯一特例：《武林外传》</p>
-<p><strong>年度游戏：</strong></p>
-<ul>
-<li>原神</li>
-<li>hell let loose</li>
-<li>战地5</li>
-<li>Heave Ho</li>
-<li>小小梦魇1</li>
-<li>光明记忆-无限</li>
-</ul>
-<h2 id="年度最爱emoji"><a class="markdownIt-Anchor" href="#年度最爱emoji"></a> 年度最爱emoji</h2>
-<p>🤤</p>
-<p>🤡</p>
-<p>🍋</p>
-<h2 id="总结"><a class="markdownIt-Anchor" href="#总结"></a> 总结</h2>
-<p>今年算是把多数技能点都点在二进制相关的分支上了，总体来说还是比较符合我的预期。虽然实验室五六十号人做二进制的目前就我和一个师兄，但是老师还是比较支持俺的。其实，没有出现老师强行抛出和自己期望的研究方向严重不符的项目就算是幸运了，知足常乐.😊</p>
-<p>关于个人输入和输出，从2020年底我重新写起来blog，虽然最近三个月很忙没有更新，但是今年内也发了20多篇内容，不见得对读者有多大的帮助，主要是在输出内容的同时把知识和内容在自己脑子里梳理清楚，也相当于是巩固复习了，也锻炼锻炼表达能力. 专业相关的书籍、文章、视频也有相当的输入，达到了我自己比较满意的程度.</p>
-<p>从本科生到研究生，人生进入了新的阶段，独立起来了，尽量不从家里要补给，生活慢慢步入社会人的轨道了.</p>
-<h3 id="新年展望"><a class="markdownIt-Anchor" href="#新年展望"></a> 新年展望</h3>
-<p>希望明年能够</p>
-<ul>
-<li>
-<p>学会打篮球🏀</p>
-</li>
-<li>
-<p>尝试健身，练一练腹肌🤤</p>
-</li>
-<li>
-<p>攒个3w买摩托</p>
-</li>
-<li>
-<p>用rust写个项目</p>
-</li>
-<li>
-<p>读完《深入理解Android Java虚拟机ART》</p>
-</li>
-<li>
-<p>完成今年没做完的Android系统原理学习</p>
-</li>
-<li>
-<p>发一篇paper</p>
-</li>
-</ul>
+<p>this is a personal post…</p>
 
   </div>
   <div>
@@ -609,7 +471,7 @@
     style="padding-right: 2px;">
   </i>目录
 </div>
-<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#2021%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93"><span class="toc-text"> 2021年终总结</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B9%B4%E5%BA%A6%E7%9B%AE%E6%A0%87%E5%AE%9E%E7%8E%B0%E6%83%85%E5%86%B5"><span class="toc-text"> 年度目标实现情况</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E6%BC%8F%E8%A1%A5%E7%BC%BA"><span class="toc-text"> 查漏补缺</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%9C%E4%B8%BA%E7%A0%94%E7%A9%B6%E7%94%9F"><span class="toc-text"> 作为研究生</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%84%E4%BC%9A%E5%88%86%E4%BA%AB%E6%96%87%E7%8C%AE"><span class="toc-text"> 组会分享文献</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%98%85%E8%AF%BB%E6%96%87%E7%8C%AE"><span class="toc-text"> 阅读文献</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%B9%E7%9B%AE"><span class="toc-text"> 项目</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E5%8A%A0%E4%BC%9A%E8%AE%AE"><span class="toc-text"> 参加会议</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#202107-%E4%B8%8A%E6%B5%B7%E4%BA%A4%E9%80%9A%E5%A4%A7%E5%AD%A6%E7%B3%BB%E7%BB%9F%E5%AE%89%E5%85%A8%E6%9A%91%E6%9C%9F%E5%AD%A6%E6%A0%A1"><span class="toc-text"> 2021.07 上海交通大学系统安全暑期学校</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#20211023-sdc%E7%9C%8B%E9%9B%AA%E5%AE%89%E5%85%A8%E5%BC%80%E5%8F%91%E8%80%85%E5%B3%B0%E4%BC%9A"><span class="toc-text"> 2021.10.23 SDC看雪安全开发者峰会</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B4%A2%E5%AF%8C"><span class="toc-text"> 财富？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%90%E5%8A%A8%E7%9B%B8%E6%9C%BA"><span class="toc-text"> 运动相机</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#blue-yeti%E9%BA%A6%E5%85%8B%E9%A3%8E"><span class="toc-text"> blue yeti麦克风</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E8%B6%B3"><span class="toc-text"> 不足</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%84%8F%E5%A4%96%E6%94%B6%E8%8E%B7"><span class="toc-text"> 意外收获</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A8%B1%E4%B9%90"><span class="toc-text"> 娱乐</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B9%B4%E5%BA%A6%E6%9C%80%E7%88%B1emoji"><span class="toc-text"> 年度最爱emoji</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text"> 总结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B0%E5%B9%B4%E5%B1%95%E6%9C%9B"><span class="toc-text"> 新年展望</span></a></li></ol></li></ol></li></ol>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#2021%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93"><span class="toc-text"> 2021年终总结</span></a></li></ol>
 </div></main>
             <aside class="left-column">
               
@@ -673,7 +535,7 @@
     style="padding-right: 2px;">
   </i>目录
 </div>
-<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#2021%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93"><span class="toc-text"> 2021年终总结</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B9%B4%E5%BA%A6%E7%9B%AE%E6%A0%87%E5%AE%9E%E7%8E%B0%E6%83%85%E5%86%B5"><span class="toc-text"> 年度目标实现情况</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E6%BC%8F%E8%A1%A5%E7%BC%BA"><span class="toc-text"> 查漏补缺</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%9C%E4%B8%BA%E7%A0%94%E7%A9%B6%E7%94%9F"><span class="toc-text"> 作为研究生</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%84%E4%BC%9A%E5%88%86%E4%BA%AB%E6%96%87%E7%8C%AE"><span class="toc-text"> 组会分享文献</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%98%85%E8%AF%BB%E6%96%87%E7%8C%AE"><span class="toc-text"> 阅读文献</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%B9%E7%9B%AE"><span class="toc-text"> 项目</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E5%8A%A0%E4%BC%9A%E8%AE%AE"><span class="toc-text"> 参加会议</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#202107-%E4%B8%8A%E6%B5%B7%E4%BA%A4%E9%80%9A%E5%A4%A7%E5%AD%A6%E7%B3%BB%E7%BB%9F%E5%AE%89%E5%85%A8%E6%9A%91%E6%9C%9F%E5%AD%A6%E6%A0%A1"><span class="toc-text"> 2021.07 上海交通大学系统安全暑期学校</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#20211023-sdc%E7%9C%8B%E9%9B%AA%E5%AE%89%E5%85%A8%E5%BC%80%E5%8F%91%E8%80%85%E5%B3%B0%E4%BC%9A"><span class="toc-text"> 2021.10.23 SDC看雪安全开发者峰会</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B4%A2%E5%AF%8C"><span class="toc-text"> 财富？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%90%E5%8A%A8%E7%9B%B8%E6%9C%BA"><span class="toc-text"> 运动相机</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#blue-yeti%E9%BA%A6%E5%85%8B%E9%A3%8E"><span class="toc-text"> blue yeti麦克风</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E8%B6%B3"><span class="toc-text"> 不足</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%84%8F%E5%A4%96%E6%94%B6%E8%8E%B7"><span class="toc-text"> 意外收获</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A8%B1%E4%B9%90"><span class="toc-text"> 娱乐</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B9%B4%E5%BA%A6%E6%9C%80%E7%88%B1emoji"><span class="toc-text"> 年度最爱emoji</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text"> 总结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B0%E5%B9%B4%E5%B1%95%E6%9C%9B"><span class="toc-text"> 新年展望</span></a></li></ol></li></ol></li></ol>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#2021%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93"><span class="toc-text"> 2021年终总结</span></a></li></ol>
       </div>
     </article>
   
@@ -745,27 +607,9 @@
   <div class="tags-list">
     
       <a 
-        href="/tags/Android/" 
-        title="Android">
-        <div class="tags-list-item">Android</div>
-      </a>
-    
-      <a 
-        href="/tags/%E6%B5%81%E9%87%8F%E6%8A%93%E5%8C%85/" 
-        title="流量抓包">
-        <div class="tags-list-item">流量抓包</div>
-      </a>
-    
-      <a 
-        href="/tags/%E6%95%99%E7%A8%8B/" 
-        title="教程">
-        <div class="tags-list-item">教程</div>
-      </a>
-    
-      <a 
-        href="/tags/Fiddler/" 
-        title="Fiddler">
-        <div class="tags-list-item">Fiddler</div>
+        href="/tags/note/" 
+        title="note">
+        <div class="tags-list-item">note</div>
       </a>
     
       <a 
@@ -775,33 +619,9 @@
       </a>
     
       <a 
-        href="/tags/note/" 
-        title="note">
-        <div class="tags-list-item">note</div>
-      </a>
-    
-      <a 
         href="/tags/Next-Step-of-ML/" 
         title="Next-Step-of-ML">
         <div class="tags-list-item">Next-Step-of-ML</div>
-      </a>
-    
-      <a 
-        href="/tags/%E6%80%BB%E7%BB%93/" 
-        title="总结">
-        <div class="tags-list-item">总结</div>
-      </a>
-    
-      <a 
-        href="/tags/%E5%AD%A6%E4%B9%A0/" 
-        title="学习">
-        <div class="tags-list-item">学习</div>
-      </a>
-    
-      <a 
-        href="/tags/%E8%AE%BA%E6%96%87/" 
-        title="论文">
-        <div class="tags-list-item">论文</div>
       </a>
     
       <a 
@@ -811,15 +631,39 @@
       </a>
     
       <a 
-        href="/tags/Hot-Patch/" 
-        title="Hot-Patch">
-        <div class="tags-list-item">Hot-Patch</div>
+        href="/tags/Android/" 
+        title="Android">
+        <div class="tags-list-item">Android</div>
       </a>
     
       <a 
-        href="/tags/Intrusion-Detection/" 
-        title="Intrusion-Detection">
-        <div class="tags-list-item">Intrusion-Detection</div>
+        href="/tags/%E8%AE%BA%E6%96%87/" 
+        title="论文">
+        <div class="tags-list-item">论文</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%80%BB%E7%BB%93/" 
+        title="总结">
+        <div class="tags-list-item">总结</div>
+      </a>
+    
+      <a 
+        href="/tags/%E5%AE%9E%E6%88%98/" 
+        title="实战">
+        <div class="tags-list-item">实战</div>
+      </a>
+    
+      <a 
+        href="/tags/crack/" 
+        title="crack">
+        <div class="tags-list-item">crack</div>
+      </a>
+    
+      <a 
+        href="/tags/%E4%BA%8C%E8%BF%9B%E5%88%B6/" 
+        title="二进制">
+        <div class="tags-list-item">二进制</div>
       </a>
     
       <a 
@@ -829,15 +673,33 @@
       </a>
     
       <a 
-        href="/tags/Attack/" 
-        title="Attack">
-        <div class="tags-list-item">Attack</div>
+        href="/tags/%E5%AD%A6%E4%B9%A0/" 
+        title="学习">
+        <div class="tags-list-item">学习</div>
       </a>
     
       <a 
-        href="/tags/Backdoor/" 
-        title="Backdoor">
-        <div class="tags-list-item">Backdoor</div>
+        href="/tags/HTTPS/" 
+        title="HTTPS">
+        <div class="tags-list-item">HTTPS</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%89%8B%E8%AE%B0/" 
+        title="手记">
+        <div class="tags-list-item">手记</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%97%A5%E5%B8%B8/" 
+        title="日常">
+        <div class="tags-list-item">日常</div>
+      </a>
+    
+      <a 
+        href="/tags/%E9%9D%99%E6%80%81%E5%88%86%E6%9E%90/" 
+        title="静态分析">
+        <div class="tags-list-item">静态分析</div>
       </a>
     
   </div>
@@ -858,7 +720,7 @@
     style="padding-right: 2px;">
   </i>目录
 </div>
-<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#2021%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93"><span class="toc-text"> 2021年终总结</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B9%B4%E5%BA%A6%E7%9B%AE%E6%A0%87%E5%AE%9E%E7%8E%B0%E6%83%85%E5%86%B5"><span class="toc-text"> 年度目标实现情况</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E6%BC%8F%E8%A1%A5%E7%BC%BA"><span class="toc-text"> 查漏补缺</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%9C%E4%B8%BA%E7%A0%94%E7%A9%B6%E7%94%9F"><span class="toc-text"> 作为研究生</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%84%E4%BC%9A%E5%88%86%E4%BA%AB%E6%96%87%E7%8C%AE"><span class="toc-text"> 组会分享文献</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%98%85%E8%AF%BB%E6%96%87%E7%8C%AE"><span class="toc-text"> 阅读文献</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%B9%E7%9B%AE"><span class="toc-text"> 项目</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E5%8A%A0%E4%BC%9A%E8%AE%AE"><span class="toc-text"> 参加会议</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#202107-%E4%B8%8A%E6%B5%B7%E4%BA%A4%E9%80%9A%E5%A4%A7%E5%AD%A6%E7%B3%BB%E7%BB%9F%E5%AE%89%E5%85%A8%E6%9A%91%E6%9C%9F%E5%AD%A6%E6%A0%A1"><span class="toc-text"> 2021.07 上海交通大学系统安全暑期学校</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#20211023-sdc%E7%9C%8B%E9%9B%AA%E5%AE%89%E5%85%A8%E5%BC%80%E5%8F%91%E8%80%85%E5%B3%B0%E4%BC%9A"><span class="toc-text"> 2021.10.23 SDC看雪安全开发者峰会</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B4%A2%E5%AF%8C"><span class="toc-text"> 财富？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%90%E5%8A%A8%E7%9B%B8%E6%9C%BA"><span class="toc-text"> 运动相机</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#blue-yeti%E9%BA%A6%E5%85%8B%E9%A3%8E"><span class="toc-text"> blue yeti麦克风</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E8%B6%B3"><span class="toc-text"> 不足</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%84%8F%E5%A4%96%E6%94%B6%E8%8E%B7"><span class="toc-text"> 意外收获</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A8%B1%E4%B9%90"><span class="toc-text"> 娱乐</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B9%B4%E5%BA%A6%E6%9C%80%E7%88%B1emoji"><span class="toc-text"> 年度最爱emoji</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text"> 总结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B0%E5%B9%B4%E5%B1%95%E6%9C%9B"><span class="toc-text"> 新年展望</span></a></li></ol></li></ol></li></ol>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#2021%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93"><span class="toc-text"> 2021年终总结</span></a></li></ol>
     </article>
   
   
