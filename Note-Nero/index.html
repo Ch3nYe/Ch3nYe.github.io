@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+  <meta charset="UTF-8">
+  <meta 
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta 
+    http-equiv="X-UA-Compatible" 
+    content="ie=edge">
+  <meta 
+    name="theme-color" 
+    content="#fff" 
+    id="theme-color">
+  <meta 
+    name="description" 
+    content="网络安全 Android ML CTF">
+  <link 
+    rel="icon" 
+    href="/images/logo.png">
+  <title>Note 《Neural reverse engineering of stripped binaries using augmented control flow graphs》</title>
+  
+    
+      <meta 
+        property="og:title" 
+        content="Note 《Neural reverse engineering of stripped binaries using augmented control flow graphs》">
+    
+    
+      <meta 
+        property="og:url" 
+        content="https://ch3nye.top/Note-Nero/index.html">
+    
+    
+      <meta 
+        property="og:img" 
+        content="/images/logo.png">
+    
+    
+      <meta 
+        property="og:img" 
+        content="网络安全 Android ML CTF">
+    
+    
+      <meta 
+        property="og:type" 
+        content="article">
+      <meta 
+        property="og:article:published_time" 
+        content="2022-02-17">
+      <meta 
+        property="og:article:modified_time" 
+        content="2022-02-17">
+      <meta 
+        property="og:article:author" 
+        content="Ch3nYe">
+      
+        
+          <meta 
+            property="og:article:tag" 
+            content="论文">
+        
+          <meta 
+            property="og:article:tag" 
+            content="笔记">
+        
+          <meta 
+            property="og:article:tag" 
+            content="Binary">
+        
+          <meta 
+            property="og:article:tag" 
+            content="Graph">
+        
+          <meta 
+            property="og:article:tag" 
+            content="CFG">
+        
+          <meta 
+            property="og:article:tag" 
+            content="LSTM">
+        
+          <meta 
+            property="og:article:tag" 
+            content="Transformer">
+        
+          <meta 
+            property="og:article:tag" 
+            content="PL">
+        
+      
+    
+  
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+    function loadCSS(href, data, attr) {
+      var sheet = document.createElement('link');
+      sheet.ref = 'stylesheet';
+      sheet.href = href;
+      sheet.dataset[data] = attr;
+      document.head.appendChild(sheet);
+    }
+    function changeCSS(cssFile, data, attr) {
+      var oldlink = document.querySelector(data);
+      var newlink = document.createElement("link");
+      newlink.setAttribute("rel", "stylesheet");
+      newlink.setAttribute("href", cssFile);
+      newlink.dataset.prism = attr;
+      document.head.replaceChild(newlink, oldlink);
+    }
+  </script>
+  
+    
+      
+      
+      
+      
+        
+        
+        
+        <script>
+          function prismThemeChange() {
+            if(document.getElementById('theme-color').dataset.mode === 'dark') {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism-tomorrow.min.css', '[data-prism]', 'prism-tomorrow');
+              } else {
+                loadCSS('/js/lib/prism/prism-tomorrow.min.css', 'prism', 'prism-tomorrow');
+              }
+            } else {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism.min.css', '[data-prism]', 'prism');
+              } else {
+                loadCSS('/js/lib/prism/prism.min.css', 'prism', 'prism');
+              }
+            }
+          }
+          prismThemeChange()
+        </script>
+      
+      
+        
+        <link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+      
+    
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+  </script>
+  
+    <script>
+      var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+        document.getElementById('theme-color').dataset.mode = getCssMediaQuery();
+        prismThemeChange();
+      }
+    };
+    setDarkmode();
+    </script>
+  
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+    <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  <link rel="stylesheet" href="/css/main.css">
+  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+  
+    <link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+  <body>
+    <div class="wrapper">
+       
+      <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+        <img 
+          class="navbar-logo-img"
+          width="32"
+          height="32"
+          src="/images/logo.png" 
+          alt="blog logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+      <a 
+        href="/" 
+        class="navbar-menu-item">
+        
+          首页
+        
+      </a>
+    
+      <a 
+        href="/archives" 
+        class="navbar-menu-item">
+        
+          归档
+        
+      </a>
+    
+      <a 
+        href="/tags" 
+        class="navbar-menu-item">
+        
+          标签
+        
+      </a>
+    
+      <a 
+        href="/categories" 
+        class="navbar-menu-item">
+        
+          分类
+        
+      </a>
+    
+      <a 
+        href="/about" 
+        class="navbar-menu-item">
+        
+          关于
+        
+      </a>
+    
+      <a 
+        href="/links" 
+        class="navbar-menu-item">
+        
+          友链
+        
+      </a>
+    
+      <a 
+        href="/shuoshuo" 
+        class="navbar-menu-item">
+        
+          说说
+        
+      </a>
+    
+    <a 
+      class="navbar-menu-item darknavbar" 
+      id="dark">
+      <i class="iconfont icon-weather"></i>
+    </a>
+    <a 
+      class="navbar-menu-item searchnavbar" 
+      id="search">
+      <i 
+        class="iconfont icon-search" 
+        style="font-size: 1.2rem; font-weight: 400;">
+      </i>
+    </a>
+  </div>
+</nav> 
+      
+      <div 
+        id="local-search" 
+        style="display: none">
+        <input
+          class="navbar-menu-item"
+          id="search-input"
+          placeholder="请输入搜索内容..." />
+        <div id="search-content"></div>
+      </div>
+      
+      <div class="section-wrap">
+        <div class="container">
+          <div class="columns">
+            <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      Note 《Neural reverse engineering of stripped binaries using augmented control flow graphs》
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2022-02-16T16:00:00.000Z">
+      <i 
+        class="iconfont icon-calendar" 
+        style="margin-right: 2px;">
+      </i>
+      <span>2022-02-17</span>
+    </time>
+    
+      <span class="dot"></span>
+      
+        <a 
+          href="/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" 
+          class="post-meta-link">
+          论文阅读
+        </a>
+      
+    
+    
+      <span class="dot"></span>
+      <span>2.2k 字</span>
+    
+  </div>
+  
+    <div 
+      class="post-meta post-show-meta" 
+      style="margin-top: -10px;">
+      <div style="display: flex; align-items: center;">
+        <i 
+          class="iconfont icon-biaoqian" 
+          style="margin-right: 2px; font-size: 1.15rem;">
+        </i>
+        
+          
+          <a 
+            href="/tags/%E8%AE%BA%E6%96%87/" 
+            class="post-meta-link">
+            论文
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/%E7%AC%94%E8%AE%B0/" 
+            class="post-meta-link">
+            笔记
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/Binary/" 
+            class="post-meta-link">
+            Binary
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/Graph/" 
+            class="post-meta-link">
+            Graph
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/CFG/" 
+            class="post-meta-link">
+            CFG
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/LSTM/" 
+            class="post-meta-link">
+            LSTM
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/Transformer/" 
+            class="post-meta-link">
+            Transformer
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/PL/" 
+            class="post-meta-link">
+            PL
+          </a>
+        
+      </div>
+    </div>
+  
+  </header>
+  <div 
+    id="section" 
+    class="post-content">
+    <h1 id="neural-reverse-engineering-of-stripped-binaries-using-augmented-control-flow-graphs"><a class="markdownIt-Anchor" href="#neural-reverse-engineering-of-stripped-binaries-using-augmented-control-flow-graphs"></a> Neural reverse engineering of stripped binaries using augmented control flow graphs</h1>
+<h2 id="0x1-introduction"><a class="markdownIt-Anchor" href="#0x1-introduction"></a> 0x1 INTRODUCTION</h2>
+<p>从二进制代码出发，遍历CFG从Entry到Sink（就是一个目标call site）的所有path，利用pointer-aware slice技术重构汇编码形式的API call，重构为有一定可读性的类似高级语言的形式（ eg: connect(RET, ARG, 16) ）.</p>
+<p>然后通过学习，如何学习，将函数名embedding，参数的抽象表达也做embedding. <u>(如何学习到embedding不知道，没看懂)</u></p>
+<p>最后，将一个procedure表示为从Entry到Sink的路径集，将这个路径集送入LSTM/Transformer-based seq2seq model 还有GNN网络训练，label是procedure对应的函数名.</p>
+<h2 id="0x2-overview"><a class="markdownIt-Anchor" href="#0x2-overview"></a> 0x2 overview</h2>
+<p>整体介绍了一下本文的思路，但是读完容易不知所云，所以建议读完文章，再回来读一遍原文这一节.</p>
+<p>每个augmented call site 作为一个node，将程序表示为graph，从起始结点开始每条path都表示一个可能的运行时执行顺序.</p>
+<p>两种训练函数名预测的方式：</p>
+<ul>
+<li>基于这些graph应用GNN模型做encoder，用LSTM decoder输出边长序列（函数名）；</li>
+<li>从graph上生成path，喂给LSTM-based、Transformer-based model.</li>
+</ul>
+<p><strong>关键点：</strong></p>
+<ul>
+<li>使用静态分析，重构API call sites</li>
+<li><strong>使用pointer-aware slices技术Sec4</strong>，使用具体值或者抽象值，替换调用点参数
+<ul>
+<li>二进制程序切片是创建一个变量必要的程序片段，本文中从CFG上取path切slices</li>
+<li>参数变量替换为具体值或者抽象值，抽象值包括：argument=ARG，global value=GLOBAL，value from calling a procedur=RET，value on stack=STK</li>
+<li>这一步提供了relative improvement 20%</li>
+</ul>
+</li>
+<li>通过分析CFG，可从<strong>call sites的近似运行时的顺序</strong>中，获知增强的call sites. Sec2</li>
+<li><strong>增强的call sites</strong>  能有效的表示二进制过程</li>
+<li>运用了大量的神经网络技术</li>
+</ul>
+<p>0x3 model 的介绍就不写了.</p>
+<h2 id="0x4-representation-binary-procedures"><a class="markdownIt-Anchor" href="#0x4-representation-binary-procedures"></a> 0x4 Representation Binary Procedures</h2>
+<h3 id="reconstruct-call-site"><a class="markdownIt-Anchor" href="#reconstruct-call-site"></a> Reconstruct call site</h3>
+<p>重构三种调用点的方法</p>
+<ul>
+<li>内部调用，elf内部的固定位置的过程调用
+<ul>
+<li>stripped binary 去除了符号表，所以无法恢复目标函数名（procedure name）；</li>
+</ul>
+</li>
+<li>外部调用，动态加载的外部库中的过程调用
+<ul>
+<li>elf导入表中包含这些函数名，且通过依赖库的debug信息可以得知函数参数信息；</li>
+</ul>
+</li>
+<li>间接调用，调用时地址存储在寄存器中的间接调用
+<ul>
+<li>通过CFG上取路径分析可能的目标方法，如果能解析成外部调用，就解析，否则就不能做reconstruct.</li>
+</ul>
+</li>
+</ul>
+<div class="post-note note-success"><p><u>这里完成了对调用点目标方法名的解析.</u></p></div>
+<h2 id="41-augmenting-call-sites-with-concrete-and-abstract-values"><a class="markdownIt-Anchor" href="#41-augmenting-call-sites-with-concrete-and-abstract-values"></a> 4.1 Augmenting call sites with concrete and abstract values</h2>
+<div class="post-note note-warning"><p><u>首先为一个call site的argument register创建pointer-aware slice-tree.</u></p></div>
+<p>第一步：</p>
+<p>对于程序切片采用了Lyle and Binkley[1993]的定义，对于一条指令inst定义以下集合：</p>
+<ul>
+<li>Vwrite(inst) 指令inst中写入操作的目标寄存器</li>
+<li>Vread(inst) 指令inst中读取操作的目标寄存器，或者指令中使用的数值</li>
+<li>Pread(inst) 指令inst中写操作的目标内存地址</li>
+<li>Pread(inst) 指令inst中读操作的目标内存地址</li>
+</ul>
+<p>前两个集合捕捉了所有指令中读写的值（寄存器）和立即数，后两集合捕捉了所有读写操作的指针.</p>
+<p>注意，控制流指令和栈指针EIP+ESP排除在外，因为他们与数据流不相关.</p>
+<p>上述集合的定义结合下面例子理解：</p>
+<p><img src="/images/Nero1.png" alt="Nero1" / srcset="/images/LoadingImage.gif" data-src="/images/Nero1.png" class="lozad post-image"></p>
+<p>第二步：</p>
+<p>对于一个指令序列，可以定义：</p>
+<ul>
+<li>Vlast-write(inst, r) 包含寄存器 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>r</mi><mo>∈</mo><msub><mi>V</mi><mrow><mi>w</mi><mi>r</mi><mi>i</mi><mi>t</mi><mi>e</mi></mrow></msub><mo stretchy="false">(</mo><mi>i</mi><mi>n</mi><mi>s</mi><msup><mi>t</mi><mo mathvariant="normal">′</mo></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">r \in V_{write}(inst&#x27;)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.001892em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.22222em;">V</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.22222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.02691em;">w</span><span class="mord mathdefault mtight" style="margin-right:0.02778em;">r</span><span class="mord mathdefault mtight">i</span><span class="mord mathdefault mtight">t</span><span class="mord mathdefault mtight">e</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span><span class="mord mathdefault">s</span><span class="mord"><span class="mord mathdefault">t</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.751892em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> 的最大指令inst &gt; inst’</li>
+<li>Plast-write(inst, p) 包含指针 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>p</mi><mo>∈</mo><msub><mi>V</mi><mrow><mi>w</mi><mi>r</mi><mi>i</mi><mi>t</mi><mi>e</mi></mrow></msub><mo stretchy="false">(</mo><mi>i</mi><mi>n</mi><mi>s</mi><msup><mi>t</mi><mo mathvariant="normal">′</mo></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">p \in V_{write}(inst&#x27;)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7335400000000001em;vertical-align:-0.19444em;"></span><span class="mord mathdefault">p</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.001892em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.22222em;">V</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.22222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.02691em;">w</span><span class="mord mathdefault mtight" style="margin-right:0.02778em;">r</span><span class="mord mathdefault mtight">i</span><span class="mord mathdefault mtight">t</span><span class="mord mathdefault mtight">e</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span><span class="mord mathdefault">s</span><span class="mord"><span class="mord mathdefault">t</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.751892em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> 的最大指令inst &gt; inst’</li>
+</ul>
+<p>大于是指先执行为大.</p>
+<div class="post-note note-success"><p><u>通过这个定于就可以从一条CFG path上找到，call site处某个寄存器的相关执行. 如下图fig3(a)中rsi（green block）的三条相关指令.</u></p></div>
+<p>第三步：</p>
+<p>为了生成在指令 inst 处的 r 寄存器的pointer-aware slice，需要重复以下步骤：<code>𝑉𝑙𝑎𝑠𝑡−𝑤𝑟𝑖𝑡𝑒 → 𝑉𝑟𝑒𝑎𝑑 and 𝑃𝑙𝑎𝑠𝑡−𝑤𝑟𝑖𝑡𝑒 → 𝑃𝑟𝑒𝑎𝑑</code>，直到达到空集. 这是一个逻辑与操作，前者是指令中读取的寄存器或值，后者是指令中读取的指针.</p>
+<div class="post-note note-success"><p><u>通过这个步骤就可以得到fig3(b)这样的slice-tree.</u></p></div>
+<p><img src="/images/Nero2.png" alt="Nero2" / srcset="/images/LoadingImage.gif" data-src="/images/Nero2.png" class="lozad post-image"></p>
+<p>Fig. 3(a) shows <strong>the pointer-aware slice</strong> for the rsi register (green) that is used as an argument for connect;</p>
+<p>Fig. 3(b) represents the same slice as a tree, we denote as a “slice tree”.</p>
+<div class="post-note note-warning"><p><u>然后，分析pointer-aware slice-trees.</u></p></div>
+<p>先以下步骤做初始化tag assignments：</p>
+<ul>
+<li>被procedure P接受的参数打“ARG”标签.</li>
+<li>所有的调用指令打“RET”标签，注意这里是给存返回值的rax寄存器打“RET”标签.</li>
+<li>P的开始时rbp寄存器打“STK”标签，在传播过程中，这个标签也许会传递给rsp或者其他寄存器.</li>
+<li>当指针指向全局变量且该不能解析出具体值时，打“GLOBAL”标签.</li>
+</ul>
+<p>完成初始化以后，我们沿着(b)所示的slice-tree向下<strong>传播</strong>这些变量，知道sink点也就是API call site处的寄存器调用，按照以下顺序选择value：</p>
+<p>(1) concrete value</p>
+<p>(2) ARG</p>
+<p>(3) GLOBAL</p>
+<p>(4) RET</p>
+<p>(5) STK</p>
+<p>(6) 空集（为了顺利执行传播算法，空集永远不会到sink点）</p>
+<p>关于传播，以fig3©为例，具体过程如下：</p>
+<ul>
+<li>先给2和4打tag，“ARG”和“STK”，初始化的tag用黑色下划线画出</li>
+<li>两个tag，空集和ARG传播到3，然后3处只有ARG能传播到6</li>
+<li>在6处，根据优先级，只有ARG能传播到7</li>
+<li>6处传播下来的ARG到达了sink点，替换rsi寄存器.</li>
+</ul>
+<div class="post-note note-success"><p><u>到这里，就完成了调用点call site处参数的reconstruction.</u></p></div>
+<ul>
+<li><strong>An augmented call site graph example</strong></li>
+</ul>
+<p><img src="/images/Nero3.png" alt="Nero3" / srcset="/images/LoadingImage.gif" data-src="/images/Nero3.png" class="lozad post-image"></p>
+<p>上图展示了一个CFG和一个增强的调用图 augmented call site graph. <strong>CFG中node 4在增强图中表示为两个不同的路径上的API call</strong>，原因是对node 4处的调用中的第二个参数做slice分析时选取的CFG的path不同从而导致创建的slice也不同，之后得到的augmented arguments representation也不同.</p>
+<p>同时也注意到node 1中的一个内部调用，缺少了过程名，就用UnknownInternel表示，这也对表征程序P有一定帮助.</p>
+<ul>
+<li><strong>Dealing with aliasing and complex constant expressions</strong></li>
+</ul>
+<p>基于作者先前的工作，重新优化了整个procedure，还在分析之前优化了每个slice，这可以推导出参数值. 一个复杂的常量计算被替换为一个优化过的方式表达. 例如 <code>xor rax,rax; inc rax;</code> 简化为 <code>mov rax, 1</code> 这节省了做表达式简化的繁重工作.</p>
+<ul>
+<li><strong>Facilitating augmented call site graphs creation</strong></li>
+</ul>
+<p>为了高效分析大量的巨大的CFGs，本文执行了以下几个优化措施：</p>
+<ul>
+<li>路径前缀的缓存值计算</li>
+<li>将不包含调用的子图融合</li>
+<li>移除重复指令序列</li>
+<li>因为所有的call指令被RET label替换，在遇到所有call指令后，就停止切片.</li>
+</ul>
+<h2 id="0x5-model"><a class="markdownIt-Anchor" href="#0x5-model"></a> 0x5 Model</h2>
+<p>这一节说一下，Model如何吃上述得到的东西.</p>
+<h3 id="51-call-site-encoder"><a class="markdownIt-Anchor" href="#51-call-site-encoder"></a> 5.1 Call site Encoder</h3>
+<p>先<strong>通过学习</strong>得到一个embedding vocab：<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>E</mi><mrow><mtext> </mtext><mi>n</mi><mi>a</mi><mi>m</mi><mi>e</mi><mi>s</mi></mrow></msup></mrow><annotation encoding="application/x-tex">E^{\ names}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.664392em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mspace mtight"><span class="mtight"> </span></span><span class="mord mathdefault mtight">n</span><span class="mord mathdefault mtight">a</span><span class="mord mathdefault mtight">m</span><span class="mord mathdefault mtight">e</span><span class="mord mathdefault mtight">s</span></span></span></span></span></span></span></span></span></span></span></span>，将训练数据库中的函数名分割成token，根据vocab给每个token赋一个vector.</p>
+<p>此外，<strong>通过学习</strong>给每个抽象的参数值定一个embedding，对于具体数值也是如此. 记作：<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>E</mi><mrow><mtext> </mtext><mi>v</mi><mi>a</mi><mi>l</mi><mi>u</mi><mi>e</mi><mi>s</mi></mrow></msup></mrow><annotation encoding="application/x-tex">E^{\ values}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.849108em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mspace mtight"><span class="mtight"> </span></span><span class="mord mathdefault mtight" style="margin-right:0.03588em;">v</span><span class="mord mathdefault mtight">a</span><span class="mord mathdefault mtight" style="margin-right:0.01968em;">l</span><span class="mord mathdefault mtight">u</span><span class="mord mathdefault mtight">e</span><span class="mord mathdefault mtight">s</span></span></span></span></span></span></span></span></span></span></span></span></p>
+<ul>
+<li><strong>encoding a call site:</strong></li>
+</ul>
+<p>对于一个call site 把上述subtoken的vector求和得到一个向量作为encoding的第一部分；把<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>k</mi><mrow><mi>a</mi><mi>r</mi><mi>g</mi><mi>s</mi></mrow></msub></mrow><annotation encoding="application/x-tex">k_{args}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.980548em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-left:-0.03148em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">a</span><span class="mord mathdefault mtight" style="margin-right:0.02778em;">r</span><span class="mord mathdefault mtight" style="margin-right:0.03588em;">g</span><span class="mord mathdefault mtight">s</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span>个参数的vector 首位相接，作为第二部分. 形式化为：</p>
+<p><img src="/images/Nero4.png" alt="Nero4" / srcset="/images/LoadingImage.gif" data-src="/images/Nero4.png" class="lozad post-image"></p>
+<p>使用一个专门的no_arg符号的vector补全 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>k</mi><mrow><mi>a</mi><mi>r</mi><mi>g</mi><mi>s</mi></mrow></msub></mrow><annotation encoding="application/x-tex">k_{args}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.980548em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-left:-0.03148em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">a</span><span class="mord mathdefault mtight" style="margin-right:0.02778em;">r</span><span class="mord mathdefault mtight" style="margin-right:0.03588em;">g</span><span class="mord mathdefault mtight">s</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span> 个参数.</p>
+<h3 id="523-encoding-call-site-sequences-with-lstms-and-transformers"><a class="markdownIt-Anchor" href="#523-encoding-call-site-sequences-with-lstms-and-transformers"></a> 5.2+3 Encoding Call Site Sequences with LSTMs and Transformers</h3>
+<p>在LSTMs和Transformer的seq2seq模型中，本文抽取一个procedure上所有可能的Entry到Sink的path，用这样一个集合表征这个procedure.</p>
+<p>注意，这里和传统的seq2seq范式的<strong>区别在于</strong>，输入不是标准的单一符号序列，而是一组call site序列，所以是这些model可以说是“set-of-sequences-to-sequence”.</p>
+<h3 id="54-encoding-call-site-sequences-with-graph-neural-networks"><a class="markdownIt-Anchor" href="#54-encoding-call-site-sequences-with-graph-neural-networks"></a> 5.4 Encoding Call Site Sequences with Graph Neural Networks</h3>
+<p>使用GNN模型的时候，直接把一个procedure的CFG图作为输入，具体使用的是GCN.</p>
+<p>这里由于直接输入CFG不像上面输入call site 序列，所以要处理一下CFG：</p>
+<p>从节点是基本块的CFG开始，一个基本块上可能有多个API call. 因此，我们将每个基本块拆分为一个call site chain，以便所有传入的边缘连接到第一个call site，最后一个call site连接到基本块的所有传出边.</p>
+<p>此外本文在重构call site参数时，选取的CFG上的path不同构造出的参数抽象值或具体值可能不同，所以这里复制了这些可能不同的调用点，组合所有参数的可能的值，如图fig4.</p>
+<p>论文链接：</p>
+<p>Link: <a target="_blank" rel="noopener" href="https://dl.acm.org/doi/abs/10.1145/3428293">https://dl.acm.org/doi/abs/10.1145/3428293</a><br />
+Publisher: 2020, ACM期刊</p>
+<p>Code: <a target="_blank" rel="noopener" href="https://github.com/tech-srl/Nero">https://github.com/tech-srl/Nero</a></p>
+
+  </div>
+  <div>
+    
+      <div 
+        class="post-note note-info copyright" 
+        style="margin-top: 42px">
+        <p>
+          <span style="font-weight: bold;">作者：</span><a 
+            target="_blank" 
+            rel="nofollow noopener noreferrer" 
+            href="/about">
+            Ch3nYe
+          </a>
+        </p>
+        <p>
+          <span style="font-weight: bold;">文章链接：</span><a 
+            target="_blank" 
+            rel="nofollow noopener noreferrer" 
+            href="https://ch3nye.top/Note-Nero/">
+            https://ch3nye.top/Note-Nero/
+          </a>
+        </p>
+        <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+      </div>
+    
+  </div>
+</article>
+<div class="nav">
+  
+  
+    <div class="nav-item-next">
+      <a 
+        href="/Note-Structural-Attack-against-Graph-Based-Android-Malware-Detection/" 
+        class="nav-link">
+        <div>
+          <div class="nav-label">下一篇</div>
+          
+            <div class="nav-title">Note 《Structural Attack against Graph Based Android Malware Detection》 </div>
+          
+        </div>
+        <i class="iconfont icon-right nav-next-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+  <div 
+    class="card card-content comment-card" 
+    style="margin-top: 16px;">
+    <div class="comment-card-title">评论</div>
+    
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: '049b30eb10ea05082ef1',
+      clientSecret: 'c33ad95041c69907b3136b895008320f000987db',
+      repo: 'Ch3nYe.github.io',
+      owner: 'Ch3nYe',
+      admin: "Ch3nYe",
+      id: md5(location.href),
+      distractionFreeMode: false,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+  </div>
+
+<div 
+  class="card card-content toc-card" 
+  id="mobiletoc">
+  <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#neural-reverse-engineering-of-stripped-binaries-using-augmented-control-flow-graphs"><span class="toc-text"> Neural reverse engineering of stripped binaries using augmented control flow graphs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-introduction"><span class="toc-text"> 0x1 INTRODUCTION</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-overview"><span class="toc-text"> 0x2 overview</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x4-representation-binary-procedures"><span class="toc-text"> 0x4 Representation Binary Procedures</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#reconstruct-call-site"><span class="toc-text"> Reconstruct call site</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#41-augmenting-call-sites-with-concrete-and-abstract-values"><span class="toc-text"> 4.1 Augmenting call sites with concrete and abstract values</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x5-model"><span class="toc-text"> 0x5 Model</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#51-call-site-encoder"><span class="toc-text"> 5.1 Call site Encoder</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#523-encoding-call-site-sequences-with-lstms-and-transformers"><span class="toc-text"> 5.2+3 Encoding Call Site Sequences with LSTMs and Transformers</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#54-encoding-call-site-sequences-with-graph-neural-networks"><span class="toc-text"> 5.4 Encoding Call Site Sequences with Graph Neural Networks</span></a></li></ol></li></ol></li></ol>
+</div></main>
+            <aside class="left-column">
+              
+              <div class="card card-author">
+                
+  <img 
+    src="/images/logo.png" 
+    class="author-img"
+    width="88"
+    height="88"
+    alt="author avatar">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a 
+    class="author-posts-count" 
+    href="/archives">
+    <span>38</span>
+    <span>文章</span>
+  </a>
+  <a 
+    class="author-categories-count" 
+    href="/categories">
+    <span>6</span>
+    <span>分类</span>
+  </a>
+  <a 
+    class="author-tags-count" 
+    href="/tags">
+    <span>56</span>
+    <span>标签</span>
+  </a>
+</div>
+
+  <div class="author-card-society">
+    
+      <div class="author-card-society-icon">
+        <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+          <i class="iconfont icon-github society-icon"></i>
+        </a>
+      </div>
+    
+      <div class="author-card-society-icon">
+        <a href="mailto:sud0su@163.com">
+          <i class="iconfont icon-mail society-icon"></i>
+        </a>
+      </div>
+    
+  </div>
+
+              </div>
+               <div class="sticky-tablet">
+  
+  
+    <article class="display-when-two-columns spacer">
+      <div class="card card-content toc-card">
+        <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#neural-reverse-engineering-of-stripped-binaries-using-augmented-control-flow-graphs"><span class="toc-text"> Neural reverse engineering of stripped binaries using augmented control flow graphs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-introduction"><span class="toc-text"> 0x1 INTRODUCTION</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-overview"><span class="toc-text"> 0x2 overview</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x4-representation-binary-procedures"><span class="toc-text"> 0x4 Representation Binary Procedures</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#reconstruct-call-site"><span class="toc-text"> Reconstruct call site</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#41-augmenting-call-sites-with-concrete-and-abstract-values"><span class="toc-text"> 4.1 Augmenting call sites with concrete and abstract values</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x5-model"><span class="toc-text"> 0x5 Model</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#51-call-site-encoder"><span class="toc-text"> 5.1 Call site Encoder</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#523-encoding-call-site-sequences-with-lstms-and-transformers"><span class="toc-text"> 5.2+3 Encoding Call Site Sequences with LSTMs and Transformers</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#54-encoding-call-site-sequences-with-graph-neural-networks"><span class="toc-text"> 5.4 Encoding Call Site Sequences with Graph Neural Networks</span></a></li></ol></li></ol></li></ol>
+      </div>
+    </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header">
+    <i 
+      class="iconfont icon-fenlei" 
+      style="padding-right: 2px;">
+    </i>分类
+  </div>
+  <div class="categories-list">
+    
+      <a href="/categories/%E5%A4%87%E5%BF%98/">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E6%9D%8E%E5%AE%8F%E6%AF%85%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">15</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%AC%94%E8%AE%B0/">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">11</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%94%9F%E6%B4%BB/">
+        <div class="categories-list-item">
+          生活
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E5%AE%9E%E6%88%98/">
+        <div class="categories-list-item">
+          实战
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header">
+    <i 
+      class="iconfont icon-biaoqian" 
+      style="padding-right: 2px;">
+    </i>热门标签
+  </div>
+  <div class="tags-list">
+    
+      <a 
+        href="/tags/Android/" 
+        title="Android">
+        <div class="tags-list-item">Android</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%B5%81%E9%87%8F%E6%8A%93%E5%8C%85/" 
+        title="流量抓包">
+        <div class="tags-list-item">流量抓包</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%95%99%E7%A8%8B/" 
+        title="教程">
+        <div class="tags-list-item">教程</div>
+      </a>
+    
+      <a 
+        href="/tags/Fiddler/" 
+        title="Fiddler">
+        <div class="tags-list-item">Fiddler</div>
+      </a>
+    
+      <a 
+        href="/tags/ML/" 
+        title="ML">
+        <div class="tags-list-item">ML</div>
+      </a>
+    
+      <a 
+        href="/tags/note/" 
+        title="note">
+        <div class="tags-list-item">note</div>
+      </a>
+    
+      <a 
+        href="/tags/Next-Step-of-ML/" 
+        title="Next-Step-of-ML">
+        <div class="tags-list-item">Next-Step-of-ML</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%80%BB%E7%BB%93/" 
+        title="总结">
+        <div class="tags-list-item">总结</div>
+      </a>
+    
+      <a 
+        href="/tags/%E5%AD%A6%E4%B9%A0/" 
+        title="学习">
+        <div class="tags-list-item">学习</div>
+      </a>
+    
+      <a 
+        href="/tags/%E8%AE%BA%E6%96%87/" 
+        title="论文">
+        <div class="tags-list-item">论文</div>
+      </a>
+    
+      <a 
+        href="/tags/%E7%AC%94%E8%AE%B0/" 
+        title="笔记">
+        <div class="tags-list-item">笔记</div>
+      </a>
+    
+      <a 
+        href="/tags/Hot-Patch/" 
+        title="Hot-Patch">
+        <div class="tags-list-item">Hot-Patch</div>
+      </a>
+    
+      <a 
+        href="/tags/Intrusion-Detection/" 
+        title="Intrusion-Detection">
+        <div class="tags-list-item">Intrusion-Detection</div>
+      </a>
+    
+      <a 
+        href="/tags/Deep-Learning/" 
+        title="Deep-Learning">
+        <div class="tags-list-item">Deep-Learning</div>
+      </a>
+    
+      <a 
+        href="/tags/Attack/" 
+        title="Attack">
+        <div class="tags-list-item">Attack</div>
+      </a>
+    
+      <a 
+        href="/tags/Backdoor/" 
+        title="Backdoor">
+        <div class="tags-list-item">Backdoor</div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+            </aside>
+            <aside class="right-column">
+              <div class="sticky-widescreen">
+  
+  
+    <article class="card card-content toc-card">
+      <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#neural-reverse-engineering-of-stripped-binaries-using-augmented-control-flow-graphs"><span class="toc-text"> Neural reverse engineering of stripped binaries using augmented control flow graphs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-introduction"><span class="toc-text"> 0x1 INTRODUCTION</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-overview"><span class="toc-text"> 0x2 overview</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x4-representation-binary-procedures"><span class="toc-text"> 0x4 Representation Binary Procedures</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#reconstruct-call-site"><span class="toc-text"> Reconstruct call site</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#41-augmenting-call-sites-with-concrete-and-abstract-values"><span class="toc-text"> 4.1 Augmenting call sites with concrete and abstract values</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x5-model"><span class="toc-text"> 0x5 Model</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#51-call-site-encoder"><span class="toc-text"> 5.1 Call site Encoder</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#523-encoding-call-site-sequences-with-lstms-and-transformers"><span class="toc-text"> 5.2+3 Encoding Call Site Sequences with LSTMs and Transformers</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#54-encoding-call-site-sequences-with-graph-neural-networks"><span class="toc-text"> 5.4 Encoding Call Site Sequences with Graph Neural Networks</span></a></li></ol></li></ol></li></ol>
+    </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header">
+    <i 
+      class="iconfont icon-wenzhang_huaban" 
+      style="padding-right: 2px;">
+    </i>最近文章
+  </div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-02-17</div>
+        <a href="/Note-Nero/"><div class="recent-posts-item-content">Note 《Neural reverse engineering of stripped binaries using augmented control flow graphs》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-01-29</div>
+        <a href="/Note-Structural-Attack-against-Graph-Based-Android-Malware-Detection/"><div class="recent-posts-item-content">Note 《Structural Attack against Graph Based Android Malware Detection》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-01-21</div>
+        <a href="/Note-ELECTRA-Pre-training-Text-Encoders-as-Discriminators-Rather-Than-Generators/"><div class="recent-posts-item-content">Note 《ELECTRA Pre-training Text Encoders as Discriminators Rather Than Generators》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-01-01</div>
+        <a href="/2021%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93/"><div class="recent-posts-item-content">2021年终总结</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+     
+    <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>
+          Copyright ©
+          
+            2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a 
+          href="/" 
+          class="footer-link">
+          ch3nye's blog
+        </a>
+      </div>
+    </div>
+
+    
+      <div class="footer-dsc">
+        
+          Powered by
+          <a 
+            href="https://hexo.io/" 
+            class="footer-link" 
+            target="_blank" 
+            rel="nofollow noopener noreferrer">
+            &nbsp;Hexo
+          </a>
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          Theme -
+          <a 
+            href="https://github.com/theme-kaze" 
+            class="footer-link" 
+            target="_blank"
+            rel="nofollow noopener noreferrer">
+            &nbsp;Kaze
+          </a>
+        
+      </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+          本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+<!-- Default Statcounter code for My Blog https://ch3nye.top -->
+<script type="text/javascript">
+var sc_project=12696483; 
+var sc_invisible=1; 
+var sc_security="0f70f90d"; 
+</script>
+<script type="text/javascript"
+src="https://www.statcounter.com/counter/counter.js" async></script>
+<noscript><div class="statcounter"><a title="Web Analytics"
+href="https://statcounter.com/" target="_blank"><img class="statcounter"
+src="https://c.statcounter.com/12696483/0/0f70f90d/1/" alt="Web Analytics"
+referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
+<!-- End of Statcounter Code -->
+</footer> 
+    
+  <a 
+    role="button" 
+    id="scrollbutton" 
+    class="basebutton" 
+    aria-label="回到顶部">
+    <i class="iconfont icon-arrowleft button-icon"></i>
+  </a>
+
+<a 
+  role="button" 
+  id="menubutton"
+  aria-label="menu button"
+  class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="popbutton" 
+  class="basebutton" 
+  aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="darkbutton" 
+  class="basebutton darkwidget" 
+  aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="searchbutton" 
+  class="basebutton searchwidget" 
+  aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a> 
+     
+     
+      
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+ 
+     
+     
+      <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img')
+    var i
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a')
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'))
+      wrapper.setAttribute('aria-label', 'illustration')
+      wrapper.style.cssText =
+        'width: 100%; display: flex; justify-content: center;'
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt
+      wrapper.dataset.nolink = true
+      img[i].before(wrapper)
+      wrapper.append(img[i])
+      var divWrap = document.createElement('div')
+      divWrap.classList.add('gallery')
+      wrapper.before(divWrap)
+      divWrap.append(wrapper)
+    }
+    baguetteBox.run('.gallery')
+  }
+</script>
+<script>
+  loadScript(
+    "/js/lib/lightbox/baguetteBox.min.js",
+    addImgLayout
+  )
+</script>
+ 
+     
+     
+    <script src="/js/main.js"></script> 
+    
+      <script> 
+        loadScript('/js/lib/busuanzi.min.js') 
+      </script>
+     
+    
+      <script>
+        var addLazyload = function () {
+          var observer = lozad('.lozad', {
+            load: function (el) {
+              el.srcset = el.getAttribute('data-src')
+            },
+            loaded: function (el) {
+              el.classList.add('loaded')
+            },
+          })
+          observer.observe()
+        }
+      </script>
+      <script>
+        loadScript('/js/lib/lozad.min.js', addLazyload)
+      </script>
+     
+    
+      <script>
+        var googleAnalytics = function () {
+          window.dataLayer = window.dataLayer || []
+          function gtag() {
+            dataLayer.push(arguments)
+          }
+          gtag('js', new Date())
+          gtag('config', 'G-WHGL11014T')
+        }
+    </script>
+      <script>
+        loadScript(
+          'https://www.googletagmanager.com/gtag/js?id=' +
+            'G-WHGL11014T',
+          googleAnalytics
+        )
+      </script>
+    
+    
+      <script>
+        setTimeout(() => {localSearch("search.json")}, 0)
+      </script>
+    
+  </body>
+</html>
