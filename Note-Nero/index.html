@@ -506,7 +506,7 @@
 </li>
 </ul>
 <div class="post-note note-success"><p><u>这里完成了对调用点目标方法名的解析.</u></p></div>
-<h2 id="41-augmenting-call-sites-with-concrete-and-abstract-values"><a class="markdownIt-Anchor" href="#41-augmenting-call-sites-with-concrete-and-abstract-values"></a> 4.1 Augmenting call sites with concrete and abstract values</h2>
+<h3 id="41-augmenting-call-sites-with-concrete-and-abstract-values"><a class="markdownIt-Anchor" href="#41-augmenting-call-sites-with-concrete-and-abstract-values"></a> 4.1 Augmenting call sites with concrete and abstract values</h3>
 <div class="post-note note-warning"><p><u>首先为一个call site的argument register创建pointer-aware slice-tree.</u></p></div>
 <p>第一步：</p>
 <p>对于程序切片采用了Lyle and Binkley[1993]的定义，对于一条指令inst定义以下集合：</p>
@@ -690,7 +690,7 @@ Publisher: 2020, ACM期刊</p>
     style="padding-right: 2px;">
   </i>目录
 </div>
-<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#neural-reverse-engineering-of-stripped-binaries-using-augmented-control-flow-graphs"><span class="toc-text"> Neural reverse engineering of stripped binaries using augmented control flow graphs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-introduction"><span class="toc-text"> 0x1 INTRODUCTION</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-overview"><span class="toc-text"> 0x2 overview</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x4-representation-binary-procedures"><span class="toc-text"> 0x4 Representation Binary Procedures</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#reconstruct-call-site"><span class="toc-text"> Reconstruct call site</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#41-augmenting-call-sites-with-concrete-and-abstract-values"><span class="toc-text"> 4.1 Augmenting call sites with concrete and abstract values</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x5-model"><span class="toc-text"> 0x5 Model</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#51-call-site-encoder"><span class="toc-text"> 5.1 Call site Encoder</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#523-encoding-call-site-sequences-with-lstms-and-transformers"><span class="toc-text"> 5.2+3 Encoding Call Site Sequences with LSTMs and Transformers</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#54-encoding-call-site-sequences-with-graph-neural-networks"><span class="toc-text"> 5.4 Encoding Call Site Sequences with Graph Neural Networks</span></a></li></ol></li></ol></li></ol>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#neural-reverse-engineering-of-stripped-binaries-using-augmented-control-flow-graphs"><span class="toc-text"> Neural reverse engineering of stripped binaries using augmented control flow graphs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-introduction"><span class="toc-text"> 0x1 INTRODUCTION</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-overview"><span class="toc-text"> 0x2 overview</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x4-representation-binary-procedures"><span class="toc-text"> 0x4 Representation Binary Procedures</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#reconstruct-call-site"><span class="toc-text"> Reconstruct call site</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#41-augmenting-call-sites-with-concrete-and-abstract-values"><span class="toc-text"> 4.1 Augmenting call sites with concrete and abstract values</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x5-model"><span class="toc-text"> 0x5 Model</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#51-call-site-encoder"><span class="toc-text"> 5.1 Call site Encoder</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#523-encoding-call-site-sequences-with-lstms-and-transformers"><span class="toc-text"> 5.2+3 Encoding Call Site Sequences with LSTMs and Transformers</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#54-encoding-call-site-sequences-with-graph-neural-networks"><span class="toc-text"> 5.4 Encoding Call Site Sequences with Graph Neural Networks</span></a></li></ol></li></ol></li></ol>
 </div></main>
             <aside class="left-column">
               
@@ -754,7 +754,7 @@ Publisher: 2020, ACM期刊</p>
     style="padding-right: 2px;">
   </i>目录
 </div>
-<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#neural-reverse-engineering-of-stripped-binaries-using-augmented-control-flow-graphs"><span class="toc-text"> Neural reverse engineering of stripped binaries using augmented control flow graphs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-introduction"><span class="toc-text"> 0x1 INTRODUCTION</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-overview"><span class="toc-text"> 0x2 overview</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x4-representation-binary-procedures"><span class="toc-text"> 0x4 Representation Binary Procedures</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#reconstruct-call-site"><span class="toc-text"> Reconstruct call site</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#41-augmenting-call-sites-with-concrete-and-abstract-values"><span class="toc-text"> 4.1 Augmenting call sites with concrete and abstract values</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x5-model"><span class="toc-text"> 0x5 Model</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#51-call-site-encoder"><span class="toc-text"> 5.1 Call site Encoder</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#523-encoding-call-site-sequences-with-lstms-and-transformers"><span class="toc-text"> 5.2+3 Encoding Call Site Sequences with LSTMs and Transformers</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#54-encoding-call-site-sequences-with-graph-neural-networks"><span class="toc-text"> 5.4 Encoding Call Site Sequences with Graph Neural Networks</span></a></li></ol></li></ol></li></ol>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#neural-reverse-engineering-of-stripped-binaries-using-augmented-control-flow-graphs"><span class="toc-text"> Neural reverse engineering of stripped binaries using augmented control flow graphs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-introduction"><span class="toc-text"> 0x1 INTRODUCTION</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-overview"><span class="toc-text"> 0x2 overview</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x4-representation-binary-procedures"><span class="toc-text"> 0x4 Representation Binary Procedures</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#reconstruct-call-site"><span class="toc-text"> Reconstruct call site</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#41-augmenting-call-sites-with-concrete-and-abstract-values"><span class="toc-text"> 4.1 Augmenting call sites with concrete and abstract values</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x5-model"><span class="toc-text"> 0x5 Model</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#51-call-site-encoder"><span class="toc-text"> 5.1 Call site Encoder</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#523-encoding-call-site-sequences-with-lstms-and-transformers"><span class="toc-text"> 5.2+3 Encoding Call Site Sequences with LSTMs and Transformers</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#54-encoding-call-site-sequences-with-graph-neural-networks"><span class="toc-text"> 5.4 Encoding Call Site Sequences with Graph Neural Networks</span></a></li></ol></li></ol></li></ol>
       </div>
     </article>
   
@@ -826,27 +826,9 @@ Publisher: 2020, ACM期刊</p>
   <div class="tags-list">
     
       <a 
-        href="/tags/Android/" 
-        title="Android">
-        <div class="tags-list-item">Android</div>
-      </a>
-    
-      <a 
-        href="/tags/%E6%B5%81%E9%87%8F%E6%8A%93%E5%8C%85/" 
-        title="流量抓包">
-        <div class="tags-list-item">流量抓包</div>
-      </a>
-    
-      <a 
-        href="/tags/%E6%95%99%E7%A8%8B/" 
-        title="教程">
-        <div class="tags-list-item">教程</div>
-      </a>
-    
-      <a 
-        href="/tags/Fiddler/" 
-        title="Fiddler">
-        <div class="tags-list-item">Fiddler</div>
+        href="/tags/note/" 
+        title="note">
+        <div class="tags-list-item">note</div>
       </a>
     
       <a 
@@ -856,33 +838,9 @@ Publisher: 2020, ACM期刊</p>
       </a>
     
       <a 
-        href="/tags/note/" 
-        title="note">
-        <div class="tags-list-item">note</div>
-      </a>
-    
-      <a 
         href="/tags/Next-Step-of-ML/" 
         title="Next-Step-of-ML">
         <div class="tags-list-item">Next-Step-of-ML</div>
-      </a>
-    
-      <a 
-        href="/tags/%E6%80%BB%E7%BB%93/" 
-        title="总结">
-        <div class="tags-list-item">总结</div>
-      </a>
-    
-      <a 
-        href="/tags/%E5%AD%A6%E4%B9%A0/" 
-        title="学习">
-        <div class="tags-list-item">学习</div>
-      </a>
-    
-      <a 
-        href="/tags/%E8%AE%BA%E6%96%87/" 
-        title="论文">
-        <div class="tags-list-item">论文</div>
       </a>
     
       <a 
@@ -892,15 +850,15 @@ Publisher: 2020, ACM期刊</p>
       </a>
     
       <a 
-        href="/tags/Hot-Patch/" 
-        title="Hot-Patch">
-        <div class="tags-list-item">Hot-Patch</div>
+        href="/tags/%E8%AE%BA%E6%96%87/" 
+        title="论文">
+        <div class="tags-list-item">论文</div>
       </a>
     
       <a 
-        href="/tags/Intrusion-Detection/" 
-        title="Intrusion-Detection">
-        <div class="tags-list-item">Intrusion-Detection</div>
+        href="/tags/Android/" 
+        title="Android">
+        <div class="tags-list-item">Android</div>
       </a>
     
       <a 
@@ -910,15 +868,57 @@ Publisher: 2020, ACM期刊</p>
       </a>
     
       <a 
-        href="/tags/Attack/" 
-        title="Attack">
-        <div class="tags-list-item">Attack</div>
+        href="/tags/%E6%80%BB%E7%BB%93/" 
+        title="总结">
+        <div class="tags-list-item">总结</div>
       </a>
     
       <a 
-        href="/tags/Backdoor/" 
-        title="Backdoor">
-        <div class="tags-list-item">Backdoor</div>
+        href="/tags/%E5%AE%9E%E6%88%98/" 
+        title="实战">
+        <div class="tags-list-item">实战</div>
+      </a>
+    
+      <a 
+        href="/tags/crack/" 
+        title="crack">
+        <div class="tags-list-item">crack</div>
+      </a>
+    
+      <a 
+        href="/tags/%E4%BA%8C%E8%BF%9B%E5%88%B6/" 
+        title="二进制">
+        <div class="tags-list-item">二进制</div>
+      </a>
+    
+      <a 
+        href="/tags/Binary/" 
+        title="Binary">
+        <div class="tags-list-item">Binary</div>
+      </a>
+    
+      <a 
+        href="/tags/%E5%AD%A6%E4%B9%A0/" 
+        title="学习">
+        <div class="tags-list-item">学习</div>
+      </a>
+    
+      <a 
+        href="/tags/Graph/" 
+        title="Graph">
+        <div class="tags-list-item">Graph</div>
+      </a>
+    
+      <a 
+        href="/tags/HTTPS/" 
+        title="HTTPS">
+        <div class="tags-list-item">HTTPS</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%89%8B%E8%AE%B0/" 
+        title="手记">
+        <div class="tags-list-item">手记</div>
       </a>
     
   </div>
@@ -939,7 +939,7 @@ Publisher: 2020, ACM期刊</p>
     style="padding-right: 2px;">
   </i>目录
 </div>
-<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#neural-reverse-engineering-of-stripped-binaries-using-augmented-control-flow-graphs"><span class="toc-text"> Neural reverse engineering of stripped binaries using augmented control flow graphs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-introduction"><span class="toc-text"> 0x1 INTRODUCTION</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-overview"><span class="toc-text"> 0x2 overview</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x4-representation-binary-procedures"><span class="toc-text"> 0x4 Representation Binary Procedures</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#reconstruct-call-site"><span class="toc-text"> Reconstruct call site</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#41-augmenting-call-sites-with-concrete-and-abstract-values"><span class="toc-text"> 4.1 Augmenting call sites with concrete and abstract values</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x5-model"><span class="toc-text"> 0x5 Model</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#51-call-site-encoder"><span class="toc-text"> 5.1 Call site Encoder</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#523-encoding-call-site-sequences-with-lstms-and-transformers"><span class="toc-text"> 5.2+3 Encoding Call Site Sequences with LSTMs and Transformers</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#54-encoding-call-site-sequences-with-graph-neural-networks"><span class="toc-text"> 5.4 Encoding Call Site Sequences with Graph Neural Networks</span></a></li></ol></li></ol></li></ol>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#neural-reverse-engineering-of-stripped-binaries-using-augmented-control-flow-graphs"><span class="toc-text"> Neural reverse engineering of stripped binaries using augmented control flow graphs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x1-introduction"><span class="toc-text"> 0x1 INTRODUCTION</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x2-overview"><span class="toc-text"> 0x2 overview</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x4-representation-binary-procedures"><span class="toc-text"> 0x4 Representation Binary Procedures</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#reconstruct-call-site"><span class="toc-text"> Reconstruct call site</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#41-augmenting-call-sites-with-concrete-and-abstract-values"><span class="toc-text"> 4.1 Augmenting call sites with concrete and abstract values</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x5-model"><span class="toc-text"> 0x5 Model</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#51-call-site-encoder"><span class="toc-text"> 5.1 Call site Encoder</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#523-encoding-call-site-sequences-with-lstms-and-transformers"><span class="toc-text"> 5.2+3 Encoding Call Site Sequences with LSTMs and Transformers</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#54-encoding-call-site-sequences-with-graph-neural-networks"><span class="toc-text"> 5.4 Encoding Call Site Sequences with Graph Neural Networks</span></a></li></ol></li></ol></li></ol>
     </article>
   
   
