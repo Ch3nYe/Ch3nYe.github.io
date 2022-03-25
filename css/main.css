@@ -24,7 +24,12 @@ h6 {
   margin: 0;
   padding: 0;
 }
-h1,
+h1 {
+  font-size: 200%;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--title-color);
+}
 h2,
 h3,
 h4,
