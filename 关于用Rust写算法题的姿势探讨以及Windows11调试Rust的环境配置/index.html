@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+  <meta charset="UTF-8">
+  <meta 
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta 
+    http-equiv="X-UA-Compatible" 
+    content="ie=edge">
+  <meta 
+    name="theme-color" 
+    content="#fff" 
+    id="theme-color">
+  <meta 
+    name="description" 
+    content="网络安全 Android ML CTF">
+  <link 
+    rel="icon" 
+    href="/images/logo.png">
+  <title>关于用Rust写算法题的姿势探讨以及Windows11调试Rust的环境配置</title>
+  
+    
+      <meta 
+        property="og:title" 
+        content="关于用Rust写算法题的姿势探讨以及Windows11调试Rust的环境配置">
+    
+    
+      <meta 
+        property="og:url" 
+        content="https://ch3nye.top/%E5%85%B3%E4%BA%8E%E7%94%A8Rust%E5%86%99%E7%AE%97%E6%B3%95%E9%A2%98%E7%9A%84%E5%A7%BF%E5%8A%BF%E6%8E%A2%E8%AE%A8%E4%BB%A5%E5%8F%8AWindows11%E8%B0%83%E8%AF%95Rust%E7%9A%84%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/index.html">
+    
+    
+      <meta 
+        property="og:img" 
+        content="/images/logo.png">
+    
+    
+      <meta 
+        property="og:img" 
+        content="网络安全 Android ML CTF">
+    
+    
+      <meta 
+        property="og:type" 
+        content="article">
+      <meta 
+        property="og:article:published_time" 
+        content="2022-03-25">
+      <meta 
+        property="og:article:modified_time" 
+        content="2022-03-25">
+      <meta 
+        property="og:article:author" 
+        content="Ch3nYe">
+      
+        
+          <meta 
+            property="og:article:tag" 
+            content="备忘">
+        
+          <meta 
+            property="og:article:tag" 
+            content="Rust">
+        
+          <meta 
+            property="og:article:tag" 
+            content="algorithm">
+        
+          <meta 
+            property="og:article:tag" 
+            content="environment">
+        
+      
+    
+  
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+    function loadCSS(href, data, attr) {
+      var sheet = document.createElement('link');
+      sheet.ref = 'stylesheet';
+      sheet.href = href;
+      sheet.dataset[data] = attr;
+      document.head.appendChild(sheet);
+    }
+    function changeCSS(cssFile, data, attr) {
+      var oldlink = document.querySelector(data);
+      var newlink = document.createElement("link");
+      newlink.setAttribute("rel", "stylesheet");
+      newlink.setAttribute("href", cssFile);
+      newlink.dataset.prism = attr;
+      document.head.replaceChild(newlink, oldlink);
+    }
+  </script>
+  
+    
+      
+      
+      
+      
+        
+        
+        
+        <script>
+          function prismThemeChange() {
+            if(document.getElementById('theme-color').dataset.mode === 'dark') {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism-tomorrow.min.css', '[data-prism]', 'prism-tomorrow');
+              } else {
+                loadCSS('/js/lib/prism/prism-tomorrow.min.css', 'prism', 'prism-tomorrow');
+              }
+            } else {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism.min.css', '[data-prism]', 'prism');
+              } else {
+                loadCSS('/js/lib/prism/prism.min.css', 'prism', 'prism');
+              }
+            }
+          }
+          prismThemeChange()
+        </script>
+      
+      
+        
+        <link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+      
+    
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+  </script>
+  
+    <script>
+      var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+        document.getElementById('theme-color').dataset.mode = getCssMediaQuery();
+        prismThemeChange();
+      }
+    };
+    setDarkmode();
+    </script>
+  
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+    <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  <link rel="stylesheet" href="/css/main.css">
+  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+  
+    <link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+  <body>
+    <div class="wrapper">
+       
+      <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+        <img 
+          class="navbar-logo-img"
+          width="32"
+          height="32"
+          src="/images/logo.png" 
+          alt="blog logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+      <a 
+        href="/" 
+        class="navbar-menu-item">
+        
+          首页
+        
+      </a>
+    
+      <a 
+        href="/archives" 
+        class="navbar-menu-item">
+        
+          归档
+        
+      </a>
+    
+      <a 
+        href="/tags" 
+        class="navbar-menu-item">
+        
+          标签
+        
+      </a>
+    
+      <a 
+        href="/categories" 
+        class="navbar-menu-item">
+        
+          分类
+        
+      </a>
+    
+      <a 
+        href="/about" 
+        class="navbar-menu-item">
+        
+          关于
+        
+      </a>
+    
+      <a 
+        href="/links" 
+        class="navbar-menu-item">
+        
+          友链
+        
+      </a>
+    
+      <a 
+        href="/shuoshuo" 
+        class="navbar-menu-item">
+        
+          说说
+        
+      </a>
+    
+    <a 
+      class="navbar-menu-item darknavbar" 
+      id="dark">
+      <i class="iconfont icon-weather"></i>
+    </a>
+    <a 
+      class="navbar-menu-item searchnavbar" 
+      id="search">
+      <i 
+        class="iconfont icon-search" 
+        style="font-size: 1.2rem; font-weight: 400;">
+      </i>
+    </a>
+  </div>
+</nav> 
+      
+      <div 
+        id="local-search" 
+        style="display: none">
+        <input
+          class="navbar-menu-item"
+          id="search-input"
+          placeholder="请输入搜索内容..." />
+        <div id="search-content"></div>
+      </div>
+      
+      <div class="section-wrap">
+        <div class="container">
+          <div class="columns">
+            <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      关于用Rust写算法题的姿势探讨以及Windows11调试Rust的环境配置
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2022-03-24T16:00:00.000Z">
+      <i 
+        class="iconfont icon-calendar" 
+        style="margin-right: 2px;">
+      </i>
+      <span>2022-03-25</span>
+    </time>
+    
+      <span class="dot"></span>
+      
+        <a 
+          href="/categories/%E5%A4%87%E5%BF%98/" 
+          class="post-meta-link">
+          备忘
+        </a>
+      
+    
+    
+      <span class="dot"></span>
+      <span>1.3k 字</span>
+    
+  </div>
+  
+    <div 
+      class="post-meta post-show-meta" 
+      style="margin-top: -10px;">
+      <div style="display: flex; align-items: center;">
+        <i 
+          class="iconfont icon-biaoqian" 
+          style="margin-right: 2px; font-size: 1.15rem;">
+        </i>
+        
+          
+          <a 
+            href="/tags/%E5%A4%87%E5%BF%98/" 
+            class="post-meta-link">
+            备忘
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/Rust/" 
+            class="post-meta-link">
+            Rust
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/algorithm/" 
+            class="post-meta-link">
+            algorithm
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/environment/" 
+            class="post-meta-link">
+            environment
+          </a>
+        
+      </div>
+    </div>
+  
+  </header>
+  <div 
+    id="section" 
+    class="post-content">
+    <h1 id="0x0-前言"><a class="markdownIt-Anchor" href="#0x0-前言"></a> 0x0 前言</h1>
+<p>用Rust写算法应该怎么组织目录结构比较好，我到各种论坛上找了都没见到有人谈这个话题，可能大家都有自己的组织方式，我作为Rust新人就有点懵. 幸运的是我在GitHub上找到一个大哥维护的<a target="_blank" rel="noopener" href="https://github.com/EFanZh/LeetCode">LeetCode in Rust</a>项目感觉非常不错，就抄了他的结构，本文做一个简要叙述，方便Rust新人通过写算法题的方式上手Rust. 可能我的方法不是Rust写算法题组织文件的最优解，但对我来说足够了，也希望对你有帮助.</p>
+<p>首先来配置一下Rust的开发和调试环境.</p>
+<h1 id="0x1-rust开发和调试环境配置"><a class="markdownIt-Anchor" href="#0x1-rust开发和调试环境配置"></a> 0x1 Rust开发和调试环境配置</h1>
+<p>Clion自带的Bundled MinGW就可以编译和调试Rust</p>
+<ul>
+<li>安装Clion</li>
+<li>Settings-Build, Execution, Deployment-toolchains 自动识别</li>
+<li>Clion Rust插件</li>
+<li>安装rust
+<ol>
+<li>自定义安装 选2</li>
+<li><strong>输入指定toolchain</strong> <code>x86_64-pc-windows-gnu</code></li>
+<li>其他的默认就好</li>
+</ol>
+</li>
+</ul>
+<p>如果已经装过了，可以通过<code>rustup default</code> 查看默认toolchain，</p>
+<p>通过  <code>rustup default stable-x86_64-pc-windows-gnu</code>  修改默认toolchain.</p>
+<p>结束.</p>
+<h1 id="0x2-rust工程目录简述"><a class="markdownIt-Anchor" href="#0x2-rust工程目录简述"></a> 0x2 Rust工程目录简述</h1>
+<h2 id="主要目录"><a class="markdownIt-Anchor" href="#主要目录"></a> 主要目录</h2>
+<p>D:\RustProject\LeetCode<br />
+├─src // 源码目录<br />
+│  ├─problem_0164_maximum_gap // 每个算法问题目录</p>
+<p>│  │    <a target="_blank" rel="noopener" href="http://xn--mod-5r4a3f.rs">├─mod.rs</a> // 模块声明 or 模块接口</p>
+<p>│  │    ├─buckets_and_pigeonhole.rs // 解法1</p>
+<p>│  │    <a target="_blank" rel="noopener" href="http://xn--solve2-2n7c3f.rs">└─solve2.rs</a> // 解法2</p>
+<p>│  ├─problem_0372_super_pow<br />
+│  ├─…<br />
+│  ├─problem_xxxx_k_radius_subarray_averages</p>
+<p>│  <a target="_blank" rel="noopener" href="http://xn--main-4e2bxe.rs">└─main.rs</a></p>
+<p>├─target // 编译生成目录<br />
+│   └─…</p>
+<p>├─Cargo.toml // cargo 配置文件</p>
+<p><a target="_blank" rel="noopener" href="http://xn--README-2n7c3f.md">└─README.md</a> // 如果设置git同步到远端的话，写一个简单的仓库说明</p>
+<h2 id="解题工作流"><a class="markdownIt-Anchor" href="#解题工作流"></a> 解题工作流</h2>
+<p>以算法题目0164 <a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/maximum-gap/">maximum_gap</a>为例：</p>
+<p>leetcode-cn 网站上给的Rust模板为：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">impl</span> <span class="token class-name">Solution</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function-definition function">maximum_gap</span><span class="token punctuation">(</span>nums<span class="token punctuation">:</span> <span class="token class-name">Vec</span><span class="token operator">&lt;</span><span class="token keyword">i32</span><span class="token operator">></span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token keyword">i32</span> <span class="token punctuation">&#123;</span>
+        
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ol>
+<li>我们在src目录创建子目录problem_0164_maximum_gap</li>
+</ol>
+<p>​	遵从 problem_id_title 的格式，我这里的问题编号是从leetcode-cn.com上取的，<a target="_blank" rel="noopener" href="http://xn--leetcode-c49l0o098s02vc.com">不是主站leetcode.com</a>.</p>
+<ol start="2">
+<li>在main.rs中调用当前模块</li>
+</ol>
+<p>将你当前调试的模块导入到main.rs中，以problem_0164_maximum_gap 为例：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token comment">// mod problem_xxxx_xxxxxx; </span>
+<span class="token keyword">mod</span> <span class="token module-declaration namespace">problem_0164_maximum_gap</span><span class="token punctuation">;</span>
+<span class="token comment">// other problem</span>
+<span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token string">"[+]main.rs| Compile Success"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>导入的目的是让Clion在你写子模块的时候进行代码分析，帮你自动补全.</p>
+<p>注意，调试完的模块就<strong>注释</strong>掉防止使用 cargo test 测试时测试到不需要的模块.</p>
+<ol start="3">
+<li><a target="_blank" rel="noopener" href="http://xn--mod-tu9du7lwoj2xhpzhmxaw49bbf9b.rs">在子目录创建文件mod.rs</a>，将测试输入写在这个文件中</li>
+</ol>
+<p><a target="_blank" rel="noopener" href="http://mod.rs">mod.rs</a></p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">pub</span> <span class="token keyword">mod</span> <span class="token module-declaration namespace">buckets_and_pigeonhole</span><span class="token punctuation">;</span> <span class="token comment">// 解法1</span>
+<span class="token keyword">pub</span> <span class="token keyword">mod</span> <span class="token module-declaration namespace">solve2</span><span class="token punctuation">;</span> <span class="token comment">// 解法2</span>
+
+<span class="token keyword">pub</span> <span class="token keyword">trait</span> <span class="token class-name">Solution</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">fn</span> <span class="token function-definition function">maximum_gap</span><span class="token punctuation">(</span>nums<span class="token punctuation">:</span> <span class="token class-name">Vec</span><span class="token operator">&lt;</span><span class="token keyword">i32</span><span class="token operator">></span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token keyword">i32</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token attribute attr-name">#[cfg(test)]</span>
+<span class="token keyword">mod</span> <span class="token module-declaration namespace">tests</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">use</span> <span class="token keyword">super</span><span class="token punctuation">::</span><span class="token class-name">Solution</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function-definition function">run</span><span class="token operator">&lt;</span><span class="token class-name">S</span><span class="token punctuation">:</span> <span class="token class-name">Solution</span><span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">let</span> test_cases <span class="token operator">=</span> <span class="token punctuation">[</span>
+            <span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">,</span> <span class="token number">9</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span> <span class="token keyword">as</span> <span class="token operator">&amp;</span><span class="token punctuation">[</span>_<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token punctuation">[</span><span class="token number">10</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">97</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">11</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>nums<span class="token punctuation">,</span> expected<span class="token punctuation">)</span> <span class="token keyword">in</span> test_cases <span class="token punctuation">&#123;</span>
+            <span class="token macro property">assert_eq!</span><span class="token punctuation">(</span><span class="token class-name">S</span><span class="token punctuation">::</span><span class="token function">maximum_gap</span><span class="token punctuation">(</span>nums<span class="token punctuation">.</span><span class="token function">to_vec</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span> expected<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>上述代码中定义了名为Solution的trait，规定了我们在写具体的算法的时候必须实现的函数接口.</p>
+<p>最上面的buckets_and_pigeonhole和solve2是我们写的具体算法的文件名.</p>
+<p>#[cfg(test)] 注解下是我们写的测试代码，其中test_cases变量中保存了我们的测试样例，每条样例中包括输入和预期输出.</p>
+<p>测试算法时就通过 <code>cargo test</code> 即可测试这些样例.</p>
+<ol start="4">
+<li>具体算法实现</li>
+</ol>
+<p>在相应的问题文件夹下创建rust文件求解，以 <strong>buckets_and_pigeonhole.rs</strong> 为例：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">pub</span> <span class="token keyword">struct</span> <span class="token type-definition class-name">Solution</span><span class="token punctuation">;</span>
+
+<span class="token keyword">impl</span> <span class="token class-name">Solution</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function-definition function">maximum_gap</span><span class="token punctuation">(</span>nums<span class="token punctuation">:</span> <span class="token class-name">Vec</span><span class="token operator">&lt;</span><span class="token keyword">i32</span><span class="token operator">></span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token keyword">i32</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">let</span> <span class="token keyword">mut</span> result <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token keyword">let</span> maybe_min_value <span class="token operator">=</span> nums<span class="token punctuation">.</span><span class="token function">iter</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">copied</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">min</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">let</span> maybe_max_value <span class="token operator">=</span> nums<span class="token punctuation">.</span><span class="token function">iter</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">copied</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">max</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> maybe_min_value <span class="token operator">!=</span> maybe_max_value <span class="token punctuation">&#123;</span>
+            <span class="token keyword">let</span> min_value <span class="token operator">=</span> maybe_min_value<span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">let</span> max_value <span class="token operator">=</span> maybe_max_value<span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">let</span> length <span class="token operator">=</span> max_value <span class="token operator">-</span> min_value<span class="token punctuation">;</span>
+
+            <span class="token comment">// The maximum gap must be greater than or equal to length / (n - 1), so as long as the bucket size is less</span>
+            <span class="token comment">// than length / (n - 1) + 1, the maximum gap can not be inside one bucket. So we only need to check gaps</span>
+            <span class="token comment">// between buckets.</span>
+
+            <span class="token keyword">let</span> bucket_size <span class="token operator">=</span> <span class="token punctuation">&#123;</span>
+                <span class="token keyword">let</span> n <span class="token operator">=</span> nums<span class="token punctuation">.</span><span class="token function">len</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> <span class="token keyword">i32</span><span class="token punctuation">;</span>
+
+                <span class="token punctuation">(</span>length <span class="token operator">+</span> n <span class="token operator">-</span> <span class="token number">2</span><span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>n <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span>
+            <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+            <span class="token keyword">let</span> <span class="token keyword">mut</span> buckets <span class="token operator">=</span> <span class="token macro property">vec!</span><span class="token punctuation">[</span><span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">(</span>length <span class="token operator">/</span> bucket_size <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token keyword">as</span> _<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+            <span class="token keyword">for</span> num <span class="token keyword">in</span> nums <span class="token punctuation">&#123;</span>
+                <span class="token keyword">let</span> <span class="token punctuation">(</span>left<span class="token punctuation">,</span> right<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token operator">&amp;</span><span class="token keyword">mut</span> buckets<span class="token punctuation">[</span><span class="token punctuation">(</span><span class="token punctuation">(</span>num <span class="token operator">-</span> min_value<span class="token punctuation">)</span> <span class="token operator">/</span> bucket_size<span class="token punctuation">)</span> <span class="token keyword">as</span> <span class="token keyword">usize</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+                <span class="token keyword">if</span> <span class="token operator">*</span>left <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token punctuation">&#123;</span>
+                    <span class="token operator">*</span>left <span class="token operator">=</span> num<span class="token punctuation">;</span>
+                    <span class="token operator">*</span>right <span class="token operator">=</span> num<span class="token punctuation">;</span>
+                <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token keyword">if</span> num <span class="token operator">&lt;</span> <span class="token operator">*</span>left <span class="token punctuation">&#123;</span>
+                    <span class="token operator">*</span>left <span class="token operator">=</span> num<span class="token punctuation">;</span>
+                <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token keyword">if</span> num <span class="token operator">></span> <span class="token operator">*</span>right <span class="token punctuation">&#123;</span>
+                    <span class="token operator">*</span>right <span class="token operator">=</span> num<span class="token punctuation">;</span>
+                <span class="token punctuation">&#125;</span>
+            <span class="token punctuation">&#125;</span>
+
+            <span class="token keyword">let</span> <span class="token keyword">mut</span> bucket_iter <span class="token operator">=</span> buckets<span class="token punctuation">.</span><span class="token function">into_iter</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">filter</span><span class="token punctuation">(</span><span class="token closure-params"><span class="token closure-punctuation punctuation">|</span><span class="token punctuation">(</span>left<span class="token punctuation">,</span> _<span class="token punctuation">)</span><span class="token closure-punctuation punctuation">|</span></span> <span class="token operator">*</span>left <span class="token operator">!=</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">let</span> <span class="token keyword">mut</span> previous <span class="token operator">=</span> bucket_iter<span class="token punctuation">.</span><span class="token function">next</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token number">1</span><span class="token punctuation">;</span>
+
+            <span class="token keyword">for</span> <span class="token punctuation">(</span>left<span class="token punctuation">,</span> right<span class="token punctuation">)</span> <span class="token keyword">in</span> bucket_iter <span class="token punctuation">&#123;</span>
+                result <span class="token operator">=</span> result<span class="token punctuation">.</span><span class="token function">max</span><span class="token punctuation">(</span>left <span class="token operator">-</span> previous<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                previous <span class="token operator">=</span> right<span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+
+        result
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// ------------------------------------------------------ snip ------------------------------------------------------ //</span>
+
+<span class="token keyword">impl</span> <span class="token keyword">super</span><span class="token punctuation">::</span><span class="token class-name">Solution</span> <span class="token keyword">for</span> <span class="token class-name">Solution</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">fn</span> <span class="token function-definition function">maximum_gap</span><span class="token punctuation">(</span>nums<span class="token punctuation">:</span> <span class="token class-name">Vec</span><span class="token operator">&lt;</span><span class="token keyword">i32</span><span class="token operator">></span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token keyword">i32</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">Self</span><span class="token punctuation">::</span><span class="token function">maximum_gap</span><span class="token punctuation">(</span>nums<span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token attribute attr-name">#[cfg(test)]</span>
+<span class="token keyword">mod</span> <span class="token module-declaration namespace">tests</span> <span class="token punctuation">&#123;</span>
+    <span class="token attribute attr-name">#[test]</span>
+    <span class="token keyword">fn</span> <span class="token function-definition function">test_solution</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">super</span><span class="token module-declaration namespace"><span class="token punctuation">::</span>super<span class="token punctuation">::</span>tests<span class="token punctuation">::</span>run<span class="token punctuation">::</span></span><span class="token operator">&lt;</span><span class="token keyword">super</span><span class="token punctuation">::</span><span class="token class-name">Solution</span><span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>snip注释下面的代码是为了将当前的Solution方法作为mod.rs中trait的实现，用于测试.</p>
+<p>使用Clion做测试调试时，可以通过下图debug按钮调试：</p>
+<p><img src="/images/image-20220325161519397.png" alt="image-20220325161519397" / srcset="/images/LoadingImage.gif" data-src="/images/image-20220325161519397.png" class="lozad post-image"></p>
+<h1 id="0x3-git同步"><a class="markdownIt-Anchor" href="#0x3-git同步"></a> 0x3 Git同步</h1>
+<p>如有需要，将除了target目录以外的文件夹加入git，同步到远端，这样就可以在多台设备上优雅的同步代码了.</p>
+<h1 id="0x4-其他"><a class="markdownIt-Anchor" href="#0x4-其他"></a> 0x4 其他</h1>
+<p>在大哥的<a target="_blank" rel="noopener" href="https://github.com/EFanZh/LeetCode">代码库</a>中包含了:</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">mod</span> <span class="token module-declaration namespace">data_structures</span><span class="token punctuation">;</span>
+<span class="token keyword">mod</span> <span class="token module-declaration namespace">test_utilities</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>这两个模块，和main.rs同级目录，其作用是一些比较重要的且rust标准库不提供的数据结构，还有一些测试用的函数，在某些问题中你可能需要用到这些.</p>
+<p>此外，他还配置了一些github action用于自动化编译和生成展示网页：<a target="_blank" rel="noopener" href="https://efanzh.org/LeetCode/">LeetCode Progress Report (efanzh.org)</a></p>
+<p>对于我这样的新手就没什么用，所以也不需要配置了.</p>
+<p>Ref：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/EFanZh/LeetCode">https://github.com/EFanZh/LeetCode</a> 快给大哥一个Star</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/Ch3nYe/LeetCode">https://github.com/Ch3nYe/LeetCode</a> 也可以给我一个Star 😘</p>
+
+  </div>
+  <div>
+    
+      <div 
+        class="post-note note-info copyright" 
+        style="margin-top: 42px">
+        <p>
+          <span style="font-weight: bold;">作者：</span><a 
+            target="_blank" 
+            rel="nofollow noopener noreferrer" 
+            href="/about">
+            Ch3nYe
+          </a>
+        </p>
+        <p>
+          <span style="font-weight: bold;">文章链接：</span><a 
+            target="_blank" 
+            rel="nofollow noopener noreferrer" 
+            href="https://ch3nye.top/%E5%85%B3%E4%BA%8E%E7%94%A8Rust%E5%86%99%E7%AE%97%E6%B3%95%E9%A2%98%E7%9A%84%E5%A7%BF%E5%8A%BF%E6%8E%A2%E8%AE%A8%E4%BB%A5%E5%8F%8AWindows11%E8%B0%83%E8%AF%95Rust%E7%9A%84%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">
+            https://ch3nye.top/%E5%85%B3%E4%BA%8E%E7%94%A8Rust%E5%86%99%E7%AE%97%E6%B3%95%E9%A2%98%E7%9A%84%E5%A7%BF%E5%8A%BF%E6%8E%A2%E8%AE%A8%E4%BB%A5%E5%8F%8AWindows11%E8%B0%83%E8%AF%95Rust%E7%9A%84%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/
+          </a>
+        </p>
+        <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+      </div>
+    
+  </div>
+</article>
+<div class="nav">
+  
+  
+    <div class="nav-item-next">
+      <a 
+        href="/Note-Nero/" 
+        class="nav-link">
+        <div>
+          <div class="nav-label">下一篇</div>
+          
+            <div class="nav-title">Note 《Neural reverse engineering of stripped binaries using augmented control flow graphs》 </div>
+          
+        </div>
+        <i class="iconfont icon-right nav-next-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+  <div 
+    class="card card-content comment-card" 
+    style="margin-top: 16px;">
+    <div class="comment-card-title">评论</div>
+    
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: '049b30eb10ea05082ef1',
+      clientSecret: 'c33ad95041c69907b3136b895008320f000987db',
+      repo: 'Ch3nYe.github.io',
+      owner: 'Ch3nYe',
+      admin: "Ch3nYe",
+      id: md5(location.href),
+      distractionFreeMode: false,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+  </div>
+
+<div 
+  class="card card-content toc-card" 
+  id="mobiletoc">
+  <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#0x0-%E5%89%8D%E8%A8%80"><span class="toc-text"> 0x0 前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x1-rust%E5%BC%80%E5%8F%91%E5%92%8C%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE"><span class="toc-text"> 0x1 Rust开发和调试环境配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x2-rust%E5%B7%A5%E7%A8%8B%E7%9B%AE%E5%BD%95%E7%AE%80%E8%BF%B0"><span class="toc-text"> 0x2 Rust工程目录简述</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E7%9B%AE%E5%BD%95"><span class="toc-text"> 主要目录</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E9%A2%98%E5%B7%A5%E4%BD%9C%E6%B5%81"><span class="toc-text"> 解题工作流</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x3-git%E5%90%8C%E6%AD%A5"><span class="toc-text"> 0x3 Git同步</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x4-%E5%85%B6%E4%BB%96"><span class="toc-text"> 0x4 其他</span></a></li></ol>
+</div></main>
+            <aside class="left-column">
+              
+              <div class="card card-author">
+                
+  <img 
+    src="/images/logo.png" 
+    class="author-img"
+    width="88"
+    height="88"
+    alt="author avatar">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a 
+    class="author-posts-count" 
+    href="/archives">
+    <span>39</span>
+    <span>文章</span>
+  </a>
+  <a 
+    class="author-categories-count" 
+    href="/categories">
+    <span>6</span>
+    <span>分类</span>
+  </a>
+  <a 
+    class="author-tags-count" 
+    href="/tags">
+    <span>60</span>
+    <span>标签</span>
+  </a>
+</div>
+
+  <div class="author-card-society">
+    
+      <div class="author-card-society-icon">
+        <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+          <i class="iconfont icon-github society-icon"></i>
+        </a>
+      </div>
+    
+      <div class="author-card-society-icon">
+        <a href="mailto:sud0su@163.com">
+          <i class="iconfont icon-mail society-icon"></i>
+        </a>
+      </div>
+    
+  </div>
+
+              </div>
+               <div class="sticky-tablet">
+  
+  
+    <article class="display-when-two-columns spacer">
+      <div class="card card-content toc-card">
+        <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#0x0-%E5%89%8D%E8%A8%80"><span class="toc-text"> 0x0 前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x1-rust%E5%BC%80%E5%8F%91%E5%92%8C%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE"><span class="toc-text"> 0x1 Rust开发和调试环境配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x2-rust%E5%B7%A5%E7%A8%8B%E7%9B%AE%E5%BD%95%E7%AE%80%E8%BF%B0"><span class="toc-text"> 0x2 Rust工程目录简述</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E7%9B%AE%E5%BD%95"><span class="toc-text"> 主要目录</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E9%A2%98%E5%B7%A5%E4%BD%9C%E6%B5%81"><span class="toc-text"> 解题工作流</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x3-git%E5%90%8C%E6%AD%A5"><span class="toc-text"> 0x3 Git同步</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x4-%E5%85%B6%E4%BB%96"><span class="toc-text"> 0x4 其他</span></a></li></ol>
+      </div>
+    </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header">
+    <i 
+      class="iconfont icon-fenlei" 
+      style="padding-right: 2px;">
+    </i>分类
+  </div>
+  <div class="categories-list">
+    
+      <a href="/categories/%E5%A4%87%E5%BF%98/">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E6%9D%8E%E5%AE%8F%E6%AF%85%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">15</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%AC%94%E8%AE%B0/">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">11</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%94%9F%E6%B4%BB/">
+        <div class="categories-list-item">
+          生活
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E5%AE%9E%E6%88%98/">
+        <div class="categories-list-item">
+          实战
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header">
+    <i 
+      class="iconfont icon-biaoqian" 
+      style="padding-right: 2px;">
+    </i>热门标签
+  </div>
+  <div class="tags-list">
+    
+      <a 
+        href="/tags/Android/" 
+        title="Android">
+        <div class="tags-list-item">Android</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%B5%81%E9%87%8F%E6%8A%93%E5%8C%85/" 
+        title="流量抓包">
+        <div class="tags-list-item">流量抓包</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%95%99%E7%A8%8B/" 
+        title="教程">
+        <div class="tags-list-item">教程</div>
+      </a>
+    
+      <a 
+        href="/tags/Fiddler/" 
+        title="Fiddler">
+        <div class="tags-list-item">Fiddler</div>
+      </a>
+    
+      <a 
+        href="/tags/ML/" 
+        title="ML">
+        <div class="tags-list-item">ML</div>
+      </a>
+    
+      <a 
+        href="/tags/note/" 
+        title="note">
+        <div class="tags-list-item">note</div>
+      </a>
+    
+      <a 
+        href="/tags/Next-Step-of-ML/" 
+        title="Next-Step-of-ML">
+        <div class="tags-list-item">Next-Step-of-ML</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%80%BB%E7%BB%93/" 
+        title="总结">
+        <div class="tags-list-item">总结</div>
+      </a>
+    
+      <a 
+        href="/tags/%E5%AD%A6%E4%B9%A0/" 
+        title="学习">
+        <div class="tags-list-item">学习</div>
+      </a>
+    
+      <a 
+        href="/tags/%E8%AE%BA%E6%96%87/" 
+        title="论文">
+        <div class="tags-list-item">论文</div>
+      </a>
+    
+      <a 
+        href="/tags/%E7%AC%94%E8%AE%B0/" 
+        title="笔记">
+        <div class="tags-list-item">笔记</div>
+      </a>
+    
+      <a 
+        href="/tags/Hot-Patch/" 
+        title="Hot-Patch">
+        <div class="tags-list-item">Hot-Patch</div>
+      </a>
+    
+      <a 
+        href="/tags/Intrusion-Detection/" 
+        title="Intrusion-Detection">
+        <div class="tags-list-item">Intrusion-Detection</div>
+      </a>
+    
+      <a 
+        href="/tags/Deep-Learning/" 
+        title="Deep-Learning">
+        <div class="tags-list-item">Deep-Learning</div>
+      </a>
+    
+      <a 
+        href="/tags/Attack/" 
+        title="Attack">
+        <div class="tags-list-item">Attack</div>
+      </a>
+    
+      <a 
+        href="/tags/Backdoor/" 
+        title="Backdoor">
+        <div class="tags-list-item">Backdoor</div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+            </aside>
+            <aside class="right-column">
+              <div class="sticky-widescreen">
+  
+  
+    <article class="card card-content toc-card">
+      <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#0x0-%E5%89%8D%E8%A8%80"><span class="toc-text"> 0x0 前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x1-rust%E5%BC%80%E5%8F%91%E5%92%8C%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE"><span class="toc-text"> 0x1 Rust开发和调试环境配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x2-rust%E5%B7%A5%E7%A8%8B%E7%9B%AE%E5%BD%95%E7%AE%80%E8%BF%B0"><span class="toc-text"> 0x2 Rust工程目录简述</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E7%9B%AE%E5%BD%95"><span class="toc-text"> 主要目录</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E9%A2%98%E5%B7%A5%E4%BD%9C%E6%B5%81"><span class="toc-text"> 解题工作流</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x3-git%E5%90%8C%E6%AD%A5"><span class="toc-text"> 0x3 Git同步</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x4-%E5%85%B6%E4%BB%96"><span class="toc-text"> 0x4 其他</span></a></li></ol>
+    </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header">
+    <i 
+      class="iconfont icon-wenzhang_huaban" 
+      style="padding-right: 2px;">
+    </i>最近文章
+  </div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-03-25</div>
+        <a href="/%E5%85%B3%E4%BA%8E%E7%94%A8Rust%E5%86%99%E7%AE%97%E6%B3%95%E9%A2%98%E7%9A%84%E5%A7%BF%E5%8A%BF%E6%8E%A2%E8%AE%A8%E4%BB%A5%E5%8F%8AWindows11%E8%B0%83%E8%AF%95Rust%E7%9A%84%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/"><div class="recent-posts-item-content">关于用Rust写算法题的姿势探讨以及Windows11调试Rust的环境配置</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-02-17</div>
+        <a href="/Note-Nero/"><div class="recent-posts-item-content">Note 《Neural reverse engineering of stripped binaries using augmented control flow graphs》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-01-29</div>
+        <a href="/Note-Structural-Attack-against-Graph-Based-Android-Malware-Detection/"><div class="recent-posts-item-content">Note 《Structural Attack against Graph Based Android Malware Detection》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-01-21</div>
+        <a href="/Note-ELECTRA-Pre-training-Text-Encoders-as-Discriminators-Rather-Than-Generators/"><div class="recent-posts-item-content">Note 《ELECTRA Pre-training Text Encoders as Discriminators Rather Than Generators》</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+     
+    <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>
+          Copyright ©
+          
+            2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a 
+          href="/" 
+          class="footer-link">
+          ch3nye's blog
+        </a>
+      </div>
+    </div>
+
+    
+      <div class="footer-dsc">
+        
+          Powered by
+          <a 
+            href="https://hexo.io/" 
+            class="footer-link" 
+            target="_blank" 
+            rel="nofollow noopener noreferrer">
+            &nbsp;Hexo
+          </a>
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          Theme -
+          <a 
+            href="https://github.com/theme-kaze" 
+            class="footer-link" 
+            target="_blank"
+            rel="nofollow noopener noreferrer">
+            &nbsp;Kaze
+          </a>
+        
+      </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+          本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+<!-- Default Statcounter code for My Blog https://ch3nye.top -->
+<script type="text/javascript">
+var sc_project=12696483; 
+var sc_invisible=1; 
+var sc_security="0f70f90d"; 
+</script>
+<script type="text/javascript"
+src="https://www.statcounter.com/counter/counter.js" async></script>
+<noscript><div class="statcounter"><a title="Web Analytics"
+href="https://statcounter.com/" target="_blank"><img class="statcounter"
+src="https://c.statcounter.com/12696483/0/0f70f90d/1/" alt="Web Analytics"
+referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
+<!-- End of Statcounter Code -->
+</footer> 
+    
+  <a 
+    role="button" 
+    id="scrollbutton" 
+    class="basebutton" 
+    aria-label="回到顶部">
+    <i class="iconfont icon-arrowleft button-icon"></i>
+  </a>
+
+<a 
+  role="button" 
+  id="menubutton"
+  aria-label="menu button"
+  class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="popbutton" 
+  class="basebutton" 
+  aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="darkbutton" 
+  class="basebutton darkwidget" 
+  aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="searchbutton" 
+  class="basebutton searchwidget" 
+  aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a> 
+     
+     
+      
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+ 
+     
+     
+      <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img')
+    var i
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a')
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'))
+      wrapper.setAttribute('aria-label', 'illustration')
+      wrapper.style.cssText =
+        'width: 100%; display: flex; justify-content: center;'
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt
+      wrapper.dataset.nolink = true
+      img[i].before(wrapper)
+      wrapper.append(img[i])
+      var divWrap = document.createElement('div')
+      divWrap.classList.add('gallery')
+      wrapper.before(divWrap)
+      divWrap.append(wrapper)
+    }
+    baguetteBox.run('.gallery')
+  }
+</script>
+<script>
+  loadScript(
+    "/js/lib/lightbox/baguetteBox.min.js",
+    addImgLayout
+  )
+</script>
+ 
+     
+     
+    <script src="/js/main.js"></script> 
+    
+      <script> 
+        loadScript('/js/lib/busuanzi.min.js') 
+      </script>
+     
+    
+      <script>
+        var addLazyload = function () {
+          var observer = lozad('.lozad', {
+            load: function (el) {
+              el.srcset = el.getAttribute('data-src')
+            },
+            loaded: function (el) {
+              el.classList.add('loaded')
+            },
+          })
+          observer.observe()
+        }
+      </script>
+      <script>
+        loadScript('/js/lib/lozad.min.js', addLazyload)
+      </script>
+     
+    
+      <script>
+        var googleAnalytics = function () {
+          window.dataLayer = window.dataLayer || []
+          function gtag() {
+            dataLayer.push(arguments)
+          }
+          gtag('js', new Date())
+          gtag('config', 'G-WHGL11014T')
+        }
+    </script>
+      <script>
+        loadScript(
+          'https://www.googletagmanager.com/gtag/js?id=' +
+            'G-WHGL11014T',
+          googleAnalytics
+        )
+      </script>
+    
+    
+      <script>
+        setTimeout(() => {localSearch("search.json")}, 0)
+      </script>
+    
+  </body>
+</html>

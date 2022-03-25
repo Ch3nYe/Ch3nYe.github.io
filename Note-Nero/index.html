@@ -527,7 +527,7 @@
 <li>Plast-write(inst, p): 包含指针 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>p</mi><mo>∈</mo><msub><mi>V</mi><mrow><mi>w</mi><mi>r</mi><mi>i</mi><mi>t</mi><mi>e</mi></mrow></msub><mo stretchy="false">(</mo><mi>i</mi><mi>n</mi><mi>s</mi><msup><mi>t</mi><mo mathvariant="normal">′</mo></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">p \in V_{write}(inst&#x27;)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7335400000000001em;vertical-align:-0.19444em;"></span><span class="mord mathdefault">p</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.001892em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.22222em;">V</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.22222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.02691em;">w</span><span class="mord mathdefault mtight" style="margin-right:0.02778em;">r</span><span class="mord mathdefault mtight">i</span><span class="mord mathdefault mtight">t</span><span class="mord mathdefault mtight">e</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span><span class="mord mathdefault">s</span><span class="mord"><span class="mord mathdefault">t</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.751892em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> 的最大指令inst &gt; inst’</li>
 </ul>
 <p>大于是指后执行为大.</p>
-<div class="post-note note-success"><p><u>通过这个定于就可以从一条CFG path上找到，call site处某个寄存器的相关执行. 如下图fig3(a)中rsi（green block）的三条相关指令.</u></p></div>
+<div class="post-note note-success"><p><u>通过这个定义就可以从一条CFG path上找到，call site处某个寄存器的相关执行. 如下图fig3(a)中rsi（green block）的三条相关指令.</u></p></div>
 <p>第三步：</p>
 <p>为了生成在指令 inst 处的 r 寄存器的pointer-aware slice，需要重复以下步骤：<code>𝑉𝑙𝑎𝑠𝑡−𝑤𝑟𝑖𝑡𝑒 → 𝑉𝑟𝑒𝑎𝑑 and 𝑃𝑙𝑎𝑠𝑡−𝑤𝑟𝑖𝑡𝑒 → 𝑃𝑟𝑒𝑎𝑑</code>，直到达到空集. 这是一个逻辑与操作，前者是指令中读取的寄存器或值，后者是指令中读取的指针.</p>
 <div class="post-note note-success"><p><u>通过这个步骤就可以得到fig3(b)这样的slice-tree.</u></p></div>
@@ -630,6 +630,20 @@ Publisher: 2020, ACM期刊</p>
 </article>
 <div class="nav">
   
+    <div class="nav-item-prev">
+      <a 
+        href="/%E5%85%B3%E4%BA%8E%E7%94%A8Rust%E5%86%99%E7%AE%97%E6%B3%95%E9%A2%98%E7%9A%84%E5%A7%BF%E5%8A%BF%E6%8E%A2%E8%AE%A8%E4%BB%A5%E5%8F%8AWindows11%E8%B0%83%E8%AF%95Rust%E7%9A%84%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/" 
+        class="nav-link">
+        <i class="iconfont icon-left nav-prev-icon"></i>
+        <div>
+          <div class="nav-label">上一篇</div>
+          
+            <div class="nav-title">关于用Rust写算法题的姿势探讨以及Windows11调试Rust的环境配置 </div>
+          
+        </div>
+      </a>
+    </div>
+  
   
     <div class="nav-item-next">
       <a 
@@ -709,7 +723,7 @@ Publisher: 2020, ACM期刊</p>
   <a 
     class="author-posts-count" 
     href="/archives">
-    <span>38</span>
+    <span>39</span>
     <span>文章</span>
   </a>
   <a 
@@ -721,7 +735,7 @@ Publisher: 2020, ACM期刊</p>
   <a 
     class="author-tags-count" 
     href="/tags">
-    <span>56</span>
+    <span>60</span>
     <span>标签</span>
   </a>
 </div>
@@ -772,7 +786,7 @@ Publisher: 2020, ACM期刊</p>
       <a href="/categories/%E5%A4%87%E5%BF%98/">
         <div class="categories-list-item">
           备忘
-          <span class="categories-list-item-badge">1</span>
+          <span class="categories-list-item-badge">2</span>
         </div>
       </a>
     
@@ -826,9 +840,27 @@ Publisher: 2020, ACM期刊</p>
   <div class="tags-list">
     
       <a 
-        href="/tags/note/" 
-        title="note">
-        <div class="tags-list-item">note</div>
+        href="/tags/Android/" 
+        title="Android">
+        <div class="tags-list-item">Android</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%B5%81%E9%87%8F%E6%8A%93%E5%8C%85/" 
+        title="流量抓包">
+        <div class="tags-list-item">流量抓包</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%95%99%E7%A8%8B/" 
+        title="教程">
+        <div class="tags-list-item">教程</div>
+      </a>
+    
+      <a 
+        href="/tags/Fiddler/" 
+        title="Fiddler">
+        <div class="tags-list-item">Fiddler</div>
       </a>
     
       <a 
@@ -838,33 +870,15 @@ Publisher: 2020, ACM期刊</p>
       </a>
     
       <a 
+        href="/tags/note/" 
+        title="note">
+        <div class="tags-list-item">note</div>
+      </a>
+    
+      <a 
         href="/tags/Next-Step-of-ML/" 
         title="Next-Step-of-ML">
         <div class="tags-list-item">Next-Step-of-ML</div>
-      </a>
-    
-      <a 
-        href="/tags/%E7%AC%94%E8%AE%B0/" 
-        title="笔记">
-        <div class="tags-list-item">笔记</div>
-      </a>
-    
-      <a 
-        href="/tags/%E8%AE%BA%E6%96%87/" 
-        title="论文">
-        <div class="tags-list-item">论文</div>
-      </a>
-    
-      <a 
-        href="/tags/Android/" 
-        title="Android">
-        <div class="tags-list-item">Android</div>
-      </a>
-    
-      <a 
-        href="/tags/Deep-Learning/" 
-        title="Deep-Learning">
-        <div class="tags-list-item">Deep-Learning</div>
       </a>
     
       <a 
@@ -874,51 +888,51 @@ Publisher: 2020, ACM期刊</p>
       </a>
     
       <a 
-        href="/tags/%E5%AE%9E%E6%88%98/" 
-        title="实战">
-        <div class="tags-list-item">实战</div>
-      </a>
-    
-      <a 
-        href="/tags/crack/" 
-        title="crack">
-        <div class="tags-list-item">crack</div>
-      </a>
-    
-      <a 
-        href="/tags/%E4%BA%8C%E8%BF%9B%E5%88%B6/" 
-        title="二进制">
-        <div class="tags-list-item">二进制</div>
-      </a>
-    
-      <a 
-        href="/tags/Binary/" 
-        title="Binary">
-        <div class="tags-list-item">Binary</div>
-      </a>
-    
-      <a 
         href="/tags/%E5%AD%A6%E4%B9%A0/" 
         title="学习">
         <div class="tags-list-item">学习</div>
       </a>
     
       <a 
-        href="/tags/Graph/" 
-        title="Graph">
-        <div class="tags-list-item">Graph</div>
+        href="/tags/%E8%AE%BA%E6%96%87/" 
+        title="论文">
+        <div class="tags-list-item">论文</div>
       </a>
     
       <a 
-        href="/tags/HTTPS/" 
-        title="HTTPS">
-        <div class="tags-list-item">HTTPS</div>
+        href="/tags/%E7%AC%94%E8%AE%B0/" 
+        title="笔记">
+        <div class="tags-list-item">笔记</div>
       </a>
     
       <a 
-        href="/tags/%E6%89%8B%E8%AE%B0/" 
-        title="手记">
-        <div class="tags-list-item">手记</div>
+        href="/tags/Hot-Patch/" 
+        title="Hot-Patch">
+        <div class="tags-list-item">Hot-Patch</div>
+      </a>
+    
+      <a 
+        href="/tags/Intrusion-Detection/" 
+        title="Intrusion-Detection">
+        <div class="tags-list-item">Intrusion-Detection</div>
+      </a>
+    
+      <a 
+        href="/tags/Deep-Learning/" 
+        title="Deep-Learning">
+        <div class="tags-list-item">Deep-Learning</div>
+      </a>
+    
+      <a 
+        href="/tags/Attack/" 
+        title="Attack">
+        <div class="tags-list-item">Attack</div>
+      </a>
+    
+      <a 
+        href="/tags/Backdoor/" 
+        title="Backdoor">
+        <div class="tags-list-item">Backdoor</div>
       </a>
     
   </div>
@@ -954,6 +968,11 @@ Publisher: 2020, ACM期刊</p>
   <div class="recent-posts-list">
     
       <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-03-25</div>
+        <a href="/%E5%85%B3%E4%BA%8E%E7%94%A8Rust%E5%86%99%E7%AE%97%E6%B3%95%E9%A2%98%E7%9A%84%E5%A7%BF%E5%8A%BF%E6%8E%A2%E8%AE%A8%E4%BB%A5%E5%8F%8AWindows11%E8%B0%83%E8%AF%95Rust%E7%9A%84%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/"><div class="recent-posts-item-content">关于用Rust写算法题的姿势探讨以及Windows11调试Rust的环境配置</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
         <div class="recent-posts-item-title">2022-02-17</div>
         <a href="/Note-Nero/"><div class="recent-posts-item-content">Note 《Neural reverse engineering of stripped binaries using augmented control flow graphs》</div></a>
       </div>
@@ -966,11 +985,6 @@ Publisher: 2020, ACM期刊</p>
       <div class="recent-posts-item">
         <div class="recent-posts-item-title">2022-01-21</div>
         <a href="/Note-ELECTRA-Pre-training-Text-Encoders-as-Discriminators-Rather-Than-Generators/"><div class="recent-posts-item-content">Note 《ELECTRA Pre-training Text Encoders as Discriminators Rather Than Generators》</div></a>
-      </div>
-    
-      <div class="recent-posts-item">
-        <div class="recent-posts-item-title">2022-01-01</div>
-        <a href="/2021%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93/"><div class="recent-posts-item-content">2021年终总结</div></a>
       </div>
     
   </div>
