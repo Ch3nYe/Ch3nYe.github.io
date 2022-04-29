@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+  <meta charset="UTF-8">
+  <meta 
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta 
+    http-equiv="X-UA-Compatible" 
+    content="ie=edge">
+  <meta 
+    name="theme-color" 
+    content="#fff" 
+    id="theme-color">
+  <meta 
+    name="description" 
+    content="网络安全 Android ML CTF">
+  <link 
+    rel="icon" 
+    href="/images/logo.png">
+  <title>从python调用rust-使用rust加速你的python代码</title>
+  
+    
+      <meta 
+        property="og:title" 
+        content="从python调用rust-使用rust加速你的python代码">
+    
+    
+      <meta 
+        property="og:url" 
+        content="https://ch3nye.top/%E4%BB%8Epython%E8%B0%83%E7%94%A8rust-%E4%BD%BF%E7%94%A8rust%E5%8A%A0%E9%80%9F%E4%BD%A0%E7%9A%84python%E4%BB%A3%E7%A0%81/index.html">
+    
+    
+      <meta 
+        property="og:img" 
+        content="/images/logo.png">
+    
+    
+      <meta 
+        property="og:img" 
+        content="网络安全 Android ML CTF">
+    
+    
+      <meta 
+        property="og:type" 
+        content="article">
+      <meta 
+        property="og:article:published_time" 
+        content="2022-04-13">
+      <meta 
+        property="og:article:modified_time" 
+        content="2022-04-29">
+      <meta 
+        property="og:article:author" 
+        content="Ch3nYe">
+      
+        
+          <meta 
+            property="og:article:tag" 
+            content="Rust">
+        
+          <meta 
+            property="og:article:tag" 
+            content="翻译">
+        
+      
+    
+  
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+    function loadCSS(href, data, attr) {
+      var sheet = document.createElement('link');
+      sheet.ref = 'stylesheet';
+      sheet.href = href;
+      sheet.dataset[data] = attr;
+      document.head.appendChild(sheet);
+    }
+    function changeCSS(cssFile, data, attr) {
+      var oldlink = document.querySelector(data);
+      var newlink = document.createElement("link");
+      newlink.setAttribute("rel", "stylesheet");
+      newlink.setAttribute("href", cssFile);
+      newlink.dataset.prism = attr;
+      document.head.replaceChild(newlink, oldlink);
+    }
+  </script>
+  
+    
+      
+      
+      
+      
+        
+        
+        
+        <script>
+          function prismThemeChange() {
+            if(document.getElementById('theme-color').dataset.mode === 'dark') {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism-tomorrow.min.css', '[data-prism]', 'prism-tomorrow');
+              } else {
+                loadCSS('/js/lib/prism/prism-tomorrow.min.css', 'prism', 'prism-tomorrow');
+              }
+            } else {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism.min.css', '[data-prism]', 'prism');
+              } else {
+                loadCSS('/js/lib/prism/prism.min.css', 'prism', 'prism');
+              }
+            }
+          }
+          prismThemeChange()
+        </script>
+      
+      
+        
+        <link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+      
+    
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+  </script>
+  
+    <script>
+      var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+        document.getElementById('theme-color').dataset.mode = getCssMediaQuery();
+        prismThemeChange();
+      }
+    };
+    setDarkmode();
+    </script>
+  
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+    <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  <link rel="stylesheet" href="/css/main.css">
+  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+  
+    <link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+  <body>
+    <div class="wrapper">
+       
+      <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+        <img 
+          class="navbar-logo-img"
+          width="32"
+          height="32"
+          src="/images/logo.png" 
+          alt="blog logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+      <a 
+        href="/" 
+        class="navbar-menu-item">
+        
+          首页
+        
+      </a>
+    
+      <a 
+        href="/archives" 
+        class="navbar-menu-item">
+        
+          归档
+        
+      </a>
+    
+      <a 
+        href="/tags" 
+        class="navbar-menu-item">
+        
+          标签
+        
+      </a>
+    
+      <a 
+        href="/categories" 
+        class="navbar-menu-item">
+        
+          分类
+        
+      </a>
+    
+      <a 
+        href="/about" 
+        class="navbar-menu-item">
+        
+          关于
+        
+      </a>
+    
+      <a 
+        href="/links" 
+        class="navbar-menu-item">
+        
+          友链
+        
+      </a>
+    
+      <a 
+        href="/shuoshuo" 
+        class="navbar-menu-item">
+        
+          说说
+        
+      </a>
+    
+    <a 
+      class="navbar-menu-item darknavbar" 
+      id="dark">
+      <i class="iconfont icon-weather"></i>
+    </a>
+    <a 
+      class="navbar-menu-item searchnavbar" 
+      id="search">
+      <i 
+        class="iconfont icon-search" 
+        style="font-size: 1.2rem; font-weight: 400;">
+      </i>
+    </a>
+  </div>
+</nav> 
+      
+      <div 
+        id="local-search" 
+        style="display: none">
+        <input
+          class="navbar-menu-item"
+          id="search-input"
+          placeholder="请输入搜索内容..." />
+        <div id="search-content"></div>
+      </div>
+      
+      <div class="section-wrap">
+        <div class="container">
+          <div class="columns">
+            <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      从python调用rust-使用rust加速你的python代码
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2022-04-12T16:00:00.000Z">
+      <i 
+        class="iconfont icon-calendar" 
+        style="margin-right: 2px;">
+      </i>
+      <span>2022-04-13</span>
+    </time>
+    
+      <span class="dot"></span>
+      
+        <a 
+          href="/categories/%E7%BF%BB%E8%AF%91/" 
+          class="post-meta-link">
+          翻译
+        </a>
+      
+    
+    
+      <span class="dot"></span>
+      <span>3.6k 字</span>
+    
+  </div>
+  
+    <div 
+      class="post-meta post-show-meta" 
+      style="margin-top: -10px;">
+      <div style="display: flex; align-items: center;">
+        <i 
+          class="iconfont icon-biaoqian" 
+          style="margin-right: 2px; font-size: 1.15rem;">
+        </i>
+        
+          
+          <a 
+            href="/tags/Rust/" 
+            class="post-meta-link">
+            Rust
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/%E7%BF%BB%E8%AF%91/" 
+            class="post-meta-link">
+            翻译
+          </a>
+        
+      </div>
+    </div>
+  
+  </header>
+  <div 
+    id="section" 
+    class="post-content">
+    <blockquote>
+<p>原文链接: <a target="_blank" rel="noopener" href="http://saidvandeklundert.net/learn/2021-11-06-calling-rust-from-python/">http://saidvandeklundert.net/learn/2021-11-06-calling-rust-from-python/</a></p>
+<p><strong>翻译：<a target="_blank" rel="noopener" href="https://github.com/Ch3nYe">ChenYe</a></strong><br />
+选题：<a target="_blank" rel="noopener" href="https://github.com/minikiller">minikiller</a></p>
+<p>本文由 <a target="_blank" rel="noopener" href="https://Rustt.org">Rustt</a> 翻译，<a target="_blank" rel="noopener" href="https://studyrust.org">StudyRust</a> 荣誉推出</p>
+</blockquote>
+<h1 id="从python调用rust-使用rust加速你的python代码"><a class="markdownIt-Anchor" href="#从python调用rust-使用rust加速你的python代码"></a> 从python调用rust-使用rust加速你的python代码</h1>
+<p>Python 是一门很棒的语言！至少，在我看来是这样。它有着丰富的第三方库，可以非常好的完成很多工作。但作为解释型语言，Python 并不是最快的。如果要加速代码运行速度，你可以使用 C/C++ 。这种编程语言上的扩展使得你可以在 Python 中调用这些其他语言写的函数。这种方式提供了更快的执行速度，同时你也不会被全局解释器锁困扰。</p>
+<p>除了使用 C 或 C++ 之外，我们还可以使用 Rust 。Rust 提供了 FFI（Foreign Function Interface 外部函数接口），它允许你将 Rust 函数导出到 C 语言。通过让 Python 使用这些导出的 C 函数，你可以将 Python 和 Rust 缝合在一起。如此一来就可以在需要的地方使用外部的 Rust 程序。</p>
+<p>在本文中，我将介绍一些关于如何从 Python 调用多个 Rust 函数的基本示例。在 Rust 一侧，我将使用 std 中的 <code>ffi</code>，在 Python 一侧，我将仍然使用 <code>ctypes</code>：</p>
+<p><img src="/images/calling_rust_from_python_std_ffi_and_ctypes.png" alt="Calling Rust from Python" / srcset="/images/LoadingImage.gif" data-src="/images/calling_rust_from_python_std_ffi_and_ctypes.png" class="lozad post-image"></p>
+<h2 id="在-python-中调用-rust-函数打印一个字符串"><a class="markdownIt-Anchor" href="#在-python-中调用-rust-函数打印一个字符串"></a> 在 Python 中调用 Rust 函数打印一个字符串.</h2>
+<p>首先，我们将编写一个打印字符串的 Rust 函数。下图说明具体发生了什么：</p>
+<p><img src="/images/python_string_to_rust_via_c.png" alt="Python string to Rust" / srcset="/images/LoadingImage.gif" data-src="/images/python_string_to_rust_via_c.png" class="lozad post-image"></p>
+<p>在 Python 侧我们做了以下几件事：</p>
+<ul>
+<li>Rust 导出为 C 编译生成的库文件被导入</li>
+<li>将 string 转换为 bytes</li>
+<li>调用从 Rust 中导入的函数</li>
+<li>Python 侧的 Rust 函数的参数是 UTF-8 编码的 bytes</li>
+</ul>
+<p>在 Rust 侧我们做了以下几件事：</p>
+<ul>
+<li>创建一个新的库</li>
+<li>通过 <strong>Cargo.toml</strong> 指明我们要构建一个 Rust 动态库</li>
+<li>用 Rust 编写与 C 兼容的外部函数接口</li>
+<li>读取经由 C 传递来的 Python 侧的输入，类型是 <code>Char *</code></li>
+<li>编译 Rust 库</li>
+</ul>
+<p>完成之后，我们就可以运行代码了！</p>
+<h3 id="python-侧"><a class="markdownIt-Anchor" href="#python-侧"></a> Python 侧.</h3>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">import</span> ctypes
+
+rust <span class="token operator">=</span> ctypes<span class="token punctuation">.</span>CDLL<span class="token punctuation">(</span><span class="token string">"target/release/librust_lib.so"</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">"__main__"</span><span class="token punctuation">:</span>
+    SOME_BYTES <span class="token operator">=</span> <span class="token string">"Python says hi inside Rust!"</span><span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">"utf-8"</span><span class="token punctuation">)</span>
+    rust<span class="token punctuation">.</span>print_string<span class="token punctuation">(</span>SOME_BYTES<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>首先，我们导入 <strong>ctypes</strong> ，然后，我们指定 <strong>.so</strong> 文件的问题。在我这里，命名为 <strong>print_string.py</strong> 的 Python 脚本被放在构建 rust 库的目录下。在我运行完 <code>cargo build --release</code> 后，会产生以下目录结构：</p>
+<pre class="line-numbers language-none"><code class="language-none">rust_lib&#x2F;
+├── target&#x2F;
+|   ├── lib.rs
+├── target&#x2F;
+│   ├── release&#x2F;
+│       ├── librust_lib.so
+├── print_string.py<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在 Python 代码的 <code>__main__</code> 部分，我先通过调用 <code>.encode(&quot;utf-8&quot;)</code> 将字符串转换为 bytes 。这一步将得到 UTF-8 编码的 bytes 。然后，我通过 <code>rust.print_string(SOME_BYTES)</code> 调用 Rust 函数，<code>rust</code> 是对我们之前加载的库的引用。<code>print_string</code> 是导出的 Rust 函数名。<code>SOME_BYTES</code> 作为参数传递给目标函数。</p>
+<p>我们还可以以另一种方式为 Rust 函数提供参数。试试将以下内容添加到 <strong>print_string_script.py</strong> ：</p>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python">rust<span class="token punctuation">.</span>print_string<span class="token punctuation">(</span>
+    ctypes<span class="token punctuation">.</span>c_char_p<span class="token punctuation">(</span><span class="token string">"Another way of sending strings to Rust via C."</span><span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">"utf-8"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>在这种情况下，我们使用 <code>ctypes.c_char_p</code> 将值传递给 rust 函数。 <code>c_char_p</code> 是一个指向字符串的指针。</p>
+<h3 id="rust-侧"><a class="markdownIt-Anchor" href="#rust-侧"></a> Rust 侧.</h3>
+<p>在 Rust 侧，我们先使用 <code>cargo new --lib</code> 创建一个库。然后我们编辑 <strong>Cargo.toml</strong> 文件：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token punctuation">[</span>package<span class="token punctuation">]</span>
+name = "rust_from_python"
+version = "0.1.0"
+authors = <span class="token punctuation">[</span><span class="token string">"Said van de Klundert"</span><span class="token punctuation">]</span>
+
+
+<span class="token punctuation">[</span>lib<span class="token punctuation">]</span>
+name = "rust_lib"
+crate<span class="token punctuation">-</span>type = <span class="token punctuation">[</span><span class="token string">"dylib"</span><span class="token punctuation">]</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这表明我们正在构建一个 Rust 动态库，并且我们将使用 <strong>libc</strong> 。</p>
+<p>然后，我们编写 <strong><a target="_blank" rel="noopener" href="http://lib.rs">lib.rs</a></strong> 文件：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">use</span> <span class="token namespace">std<span class="token punctuation">::</span>ffi<span class="token punctuation">::</span></span><span class="token class-name">CStr</span><span class="token punctuation">;</span>
+<span class="token keyword">use</span> <span class="token namespace">std<span class="token punctuation">::</span>os<span class="token punctuation">::</span>raw<span class="token punctuation">::</span></span>c_char<span class="token punctuation">;</span>
+<span class="token keyword">use</span> <span class="token namespace">std<span class="token punctuation">::</span></span><span class="token keyword">str</span><span class="token punctuation">;</span>
+
+<span class="token comment">/// Turn a C-string into a string slice and print to console:</span>
+<span class="token attribute attr-name">#[no_mangle]</span>
+<span class="token keyword">pub</span> <span class="token keyword">extern</span> <span class="token string">"C"</span> <span class="token keyword">fn</span> <span class="token function-definition function">print_string</span><span class="token punctuation">(</span>c_string_ptr<span class="token punctuation">:</span> <span class="token operator">*</span><span class="token keyword">const</span> c_char<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> bytes <span class="token operator">=</span> <span class="token keyword">unsafe</span> <span class="token punctuation">&#123;</span> <span class="token class-name">CStr</span><span class="token punctuation">::</span><span class="token function">from_ptr</span><span class="token punctuation">(</span>c_string_ptr<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">to_bytes</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> str_slice <span class="token operator">=</span> <span class="token keyword">str</span><span class="token punctuation">::</span><span class="token function">from_utf8</span><span class="token punctuation">(</span>bytes<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token string">"&#123;&#125;"</span><span class="token punctuation">,</span> str_slice<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>第一行将 <a target="_blank" rel="noopener" href="https://doc.rust-lang.org/std/ffi/struct.CStr.html">CStr</a> 引入，这是一个表示 C 字符串的借用的结构体，它的文档是这样说的：</p>
+<pre class="line-numbers language-none"><code class="language-none">This type represents a borrowed reference to a nul-terminated array of bytes. It can be constructed safely from a &amp;[u8] slice, or unsafely from a raw *const c_char. It can then be converted to a Rust &amp;str by performing UTF-8 validation, or into an owned CString.<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>我们将用它，将 <strong>CStr</strong> 转换成 Rust 中的 <strong>&amp;str</strong> 。</p>
+<p>第二行 <code>use std::os::raw::c_char;</code> ，将 <a target="_blank" rel="noopener" href="https://doc.rust-lang.org/std/os/raw/type.c_char.html">c_char</a> 类型引入。</p>
+<p>第三行 <code>use std::os::raw::c_char;</code> ，使得我们能访问 <strong>from_utf8</strong> ，使用这个方法将 <strong>bytes</strong> 转换为 Rust 的 <strong>&amp;str</strong> 。</p>
+<p>现在，我们看看这个函数：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token attribute attr-name">#[no_mangle]</span>
+<span class="token keyword">pub</span> <span class="token keyword">extern</span> <span class="token string">"C"</span> <span class="token keyword">fn</span> <span class="token function-definition function">print_string</span><span class="token punctuation">(</span>c_string_ptr<span class="token punctuation">:</span> <span class="token operator">*</span><span class="token keyword">const</span> c_char<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> bytes <span class="token operator">=</span> <span class="token keyword">unsafe</span> <span class="token punctuation">&#123;</span> <span class="token class-name">CStr</span><span class="token punctuation">::</span><span class="token function">from_ptr</span><span class="token punctuation">(</span>c_string_ptr<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">to_bytes</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> str_slice <span class="token operator">=</span> <span class="token keyword">str</span><span class="token punctuation">::</span><span class="token function">from_utf8</span><span class="token punctuation">(</span>bytes<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token string">"&#123;&#125;"</span><span class="token punctuation">,</span> str_slice<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><code>extern</code> 关键字用于创建 FFI（Foreign Function Interface）。它可用于调用其他语言的函数或创建允许其他语言调用 Rust 函数接口。</p>
+<p>以下引用来自 book of Rust：</p>
+<pre class="line-numbers language-none"><code class="language-none">We also need to add a #[no_mangle] annotation to tell the Rust compiler not to mangle the name of this function. Mangling is when a compiler changes the name we’ve given a function to a different name that contains more information for other parts of the compilation process to consume but is less human readable. Every programming language compiler mangles names slightly differently, so for a Rust function to be nameable by other languages, we must disable the Rust compiler’s name mangling.<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>函数参数类型指定为 <code>c_string_ptr: *const c_char</code> 。其中，<code>*const</code> 表示原始指针，<code>c_char</code> 是 C 语言 char 类型。送一组合起来，就是一个指向 <code>c_char</code> 的原始指针。</p>
+<p>为了解引用这个原始指针，我们使用 <code>unsafe</code> 代码块。在这个代码块中，我们使用 <code>CStr::from_ptr</code> ，它会使用 CStr 包装器包装由参数传进来的指针。之后，我们调用 <code>to_bytes()</code> 将 C 字符串转换为 byte 切片。这些字符都将存储在 <code>bytes</code> 变量中。</p>
+<p>将字符切片传给 <code>str::from_utf8()</code> 并解包返回值，就会得到一个 <code>&amp;str</code> 类型的值，最后将其打印出来。</p>
+<p>当上述一切都写好之后，使用命令 <code>cargo build --release</code> 就可以得到以下目录结构：</p>
+<pre class="line-numbers language-none"><code class="language-none">rust_lib&#x2F;
+├── target&#x2F;
+|   ├── lib.rs
+├── target&#x2F;
+│   ├── release&#x2F;
+│       ├── librust_lib.so
+├── print_string.py<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>从 rust_lib 目录，我们运行 Python 脚本：</p>
+<pre class="line-numbers language-none"><code class="language-none">root@rust:&#x2F;python&#x2F;rust&#x2F;rust_lib# .&#x2F;print_string.py  
+Python says hi inside Rust!<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>此时，我们就已经从 Python 调用了一个 Rust 函数并将一个字符串打印到控制台。</p>
+<h2 id="在-python-中调用一个-rust-函数打印一个整数"><a class="markdownIt-Anchor" href="#在-python-中调用一个-rust-函数打印一个整数"></a> 在 Python 中调用一个 Rust 函数打印一个整数.</h2>
+<p>当从 Python 向 Rust 传递参数时，我们需要考虑 Python、C 和 Rust 中使用的类型。现在我们试试在屏幕上打印一个整数。首先，我们创建 Python 脚本：</p>
+<pre class="line-numbers language-none"><code class="language-none">import ctypes
+
+rust_lib &#x3D; ctypes.CDLL(&quot;target&#x2F;release&#x2F;librust_lib.so&quot;)
+
+if __name__ &#x3D;&#x3D; &quot;__main__&quot;:
+    SOME_BYTES &#x3D; (2).to_bytes(4, byteorder&#x3D;&quot;little&quot;)
+    rust_lib.print_int(SOME_BYTES)<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>接下来，我们在 Rust 端并将以下内容添加到我们的 <a target="_blank" rel="noopener" href="http://lib.rs">lib.rs</a> 中：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">use</span> <span class="token namespace">std<span class="token punctuation">::</span>os<span class="token punctuation">::</span>raw<span class="token punctuation">::</span></span>c_int<span class="token punctuation">;</span>
+
+<span class="token comment">// Turn a C-int into a &amp;i32 and print to console:</span>
+<span class="token attribute attr-name">#[no_mangle]</span>
+<span class="token keyword">pub</span> <span class="token keyword">extern</span> <span class="token string">"C"</span> <span class="token keyword">fn</span> <span class="token function-definition function">print_int</span><span class="token punctuation">(</span>c_int_ptr<span class="token punctuation">:</span> <span class="token operator">*</span><span class="token keyword">const</span> c_int<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> int_ptr <span class="token operator">=</span> <span class="token keyword">unsafe</span> <span class="token punctuation">&#123;</span> c_int_ptr<span class="token punctuation">.</span><span class="token function">as_ref</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+    <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token string">"Python gave us number &#123;&#125;"</span><span class="token punctuation">,</span> int_ptr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我们将另一种数据类型 <code>c_int</code> 引入 。该函数将指向 C 整型的指针作为参数。在我们执行命令 <code>cargo build --release</code> 之后，我们可以运行 Python 脚本：</p>
+<pre class="line-numbers language-none"><code class="language-none">root@rust:&#x2F;python&#x2F;rust&#x2F;rust_lib# python3 print_number.py  
+Python gave us number 2<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>Rust、Python 和 C 中有许多类型。这些类型之间的对应可能会把人搞的很头疼！</p>
+<h2 id="从-python-调用多类型的-rust-函数"><a class="markdownIt-Anchor" href="#从-python-调用多类型的-rust-函数"></a> 从 Python 调用多类型的 Rust 函数</h2>
+<p>现在，我们使用 Python 调用一个 <code>start_procedure</code> 。为了专注研究跨语言调用，该函数仅仅获取一个结构并返回另一个结构。在 Python 侧，我们使用 Pydantic basemodel 来创建 Rust 函数所需的输入。Pydantic basemodel 将具有与 Rust 结构相同的字段。我们对 Rust 的返回值做同样的事情。我们创建了一个 Pydantic basemodel ，它是 Rust struct 在 Python 侧的镜像。 Rust struct 和 Pydantic basemodel 将包含多种不同类型的字段。这是我们将以最简单的方式（至少在我看来）处理的这件事：使用 C 语言中的 <code>Char *</code>。</p>
+<p><img src="/images/model_to_struct.png" alt="Pydantic BaseModel to Rust Struct" / srcset="/images/LoadingImage.gif" data-src="/images/model_to_struct.png" class="lozad post-image"></p>
+<p>上图说明了该过程会发生什么。在 Rust 和 Python 之间，JSON 字符串用于传递值。在 Rust 侧，我们将 JSON 解析到相应的结构中。在 Python 侧，我们将 JSON 加载到相应的 Pydantic basemodel 中。这样做的优点是我们只需要在 C 中使用 <code>Char *</code>，而不必使用 C 结构体或 C 中的其他类型。</p>
+<h3 id="python-侧-2"><a class="markdownIt-Anchor" href="#python-侧-2"></a> Python 侧.</h3>
+<p>我们将使用的 Python 脚本如下：</p>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">import</span> ctypes
+<span class="token keyword">from</span> pydantic <span class="token keyword">import</span> BaseModel
+<span class="token keyword">from</span> typing <span class="token keyword">import</span> List
+
+rust <span class="token operator">=</span> ctypes<span class="token punctuation">.</span>CDLL<span class="token punctuation">(</span><span class="token string">"target/release/librust_lib2.so"</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">class</span> <span class="token class-name">ProcedureInput</span><span class="token punctuation">(</span>BaseModel<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    timeout<span class="token punctuation">:</span> <span class="token builtin">int</span>
+    retries<span class="token punctuation">:</span> <span class="token builtin">int</span>
+    host_list<span class="token punctuation">:</span> List<span class="token punctuation">[</span><span class="token builtin">str</span><span class="token punctuation">]</span>
+    action<span class="token punctuation">:</span> <span class="token builtin">str</span>
+    job_id<span class="token punctuation">:</span> <span class="token builtin">int</span>
+
+
+<span class="token keyword">class</span> <span class="token class-name">ProcedureOutput</span><span class="token punctuation">(</span>BaseModel<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    job_id<span class="token punctuation">:</span> <span class="token builtin">int</span>
+    result<span class="token punctuation">:</span> <span class="token builtin">str</span>
+    message<span class="token punctuation">:</span> <span class="token builtin">str</span>
+    failed_hosts<span class="token punctuation">:</span> List<span class="token punctuation">[</span><span class="token builtin">str</span><span class="token punctuation">]</span>
+
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">"__main__"</span><span class="token punctuation">:</span>
+    procedure_input <span class="token operator">=</span> ProcedureInput<span class="token punctuation">(</span>
+        timeout<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">,</span>
+        retries<span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">,</span>
+        action<span class="token operator">=</span><span class="token string">"reboot"</span><span class="token punctuation">,</span>
+        host_list<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">"server1"</span><span class="token punctuation">,</span> <span class="token string">"server2"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+        job_id<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">,</span>
+    <span class="token punctuation">)</span>
+
+    ptr <span class="token operator">=</span> rust<span class="token punctuation">.</span>start_procedure<span class="token punctuation">(</span>procedure_input<span class="token punctuation">.</span>json<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">"utf-8"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    returned_bytes <span class="token operator">=</span> ctypes<span class="token punctuation">.</span>c_char_p<span class="token punctuation">(</span>ptr<span class="token punctuation">)</span><span class="token punctuation">.</span>value
+
+    procedure_output <span class="token operator">=</span> ProcedureOutput<span class="token punctuation">.</span>parse_raw<span class="token punctuation">(</span>returned_bytes<span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>procedure_output<span class="token punctuation">.</span>json<span class="token punctuation">(</span>indent<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我们先加载了目标库，然后定义了两个类。这脸各类是 Pydantic basemodels ，它在运行时强制执行类型提示。<strong>ProcedureInput</strong> 类是 Rust 函数的参数，<strong>ProcedureOutput</strong> 类是我们希望从 Rust 函数中返回的东西。</p>
+<p>完成定义后，我们实例化一个 <strong>ProcedureInput</strong> 对象。我们使用 <code>rust.start_procedure</code> 调用 Rust 函数。当我们进行 Rust 函数调用时，<code>procedure_input.json().encode(&quot;utf-8&quot;)</code> 这个表达式将会以 JSON 字符串的形式输出类实例的字段，并将字符串转成 bytes 。</p>
+<p>我们会收到从 Rust 中返回的 <strong>ptr</strong> 。接下来，将其转换为 bytes，并且使用 parse_raw 方法将使我们能够从这些 bytes 构建 <strong>ProcedureOutput</strong> 实例。</p>
+<p>当我们运行 Python 代码时，将得到以下输出：</p>
+<pre class="line-numbers language-none"><code class="language-none">root@rust:&#x2F;python&#x2F;rust&#x2F;rust_lib# python3 call_rust_function.py 
+&#123;
+  &quot;job_id&quot;: 1,
+  &quot;result&quot;: &quot;success&quot;,
+  &quot;message&quot;: &quot;1 host failed&quot;,
+  &quot;failed_hosts&quot;: [
+    &quot;server1&quot;
+  ]
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="rust-侧-2"><a class="markdownIt-Anchor" href="#rust-侧-2"></a> Rust 侧.</h3>
+<p>以下是 Rust 侧的代码：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">extern</span> <span class="token keyword">crate</span> <span class="token module-declaration namespace">serde</span><span class="token punctuation">;</span>
+<span class="token keyword">extern</span> <span class="token keyword">crate</span> <span class="token module-declaration namespace">serde_json</span><span class="token punctuation">;</span>
+
+<span class="token keyword">use</span> <span class="token namespace">serde<span class="token punctuation">::</span></span><span class="token punctuation">&#123;</span><span class="token class-name">Deserialize</span><span class="token punctuation">,</span> <span class="token class-name">Serialize</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token keyword">use</span> <span class="token namespace">std<span class="token punctuation">::</span>ffi<span class="token punctuation">::</span></span><span class="token class-name">CStr</span><span class="token punctuation">;</span>
+<span class="token keyword">use</span> <span class="token namespace">std<span class="token punctuation">::</span>ffi<span class="token punctuation">::</span></span><span class="token class-name">CString</span><span class="token punctuation">;</span>
+<span class="token keyword">use</span> <span class="token namespace">std<span class="token punctuation">::</span>os<span class="token punctuation">::</span>raw<span class="token punctuation">::</span></span>c_char<span class="token punctuation">;</span>
+<span class="token keyword">use</span> <span class="token namespace">std<span class="token punctuation">::</span></span><span class="token keyword">str</span><span class="token punctuation">;</span>
+
+<span class="token attribute attr-name">#[derive(Debug, Serialize, Deserialize)]</span>
+<span class="token keyword">struct</span> <span class="token type-definition class-name">ProcedureInput</span> <span class="token punctuation">&#123;</span>
+    timeout<span class="token punctuation">:</span> <span class="token keyword">u8</span><span class="token punctuation">,</span>
+    retries<span class="token punctuation">:</span> <span class="token keyword">u8</span><span class="token punctuation">,</span>
+    host_list<span class="token punctuation">:</span> <span class="token class-name">Vec</span><span class="token operator">&lt;</span><span class="token class-name">String</span><span class="token operator">></span><span class="token punctuation">,</span>
+    action<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span>
+    job_id<span class="token punctuation">:</span> <span class="token keyword">i32</span><span class="token punctuation">,</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token attribute attr-name">#[derive(Serialize, Deserialize)]</span>
+<span class="token keyword">struct</span> <span class="token type-definition class-name">ProcedureOutput</span> <span class="token punctuation">&#123;</span>
+    result<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span>
+    message<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span>
+    failed_hosts<span class="token punctuation">:</span> <span class="token class-name">Vec</span><span class="token operator">&lt;</span><span class="token class-name">String</span><span class="token operator">></span><span class="token punctuation">,</span>
+    job_id<span class="token punctuation">:</span> <span class="token keyword">i32</span><span class="token punctuation">,</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token attribute attr-name">#[no_mangle]</span>
+<span class="token keyword">pub</span> <span class="token keyword">extern</span> <span class="token string">"C"</span> <span class="token keyword">fn</span> <span class="token function-definition function">start_procedure</span><span class="token punctuation">(</span>c_string_ptr<span class="token punctuation">:</span> <span class="token operator">*</span><span class="token keyword">const</span> c_char<span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token operator">*</span><span class="token keyword">mut</span> c_char <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> bytes <span class="token operator">=</span> <span class="token keyword">unsafe</span> <span class="token punctuation">&#123;</span> <span class="token class-name">CStr</span><span class="token punctuation">::</span><span class="token function">from_ptr</span><span class="token punctuation">(</span>c_string_ptr<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">to_bytes</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> string <span class="token operator">=</span> <span class="token keyword">str</span><span class="token punctuation">::</span><span class="token function">from_utf8</span><span class="token punctuation">(</span>bytes<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> model<span class="token punctuation">:</span> <span class="token class-name">ProcedureInput</span> <span class="token operator">=</span> <span class="token namespace">serde_json<span class="token punctuation">::</span></span><span class="token function">from_str</span><span class="token punctuation">(</span>string<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> result <span class="token operator">=</span> <span class="token function">long_running_task</span><span class="token punctuation">(</span>model<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> result_json <span class="token operator">=</span> <span class="token namespace">serde_json<span class="token punctuation">::</span></span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>result<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> c_string <span class="token operator">=</span> <span class="token class-name">CString</span><span class="token punctuation">::</span><span class="token function">new</span><span class="token punctuation">(</span>result_json<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    c_string<span class="token punctuation">.</span><span class="token function">into_raw</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">fn</span> <span class="token function-definition function">long_running_task</span><span class="token punctuation">(</span>model<span class="token punctuation">:</span> <span class="token class-name">ProcedureInput</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">ProcedureOutput</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> result <span class="token operator">=</span> <span class="token class-name">ProcedureOutput</span> <span class="token punctuation">&#123;</span>
+        result<span class="token punctuation">:</span> <span class="token string">"success"</span><span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        message<span class="token punctuation">:</span> <span class="token string">"1 host failed"</span><span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        failed_hosts<span class="token punctuation">:</span> <span class="token macro property">vec!</span><span class="token punctuation">[</span><span class="token string">"server1"</span><span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+        job_id<span class="token punctuation">:</span> model<span class="token punctuation">.</span>job_id<span class="token punctuation">,</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> result<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在这段代码中，我们先定义了两个结构体作为 Pydantic basemodels 在 Rust 侧的镜像：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token attribute attr-name">#[derive(Debug, Serialize, Deserialize)]</span>
+<span class="token keyword">struct</span> <span class="token type-definition class-name">ProcedureInput</span> <span class="token punctuation">&#123;</span>
+    timeout<span class="token punctuation">:</span> <span class="token keyword">u8</span><span class="token punctuation">,</span>
+    retries<span class="token punctuation">:</span> <span class="token keyword">u8</span><span class="token punctuation">,</span>
+    host_list<span class="token punctuation">:</span> <span class="token class-name">Vec</span><span class="token operator">&lt;</span><span class="token class-name">String</span><span class="token operator">></span><span class="token punctuation">,</span>
+    action<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span>
+    job_id<span class="token punctuation">:</span> <span class="token keyword">i32</span><span class="token punctuation">,</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token attribute attr-name">#[derive(Serialize, Deserialize)]</span>
+<span class="token keyword">struct</span> <span class="token type-definition class-name">ProcedureOutput</span> <span class="token punctuation">&#123;</span>
+    result<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span>
+    message<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span>
+    failed_hosts<span class="token punctuation">:</span> <span class="token class-name">Vec</span><span class="token operator">&lt;</span><span class="token class-name">String</span><span class="token operator">></span><span class="token punctuation">,</span>
+    job_id<span class="token punctuation">:</span> <span class="token keyword">i32</span><span class="token punctuation">,</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>然后，定义了 <strong>start_procedure</strong> 函数：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token attribute attr-name">#[no_mangle]</span>
+<span class="token keyword">pub</span> <span class="token keyword">extern</span> <span class="token string">"C"</span> <span class="token keyword">fn</span> <span class="token function-definition function">start_procedure</span><span class="token punctuation">(</span>c_string_ptr<span class="token punctuation">:</span> <span class="token operator">*</span><span class="token keyword">const</span> c_char<span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token operator">*</span><span class="token keyword">mut</span> c_char <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> bytes <span class="token operator">=</span> <span class="token keyword">unsafe</span> <span class="token punctuation">&#123;</span> <span class="token class-name">CStr</span><span class="token punctuation">::</span><span class="token function">from_ptr</span><span class="token punctuation">(</span>c_string_ptr<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">to_bytes</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> string <span class="token operator">=</span> <span class="token keyword">str</span><span class="token punctuation">::</span><span class="token function">from_utf8</span><span class="token punctuation">(</span>bytes<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> model<span class="token punctuation">:</span> <span class="token class-name">ProcedureInput</span> <span class="token operator">=</span> <span class="token namespace">serde_json<span class="token punctuation">::</span></span><span class="token function">from_str</span><span class="token punctuation">(</span>string<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> result <span class="token operator">=</span> <span class="token function">long_running_task</span><span class="token punctuation">(</span>model<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> result_json <span class="token operator">=</span> <span class="token namespace">serde_json<span class="token punctuation">::</span></span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>result<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> c_string <span class="token operator">=</span> <span class="token class-name">CString</span><span class="token punctuation">::</span><span class="token function">new</span><span class="token punctuation">(</span>result_json<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    c_string<span class="token punctuation">.</span><span class="token function">into_raw</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>与之前相似，我们先从原始指针构建一个字符串。然后我们得到了从 Python 传过来的 JSON 字符串，我们将其解析为 <strong>ProcedureInput</strong> 结构体。我们将该结构传递给 <code>long_running_task</code> 方法，它会为我们返回一个 <strong>ProcedureOutput</strong> 对象。使用 <code>serde_json::to_string</code> 可以将结构体转为 JSON 字符串。我们使用 <code>CString::new</code> 从字节容器创建新的兼容 C 的字符串。使用 <code>into_raw()</code> 方法将 <code>c_string</code> 的所有权转移给 C 中的调用者。<code>into_raw()</code> 方法返回一个指针，我们之前在 Python 侧用它来读取返回值。</p>
+<h2 id="从-python-调用带有内存泄漏的-rust-函数"><a class="markdownIt-Anchor" href="#从-python-调用带有内存泄漏的-rust-函数"></a> 从 Python 调用带有内存泄漏的 Rust 函数</h2>
+<p>如果我们把 <code>start_procedure</code> 放在一个 while 循环里，让它运行一段时间，我们可以看到进程会逐渐开始消耗越来越多的内存。是因为从 Rust 返回的值没有被清理。</p>
+<p>通过对 Python 脚本进行以下更改，我们将持续调用 <code>start_procedure</code> ：</p>
+<pre class="line-numbers language-Python" data-language="Python"><code class="language-Python">while True:
+    ptr &#x3D; rust.start_procedure(procedure_input.json().encode(&quot;utf-8&quot;))
+    returned_bytes &#x3D; ctypes.c_char_p(ptr).value
+    procedure_output &#x3D; ProcedureOutput.parse_raw(returned_bytes)
+    print(procedure_output.json(indent&#x3D;2))<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>调用脚本，我们可以看到 Python 脚本的内存使用量在慢慢增加。</p>
+<h3 id="修复内存泄露问题"><a class="markdownIt-Anchor" href="#修复内存泄露问题"></a> 修复内存泄露问题</h3>
+<p>为了解决这个内存泄漏问题，我们首先需要在 Rust 中创建一个清理内存的函数：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token attribute attr-name">#[no_mangle]</span>
+<span class="token keyword">pub</span> <span class="token keyword">extern</span> <span class="token string">"C"</span> <span class="token keyword">fn</span> <span class="token function-definition function">free_mem</span><span class="token punctuation">(</span>c_string_ptr<span class="token punctuation">:</span> <span class="token operator">*</span><span class="token keyword">mut</span> c_char<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">unsafe</span> <span class="token punctuation">&#123;</span> <span class="token class-name">CString</span><span class="token punctuation">::</span><span class="token function">from_raw</span><span class="token punctuation">(</span>c_string_ptr<span class="token punctuation">)</span> <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>此函数将使用 <code>from_raw</code> 获取已转移到 C 的 <code>CString</code> 的所有权。当函数结束时，变量将不被任何所有者拥有，值被删除，释放内存。</p>
+<p>我们需要在 Python 侧调用这个函数。 <code>free_mem</code> 函数的输入应该是 Rust 返回给 Python 的值。</p>
+<p>以下 Python 可以连续运行而不会泄漏内存：</p>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">while</span> <span class="token boolean">True</span><span class="token punctuation">:</span>
+    ptr <span class="token operator">=</span> rust<span class="token punctuation">.</span>start_procedure<span class="token punctuation">(</span>procedure_input<span class="token punctuation">.</span>json<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">"utf-8"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    returned_bytes <span class="token operator">=</span> ctypes<span class="token punctuation">.</span>c_char_p<span class="token punctuation">(</span>ptr<span class="token punctuation">)</span><span class="token punctuation">.</span>value
+    procedure_output <span class="token operator">=</span> ProcedureOutput<span class="token punctuation">.</span>parse_raw<span class="token punctuation">(</span>returned_bytes<span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>procedure_output<span class="token punctuation">)</span>
+    rust<span class="token punctuation">.</span>free_mem<span class="token punctuation">(</span>ptr<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><code>start_procedure</code> 返回的值就是我们传递给 free_mem 的值。另一件需要注意的事情是我们在处理完值后调用 <code>free_mem</code>。</p>
+<p>在下面的示例中，我们在 Python 代码中使用它之前释放该值：</p>
+<pre class="line-numbers language-Python" data-language="Python"><code class="language-Python">ptr &#x3D; rust.start_procedure(procedure_input.json().encode(&quot;utf-8&quot;))
+returned_bytes &#x3D; ctypes.c_char_p(ptr).value
+rust.free_mem(ptr)
+procedure_output &#x3D; ProcedureOutput.parse_raw(returned_bytes)<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在让 Rust 释放内存之后，我们尝试在 Python 侧读取相同的字节。当我们运行这段代码时，我们完成了一次 double free ：</p>
+<pre class="line-numbers language-Python" data-language="Python"><code class="language-Python">root@rust:&#x2F;python&#x2F;rust&#x2F;rust_lib# python3 call_rust_continuously_free_mem.py
+job_id&#x3D;1 result&#x3D;&#39;success&#39; message&#x3D;&#39;1 host failed&#39; failed_hosts&#x3D;[&#39;server1&#39;]
+free(): double free detected in tcache 2
+Aborted<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="总结"><a class="markdownIt-Anchor" href="#总结"></a> 总结</h2>
+<p>从 Python 中使用 Rust 是我这段时间一直想尝试的事情。即使我已经研究 Rust 一段时间了，完全转向 Rust 对我现在参与的任何项目都没有任何意义。在某些情况下，我使用的库在 Rust 中不可用，而在其他情况下，我正在工作的项目太大而无法在 Rust 中重写。另外，其实我对于 Rust 还处于学习阶段。</p>
+<p>像这样从 Python 调用 Rust 为我铺平了道路：</p>
+<ul>
+<li>将 Rust 合并到现有的 Python 项目中并从小处着手</li>
+<li>对现有的 Python 项目更有信心，知道如果速度真的成为问题，我可以用 Rust 来加速</li>
+<li>同时使用 Python 和 Rust！</li>
+</ul>
+<p>Rust 社区的人们在使用 Rust 来加速 Python 方面做出了很多努力。在很多情况下，你会看到这些项目使用 pyo3。这个库提供了 “Python 的 Rust 绑定，包括用于创建原生 Python 扩展库的工具” 。使用 pyo3 的一个例子是 <a target="_blank" rel="noopener" href="https://www.pola.rs/">polars</a> 。</p>
+<p>这篇文章中的例子可以在<a target="_blank" rel="noopener" href="https://github.com/saidvandeklundert/rust_from_python">这里</a>找到。</p>
+<p>注意：写这篇文章时，我使用了 CPython 3.9.2、Pydantic 版本 1.8.2 和 Rust 1.56.0。</p>
+
+  </div>
+  <div>
+    
+      <div 
+        class="post-note note-info copyright" 
+        style="margin-top: 42px">
+        <p>
+          <span style="font-weight: bold;">作者：</span><a 
+            target="_blank" 
+            rel="nofollow noopener noreferrer" 
+            href="/about">
+            Ch3nYe
+          </a>
+        </p>
+        <p>
+          <span style="font-weight: bold;">文章链接：</span><a 
+            target="_blank" 
+            rel="nofollow noopener noreferrer" 
+            href="https://ch3nye.top/%E4%BB%8Epython%E8%B0%83%E7%94%A8rust-%E4%BD%BF%E7%94%A8rust%E5%8A%A0%E9%80%9F%E4%BD%A0%E7%9A%84python%E4%BB%A3%E7%A0%81/">
+            https://ch3nye.top/%E4%BB%8Epython%E8%B0%83%E7%94%A8rust-%E4%BD%BF%E7%94%A8rust%E5%8A%A0%E9%80%9F%E4%BD%A0%E7%9A%84python%E4%BB%A3%E7%A0%81/
+          </a>
+        </p>
+        <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+      </div>
+    
+  </div>
+</article>
+<div class="nav">
+  
+  
+    <div class="nav-item-next">
+      <a 
+        href="/%E5%A6%82%E4%BD%95%E7%94%A8%20Rust%20%E5%AE%9E%E7%8E%B0%E6%9C%B4%E7%B4%A0%E8%B4%9D%E5%8F%B6%E6%96%AF%E5%88%86%E7%B1%BB%E5%99%A8/" 
+        class="nav-link">
+        <div>
+          <div class="nav-label">下一篇</div>
+          
+            <div class="nav-title">如何用 Rust 实现朴素贝叶斯分类器 </div>
+          
+        </div>
+        <i class="iconfont icon-right nav-next-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+  <div 
+    class="card card-content comment-card" 
+    style="margin-top: 16px;">
+    <div class="comment-card-title">评论</div>
+    
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: '049b30eb10ea05082ef1',
+      clientSecret: 'c33ad95041c69907b3136b895008320f000987db',
+      repo: 'Ch3nYe.github.io',
+      owner: 'Ch3nYe',
+      admin: "Ch3nYe",
+      id: md5(location.href),
+      distractionFreeMode: false,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+  </div>
+
+<div 
+  class="card card-content toc-card" 
+  id="mobiletoc">
+  <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BB%8Epython%E8%B0%83%E7%94%A8rust-%E4%BD%BF%E7%94%A8rust%E5%8A%A0%E9%80%9F%E4%BD%A0%E7%9A%84python%E4%BB%A3%E7%A0%81"><span class="toc-text"> 从python调用rust-使用rust加速你的python代码</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9C%A8-python-%E4%B8%AD%E8%B0%83%E7%94%A8-rust-%E5%87%BD%E6%95%B0%E6%89%93%E5%8D%B0%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E4%B8%B2"><span class="toc-text"> 在 Python 中调用 Rust 函数打印一个字符串.</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#python-%E4%BE%A7"><span class="toc-text"> Python 侧.</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#rust-%E4%BE%A7"><span class="toc-text"> Rust 侧.</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9C%A8-python-%E4%B8%AD%E8%B0%83%E7%94%A8%E4%B8%80%E4%B8%AA-rust-%E5%87%BD%E6%95%B0%E6%89%93%E5%8D%B0%E4%B8%80%E4%B8%AA%E6%95%B4%E6%95%B0"><span class="toc-text"> 在 Python 中调用一个 Rust 函数打印一个整数.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E-python-%E8%B0%83%E7%94%A8%E5%A4%9A%E7%B1%BB%E5%9E%8B%E7%9A%84-rust-%E5%87%BD%E6%95%B0"><span class="toc-text"> 从 Python 调用多类型的 Rust 函数</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#python-%E4%BE%A7-2"><span class="toc-text"> Python 侧.</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#rust-%E4%BE%A7-2"><span class="toc-text"> Rust 侧.</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E-python-%E8%B0%83%E7%94%A8%E5%B8%A6%E6%9C%89%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84-rust-%E5%87%BD%E6%95%B0"><span class="toc-text"> 从 Python 调用带有内存泄漏的 Rust 函数</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BF%AE%E5%A4%8D%E5%86%85%E5%AD%98%E6%B3%84%E9%9C%B2%E9%97%AE%E9%A2%98"><span class="toc-text"> 修复内存泄露问题</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text"> 总结</span></a></li></ol></li></ol>
+</div></main>
+            <aside class="left-column">
+              
+              <div class="card card-author">
+                
+  <img 
+    src="/images/logo.png" 
+    class="author-img"
+    width="88"
+    height="88"
+    alt="author avatar">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a 
+    class="author-posts-count" 
+    href="/archives">
+    <span>41</span>
+    <span>文章</span>
+  </a>
+  <a 
+    class="author-categories-count" 
+    href="/categories">
+    <span>7</span>
+    <span>分类</span>
+  </a>
+  <a 
+    class="author-tags-count" 
+    href="/tags">
+    <span>62</span>
+    <span>标签</span>
+  </a>
+</div>
+
+  <div class="author-card-society">
+    
+      <div class="author-card-society-icon">
+        <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+          <i class="iconfont icon-github society-icon"></i>
+        </a>
+      </div>
+    
+      <div class="author-card-society-icon">
+        <a href="mailto:sud0su@163.com">
+          <i class="iconfont icon-mail society-icon"></i>
+        </a>
+      </div>
+    
+  </div>
+
+              </div>
+               <div class="sticky-tablet">
+  
+  
+    <article class="display-when-two-columns spacer">
+      <div class="card card-content toc-card">
+        <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BB%8Epython%E8%B0%83%E7%94%A8rust-%E4%BD%BF%E7%94%A8rust%E5%8A%A0%E9%80%9F%E4%BD%A0%E7%9A%84python%E4%BB%A3%E7%A0%81"><span class="toc-text"> 从python调用rust-使用rust加速你的python代码</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9C%A8-python-%E4%B8%AD%E8%B0%83%E7%94%A8-rust-%E5%87%BD%E6%95%B0%E6%89%93%E5%8D%B0%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E4%B8%B2"><span class="toc-text"> 在 Python 中调用 Rust 函数打印一个字符串.</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#python-%E4%BE%A7"><span class="toc-text"> Python 侧.</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#rust-%E4%BE%A7"><span class="toc-text"> Rust 侧.</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9C%A8-python-%E4%B8%AD%E8%B0%83%E7%94%A8%E4%B8%80%E4%B8%AA-rust-%E5%87%BD%E6%95%B0%E6%89%93%E5%8D%B0%E4%B8%80%E4%B8%AA%E6%95%B4%E6%95%B0"><span class="toc-text"> 在 Python 中调用一个 Rust 函数打印一个整数.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E-python-%E8%B0%83%E7%94%A8%E5%A4%9A%E7%B1%BB%E5%9E%8B%E7%9A%84-rust-%E5%87%BD%E6%95%B0"><span class="toc-text"> 从 Python 调用多类型的 Rust 函数</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#python-%E4%BE%A7-2"><span class="toc-text"> Python 侧.</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#rust-%E4%BE%A7-2"><span class="toc-text"> Rust 侧.</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E-python-%E8%B0%83%E7%94%A8%E5%B8%A6%E6%9C%89%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84-rust-%E5%87%BD%E6%95%B0"><span class="toc-text"> 从 Python 调用带有内存泄漏的 Rust 函数</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BF%AE%E5%A4%8D%E5%86%85%E5%AD%98%E6%B3%84%E9%9C%B2%E9%97%AE%E9%A2%98"><span class="toc-text"> 修复内存泄露问题</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text"> 总结</span></a></li></ol></li></ol>
+      </div>
+    </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header">
+    <i 
+      class="iconfont icon-fenlei" 
+      style="padding-right: 2px;">
+    </i>分类
+  </div>
+  <div class="categories-list">
+    
+      <a href="/categories/%E7%94%9F%E6%B4%BB/">
+        <div class="categories-list-item">
+          生活
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E5%A4%87%E5%BF%98/">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E6%9D%8E%E5%AE%8F%E6%AF%85%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">15</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">11</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E5%AE%9E%E6%88%98/">
+        <div class="categories-list-item">
+          实战
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%AC%94%E8%AE%B0/">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%BF%BB%E8%AF%91/">
+        <div class="categories-list-item">
+          翻译
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header">
+    <i 
+      class="iconfont icon-biaoqian" 
+      style="padding-right: 2px;">
+    </i>热门标签
+  </div>
+  <div class="tags-list">
+    
+      <a 
+        href="/tags/note/" 
+        title="note">
+        <div class="tags-list-item">note</div>
+      </a>
+    
+      <a 
+        href="/tags/ML/" 
+        title="ML">
+        <div class="tags-list-item">ML</div>
+      </a>
+    
+      <a 
+        href="/tags/Next-Step-of-ML/" 
+        title="Next-Step-of-ML">
+        <div class="tags-list-item">Next-Step-of-ML</div>
+      </a>
+    
+      <a 
+        href="/tags/%E7%AC%94%E8%AE%B0/" 
+        title="笔记">
+        <div class="tags-list-item">笔记</div>
+      </a>
+    
+      <a 
+        href="/tags/%E8%AE%BA%E6%96%87/" 
+        title="论文">
+        <div class="tags-list-item">论文</div>
+      </a>
+    
+      <a 
+        href="/tags/Android/" 
+        title="Android">
+        <div class="tags-list-item">Android</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%80%BB%E7%BB%93/" 
+        title="总结">
+        <div class="tags-list-item">总结</div>
+      </a>
+    
+      <a 
+        href="/tags/Deep-Learning/" 
+        title="Deep-Learning">
+        <div class="tags-list-item">Deep-Learning</div>
+      </a>
+    
+      <a 
+        href="/tags/%E5%AD%A6%E4%B9%A0/" 
+        title="学习">
+        <div class="tags-list-item">学习</div>
+      </a>
+    
+      <a 
+        href="/tags/%E5%AE%9E%E6%88%98/" 
+        title="实战">
+        <div class="tags-list-item">实战</div>
+      </a>
+    
+      <a 
+        href="/tags/crack/" 
+        title="crack">
+        <div class="tags-list-item">crack</div>
+      </a>
+    
+      <a 
+        href="/tags/%E4%BA%8C%E8%BF%9B%E5%88%B6/" 
+        title="二进制">
+        <div class="tags-list-item">二进制</div>
+      </a>
+    
+      <a 
+        href="/tags/Binary/" 
+        title="Binary">
+        <div class="tags-list-item">Binary</div>
+      </a>
+    
+      <a 
+        href="/tags/%E7%BF%BB%E8%AF%91/" 
+        title="翻译">
+        <div class="tags-list-item">翻译</div>
+      </a>
+    
+      <a 
+        href="/tags/Rust/" 
+        title="Rust">
+        <div class="tags-list-item">Rust</div>
+      </a>
+    
+      <a 
+        href="/tags/HTTPS/" 
+        title="HTTPS">
+        <div class="tags-list-item">HTTPS</div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+            </aside>
+            <aside class="right-column">
+              <div class="sticky-widescreen">
+  
+  
+    <article class="card card-content toc-card">
+      <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BB%8Epython%E8%B0%83%E7%94%A8rust-%E4%BD%BF%E7%94%A8rust%E5%8A%A0%E9%80%9F%E4%BD%A0%E7%9A%84python%E4%BB%A3%E7%A0%81"><span class="toc-text"> 从python调用rust-使用rust加速你的python代码</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9C%A8-python-%E4%B8%AD%E8%B0%83%E7%94%A8-rust-%E5%87%BD%E6%95%B0%E6%89%93%E5%8D%B0%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E4%B8%B2"><span class="toc-text"> 在 Python 中调用 Rust 函数打印一个字符串.</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#python-%E4%BE%A7"><span class="toc-text"> Python 侧.</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#rust-%E4%BE%A7"><span class="toc-text"> Rust 侧.</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9C%A8-python-%E4%B8%AD%E8%B0%83%E7%94%A8%E4%B8%80%E4%B8%AA-rust-%E5%87%BD%E6%95%B0%E6%89%93%E5%8D%B0%E4%B8%80%E4%B8%AA%E6%95%B4%E6%95%B0"><span class="toc-text"> 在 Python 中调用一个 Rust 函数打印一个整数.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E-python-%E8%B0%83%E7%94%A8%E5%A4%9A%E7%B1%BB%E5%9E%8B%E7%9A%84-rust-%E5%87%BD%E6%95%B0"><span class="toc-text"> 从 Python 调用多类型的 Rust 函数</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#python-%E4%BE%A7-2"><span class="toc-text"> Python 侧.</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#rust-%E4%BE%A7-2"><span class="toc-text"> Rust 侧.</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E-python-%E8%B0%83%E7%94%A8%E5%B8%A6%E6%9C%89%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84-rust-%E5%87%BD%E6%95%B0"><span class="toc-text"> 从 Python 调用带有内存泄漏的 Rust 函数</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BF%AE%E5%A4%8D%E5%86%85%E5%AD%98%E6%B3%84%E9%9C%B2%E9%97%AE%E9%A2%98"><span class="toc-text"> 修复内存泄露问题</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text"> 总结</span></a></li></ol></li></ol>
+    </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header">
+    <i 
+      class="iconfont icon-wenzhang_huaban" 
+      style="padding-right: 2px;">
+    </i>最近文章
+  </div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-04-13</div>
+        <a href="/%E4%BB%8Epython%E8%B0%83%E7%94%A8rust-%E4%BD%BF%E7%94%A8rust%E5%8A%A0%E9%80%9F%E4%BD%A0%E7%9A%84python%E4%BB%A3%E7%A0%81/"><div class="recent-posts-item-content">从python调用rust-使用rust加速你的python代码</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-03-28</div>
+        <a href="/%E5%A6%82%E4%BD%95%E7%94%A8%20Rust%20%E5%AE%9E%E7%8E%B0%E6%9C%B4%E7%B4%A0%E8%B4%9D%E5%8F%B6%E6%96%AF%E5%88%86%E7%B1%BB%E5%99%A8/"><div class="recent-posts-item-content">如何用 Rust 实现朴素贝叶斯分类器</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-03-25</div>
+        <a href="/%E5%85%B3%E4%BA%8E%E7%94%A8Rust%E5%86%99%E7%AE%97%E6%B3%95%E9%A2%98%E7%9A%84%E5%A7%BF%E5%8A%BF%E6%8E%A2%E8%AE%A8%E4%BB%A5%E5%8F%8AWindows11%E8%B0%83%E8%AF%95Rust%E7%9A%84%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/"><div class="recent-posts-item-content">关于用Rust写算法题的姿势探讨以及Windows11调试Rust的环境配置</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-02-17</div>
+        <a href="/Note-Nero/"><div class="recent-posts-item-content">Note 《Neural reverse engineering of stripped binaries using augmented control flow graphs》</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+     
+    <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>
+          Copyright ©
+          
+            2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a 
+          href="/" 
+          class="footer-link">
+          ch3nye's blog
+        </a>
+      </div>
+    </div>
+
+    
+      <div class="footer-dsc">
+        
+          Powered by
+          <a 
+            href="https://hexo.io/" 
+            class="footer-link" 
+            target="_blank" 
+            rel="nofollow noopener noreferrer">
+            &nbsp;Hexo
+          </a>
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          Theme -
+          <a 
+            href="https://github.com/theme-kaze" 
+            class="footer-link" 
+            target="_blank"
+            rel="nofollow noopener noreferrer">
+            &nbsp;Kaze
+          </a>
+        
+      </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+          本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+<!-- Default Statcounter code for My Blog https://ch3nye.top -->
+<script type="text/javascript">
+var sc_project=12696483; 
+var sc_invisible=1; 
+var sc_security="0f70f90d"; 
+</script>
+<script type="text/javascript"
+src="https://www.statcounter.com/counter/counter.js" async></script>
+<noscript><div class="statcounter"><a title="Web Analytics"
+href="https://statcounter.com/" target="_blank"><img class="statcounter"
+src="https://c.statcounter.com/12696483/0/0f70f90d/1/" alt="Web Analytics"
+referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
+<!-- End of Statcounter Code -->
+</footer> 
+    
+  <a 
+    role="button" 
+    id="scrollbutton" 
+    class="basebutton" 
+    aria-label="回到顶部">
+    <i class="iconfont icon-arrowleft button-icon"></i>
+  </a>
+
+<a 
+  role="button" 
+  id="menubutton"
+  aria-label="menu button"
+  class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="popbutton" 
+  class="basebutton" 
+  aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="darkbutton" 
+  class="basebutton darkwidget" 
+  aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="searchbutton" 
+  class="basebutton searchwidget" 
+  aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a> 
+     
+     
+      
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+ 
+     
+     
+      <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img')
+    var i
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a')
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'))
+      wrapper.setAttribute('aria-label', 'illustration')
+      wrapper.style.cssText =
+        'width: 100%; display: flex; justify-content: center;'
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt
+      wrapper.dataset.nolink = true
+      img[i].before(wrapper)
+      wrapper.append(img[i])
+      var divWrap = document.createElement('div')
+      divWrap.classList.add('gallery')
+      wrapper.before(divWrap)
+      divWrap.append(wrapper)
+    }
+    baguetteBox.run('.gallery')
+  }
+</script>
+<script>
+  loadScript(
+    "/js/lib/lightbox/baguetteBox.min.js",
+    addImgLayout
+  )
+</script>
+ 
+     
+     
+    <script src="/js/main.js"></script> 
+    
+      <script> 
+        loadScript('/js/lib/busuanzi.min.js') 
+      </script>
+     
+    
+      <script>
+        var addLazyload = function () {
+          var observer = lozad('.lozad', {
+            load: function (el) {
+              el.srcset = el.getAttribute('data-src')
+            },
+            loaded: function (el) {
+              el.classList.add('loaded')
+            },
+          })
+          observer.observe()
+        }
+      </script>
+      <script>
+        loadScript('/js/lib/lozad.min.js', addLazyload)
+      </script>
+     
+    
+      <script>
+        var googleAnalytics = function () {
+          window.dataLayer = window.dataLayer || []
+          function gtag() {
+            dataLayer.push(arguments)
+          }
+          gtag('js', new Date())
+          gtag('config', 'G-WHGL11014T')
+        }
+    </script>
+      <script>
+        loadScript(
+          'https://www.googletagmanager.com/gtag/js?id=' +
+            'G-WHGL11014T',
+          googleAnalytics
+        )
+      </script>
+    
+    
+      <script>
+        setTimeout(() => {localSearch("search.json")}, 0)
+      </script>
+    
+  </body>
+</html>

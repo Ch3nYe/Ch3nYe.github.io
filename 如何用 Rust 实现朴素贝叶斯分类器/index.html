@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+  <meta charset="UTF-8">
+  <meta 
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta 
+    http-equiv="X-UA-Compatible" 
+    content="ie=edge">
+  <meta 
+    name="theme-color" 
+    content="#fff" 
+    id="theme-color">
+  <meta 
+    name="description" 
+    content="网络安全 Android ML CTF">
+  <link 
+    rel="icon" 
+    href="/images/logo.png">
+  <title>如何用 Rust 实现朴素贝叶斯分类器</title>
+  
+    
+      <meta 
+        property="og:title" 
+        content="如何用 Rust 实现朴素贝叶斯分类器">
+    
+    
+      <meta 
+        property="og:url" 
+        content="https://ch3nye.top/%E5%A6%82%E4%BD%95%E7%94%A8%20Rust%20%E5%AE%9E%E7%8E%B0%E6%9C%B4%E7%B4%A0%E8%B4%9D%E5%8F%B6%E6%96%AF%E5%88%86%E7%B1%BB%E5%99%A8/index.html">
+    
+    
+      <meta 
+        property="og:img" 
+        content="/images/logo.png">
+    
+    
+      <meta 
+        property="og:img" 
+        content="网络安全 Android ML CTF">
+    
+    
+      <meta 
+        property="og:type" 
+        content="article">
+      <meta 
+        property="og:article:published_time" 
+        content="2022-03-28">
+      <meta 
+        property="og:article:modified_time" 
+        content="2022-04-29">
+      <meta 
+        property="og:article:author" 
+        content="Ch3nYe">
+      
+        
+          <meta 
+            property="og:article:tag" 
+            content="翻译">
+        
+          <meta 
+            property="og:article:tag" 
+            content="Rust - Bayes">
+        
+      
+    
+  
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+    function loadCSS(href, data, attr) {
+      var sheet = document.createElement('link');
+      sheet.ref = 'stylesheet';
+      sheet.href = href;
+      sheet.dataset[data] = attr;
+      document.head.appendChild(sheet);
+    }
+    function changeCSS(cssFile, data, attr) {
+      var oldlink = document.querySelector(data);
+      var newlink = document.createElement("link");
+      newlink.setAttribute("rel", "stylesheet");
+      newlink.setAttribute("href", cssFile);
+      newlink.dataset.prism = attr;
+      document.head.replaceChild(newlink, oldlink);
+    }
+  </script>
+  
+    
+      
+      
+      
+      
+        
+        
+        
+        <script>
+          function prismThemeChange() {
+            if(document.getElementById('theme-color').dataset.mode === 'dark') {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism-tomorrow.min.css', '[data-prism]', 'prism-tomorrow');
+              } else {
+                loadCSS('/js/lib/prism/prism-tomorrow.min.css', 'prism', 'prism-tomorrow');
+              }
+            } else {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism.min.css', '[data-prism]', 'prism');
+              } else {
+                loadCSS('/js/lib/prism/prism.min.css', 'prism', 'prism');
+              }
+            }
+          }
+          prismThemeChange()
+        </script>
+      
+      
+        
+        <link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+      
+    
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+  </script>
+  
+    <script>
+      var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+        document.getElementById('theme-color').dataset.mode = getCssMediaQuery();
+        prismThemeChange();
+      }
+    };
+    setDarkmode();
+    </script>
+  
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+    <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  <link rel="stylesheet" href="/css/main.css">
+  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+  
+    <link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+  <body>
+    <div class="wrapper">
+       
+      <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+        <img 
+          class="navbar-logo-img"
+          width="32"
+          height="32"
+          src="/images/logo.png" 
+          alt="blog logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+      <a 
+        href="/" 
+        class="navbar-menu-item">
+        
+          首页
+        
+      </a>
+    
+      <a 
+        href="/archives" 
+        class="navbar-menu-item">
+        
+          归档
+        
+      </a>
+    
+      <a 
+        href="/tags" 
+        class="navbar-menu-item">
+        
+          标签
+        
+      </a>
+    
+      <a 
+        href="/categories" 
+        class="navbar-menu-item">
+        
+          分类
+        
+      </a>
+    
+      <a 
+        href="/about" 
+        class="navbar-menu-item">
+        
+          关于
+        
+      </a>
+    
+      <a 
+        href="/links" 
+        class="navbar-menu-item">
+        
+          友链
+        
+      </a>
+    
+      <a 
+        href="/shuoshuo" 
+        class="navbar-menu-item">
+        
+          说说
+        
+      </a>
+    
+    <a 
+      class="navbar-menu-item darknavbar" 
+      id="dark">
+      <i class="iconfont icon-weather"></i>
+    </a>
+    <a 
+      class="navbar-menu-item searchnavbar" 
+      id="search">
+      <i 
+        class="iconfont icon-search" 
+        style="font-size: 1.2rem; font-weight: 400;">
+      </i>
+    </a>
+  </div>
+</nav> 
+      
+      <div 
+        id="local-search" 
+        style="display: none">
+        <input
+          class="navbar-menu-item"
+          id="search-input"
+          placeholder="请输入搜索内容..." />
+        <div id="search-content"></div>
+      </div>
+      
+      <div class="section-wrap">
+        <div class="container">
+          <div class="columns">
+            <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      如何用 Rust 实现朴素贝叶斯分类器
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2022-03-27T16:00:00.000Z">
+      <i 
+        class="iconfont icon-calendar" 
+        style="margin-right: 2px;">
+      </i>
+      <span>2022-03-28</span>
+    </time>
+    
+      <span class="dot"></span>
+      
+        <a 
+          href="/categories/%E7%BF%BB%E8%AF%91/" 
+          class="post-meta-link">
+          翻译
+        </a>
+      
+    
+    
+      <span class="dot"></span>
+      <span>3.2k 字</span>
+    
+  </div>
+  
+    <div 
+      class="post-meta post-show-meta" 
+      style="margin-top: -10px;">
+      <div style="display: flex; align-items: center;">
+        <i 
+          class="iconfont icon-biaoqian" 
+          style="margin-right: 2px; font-size: 1.15rem;">
+        </i>
+        
+          
+          <a 
+            href="/tags/%E7%BF%BB%E8%AF%91/" 
+            class="post-meta-link">
+            翻译
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/Rust-Bayes/" 
+            class="post-meta-link">
+            Rust - Bayes
+          </a>
+        
+      </div>
+    </div>
+  
+  </header>
+  <div 
+    id="section" 
+    class="post-content">
+    <blockquote>
+<p>原文链接: <a target="_blank" rel="noopener" href="https://www.freecodecamp.org/news/implement-naive-bayes-with-rust/">https://www.freecodecamp.org/news/implement-naive-bayes-with-rust/</a></p>
+<p>翻译：<a target="_blank" rel="noopener" href="https://github.com/Ch3nYe">Ch3nYe</a></p>
+<p>选题：<a target="_blank" rel="noopener" href="https://github.com/Ch3nYe">Ch3nYe</a></p>
+<p>本文由 <a target="_blank" rel="noopener" href="https://Rustt.org">Rustt</a> 翻译，<a target="_blank" rel="noopener" href="https://studyrust.org">StudyRust</a> 荣誉推出</p>
+</blockquote>
+<h1 id="如何用-rust-实现朴素贝叶斯分类器"><a class="markdownIt-Anchor" href="#如何用-rust-实现朴素贝叶斯分类器"></a> 如何用 Rust 实现朴素贝叶斯分类器</h1>
+<p>我想精进我的 Rust 编程技能，同时也帮助你磨练技能。所以我决定写一系列关于 Rust 编程语言的文章。</p>
+<p>在实际使用 Rust 写东西的时候，我能学到很广泛的技术概念。在本期中，我们将学习如何使用 Rust 实现朴素贝叶斯分类器。</p>
+<p>您可能会在本文中遇到一些不熟悉的术语或概念。不要气馁，如果你有时间可以自行学习，但无论如何，希望你不要偏离本文的主要思路。</p>
+<h2 id="什么是朴素贝叶斯分类器"><a class="markdownIt-Anchor" href="#什么是朴素贝叶斯分类器"></a> 什么是朴素贝叶斯分类器</h2>
+<p>朴素贝叶斯分类器是一个基于贝叶斯理论的机器学习算法。<a target="_blank" rel="noopener" href="https://greenteapress.com/wp/think-bayes/">贝叶斯理论</a>是一种通过给定一些数据 D ，来更新一个假设 H 的概率的方法。</p>
+<p>数学表达为：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mi>H</mi><mo>∣</mo><mi>D</mi><mo stretchy="false">)</mo><mo>=</mo><mfrac><mrow><mi>P</mi><mo stretchy="false">(</mo><mi>D</mi><mo>∣</mo><mi>H</mi><mo stretchy="false">)</mo><mi>P</mi><mo stretchy="false">(</mo><mi>H</mi><mo stretchy="false">)</mo></mrow><mrow><mi>P</mi><mo stretchy="false">(</mo><mi>D</mi><mo stretchy="false">)</mo></mrow></mfrac></mrow><annotation encoding="application/x-tex">P(H \mid D)=\frac{P(D \mid H) P(H)}{P(D)}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.08125em;">H</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∣</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">D</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.363em;vertical-align:-0.936em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.427em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.02778em;">D</span><span class="mclose">)</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.02778em;">D</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∣</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord mathdefault" style="margin-right:0.08125em;">H</span><span class="mclose">)</span><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.08125em;">H</span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.936em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
+<p><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mi>H</mi><mi mathvariant="normal">∣</mi><mi>D</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">P(H|D)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.08125em;">H</span><span class="mord">∣</span><span class="mord mathdefault" style="margin-right:0.02778em;">D</span><span class="mclose">)</span></span></span></span> 是给出数据 D 假设 H 成立的概率。</p>
+<p>如果我们统计更多数据，就可以根据这些数据更新<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mi>H</mi><mi mathvariant="normal">∣</mi><mi>D</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">P(H|D)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.08125em;">H</span><span class="mord">∣</span><span class="mord mathdefault" style="margin-right:0.02778em;">D</span><span class="mclose">)</span></span></span></span> 。</p>
+<p>朴素贝叶斯模型基于一个大假设：数据集中是否存在数据点与该数据集中已经存在的数据无关（<a target="_blank" rel="noopener" href="https://www.oreilly.com/library/view/data-science-from/9781492041122/">参考</a>）。也就是说，每条数据之间相互独立。</p>
+<p>显然，这个假设是比较弱的，现实中难以完全成立。但它仍然很有用，它允许我们创建一个用起来还不错的的高效分类器（<a target="_blank" rel="noopener" href="https://probml.github.io/pml-book/book0.html">参考</a>）。</p>
+<p>对朴素贝叶斯的描述就停在这里，本文的重点是练习 Rust 。</p>
+<p>如果您想了解有关该算法的更多信息，这里有一些资源：</p>
+<ul>
+<li>Josh Starmer 的<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=O2L2Uv9pdDA&amp;t=657s">视频</a>讲解非常好.</li>
+<li>Joel Grus 在《<em><a target="_blank" rel="noopener" href="https://learning.oreilly.com/library/view/data-science-from/9781492041122/">Data Science from Scratch</a></em>》这本书中关于贝叶斯一节的描述是本文实现的启发。</li>
+<li>如果你更喜欢数学的形式化定义, <a target="_blank" rel="noopener" href="https://hastie.su.domains/Papers/ESLII.pdf">try section 6.6.3 of *The Elements of Statisical Learning</a>.*</li>
+<li>一篇关于算法工作原理的有用<a target="_blank" rel="noopener" href="https://www.freecodecamp.org/news/how-naive-bayes-classifiers-work/">文章</a></li>
+</ul>
+<p>朴素贝叶斯分类器的典型应用是<strong>垃圾邮件分类器</strong>。这就是我们要实现的东西。代码在这：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/josht-jpg/shaking-off-the-rust">https://github.com/josht-jpg/shaking-off-the-rust</a></p>
+<p>我们从使用 Cargo 创建一个新的库开始：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cargo new naive_bayes --lib
+<span class="token builtin class-name">cd</span> naive_bayes<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h2 id="tokenization-in-rust"><a class="markdownIt-Anchor" href="#tokenization-in-rust"></a> Tokenization in Rust</h2>
+<p>我们的分类器会将邮件消息内容作为输入并返回其是否为垃圾邮件的分类。</p>
+<p>为了处理我们收到的消息，我们需要对其进行tokenize（分词）。我们的词汇表将是一堆小写的单词，忽略顺序和重复单词。Rust 的 <a target="_blank" rel="noopener" href="https://doc.rust-lang.org/std/collections/struct.HashSet.html"><code>std::collections::HashSet</code></a> 结构正合适来实现词汇表。</p>
+<p>我们将编写分词的函数将需要使用 <a target="_blank" rel="noopener" href="https://docs.rs/regex/latest/regex/">regex</a> crate。确保在 Cargo.toml 文件中包含以下依赖项：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token punctuation">[</span>dependencies<span class="token punctuation">]</span>
+regex = "^1.5.4"<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p><code>tokenize</code> 分词函数：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token comment">// lib.rs</span>
+
+<span class="token comment">// We'll need HashMap later</span>
+<span class="token keyword">use</span> <span class="token namespace">std<span class="token punctuation">::</span>collections<span class="token punctuation">::</span></span><span class="token punctuation">&#123;</span><span class="token class-name">HashMap</span><span class="token punctuation">,</span> <span class="token class-name">HashSet</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">extern</span> <span class="token keyword">crate</span> <span class="token module-declaration namespace">regex</span><span class="token punctuation">;</span>
+<span class="token keyword">use</span> <span class="token namespace">regex<span class="token punctuation">::</span></span><span class="token class-name">Regex</span><span class="token punctuation">;</span>
+
+<span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function-definition function">tokenize</span><span class="token punctuation">(</span>lower_case_text<span class="token punctuation">:</span> <span class="token operator">&amp;</span><span class="token keyword">str</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">HashSet</span><span class="token operator">&lt;</span><span class="token operator">&amp;</span><span class="token keyword">str</span><span class="token operator">></span> <span class="token punctuation">&#123;</span>
+    <span class="token class-name">Regex</span><span class="token punctuation">::</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token string">r"[a-z0-9']+"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">find_iter</span><span class="token punctuation">(</span>lower_case_text<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span><span class="token closure-params"><span class="token closure-punctuation punctuation">|</span>mat<span class="token closure-punctuation punctuation">|</span></span> mat<span class="token punctuation">.</span><span class="token function">as_str</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">collect</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>此函数使用正则表达式匹配所有数字和小写字母。每当我们遇到不同类型的符号（通常是空格或标点符号）时，我们就会拆分输入并将自上次拆分后遇到的所有数字和字母组合在一起（你可以在<a target="_blank" rel="noopener" href="https://rust-lang-nursery.github.io/rust-cookbook/text/regex.html">这里</a>阅读有关 Rust 正则表达式的更多内容）。也就是说，我们正在识别和分割输入文本中的单词。</p>
+<h2 id="构造结构体"><a class="markdownIt-Anchor" href="#构造结构体"></a> 构造结构体</h2>
+<p>使用 <code>struct</code> 来表示消息是很好的方法。<code>struct</code> 将包含消息文本的<em>字符串切片</em>，以及指示消息是否为垃圾邮件的布尔值：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">pub</span> <span class="token keyword">struct</span> <span class="token type-definition class-name">Message</span><span class="token operator">&lt;</span><span class="token lifetime-annotation symbol">'a</span><span class="token operator">></span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">pub</span> text<span class="token punctuation">:</span> <span class="token operator">&amp;</span><span class="token lifetime-annotation symbol">'a</span> <span class="token keyword">str</span><span class="token punctuation">,</span>
+    <span class="token keyword">pub</span> is_spam<span class="token punctuation">:</span> <span class="token keyword">bool</span><span class="token punctuation">,</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p><code>'a</code> 是声明周期注释。如果你不熟悉生命周期，我推荐你阅读 <a target="_blank" rel="noopener" href="https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html">section 10.3 of The Rust Programming Language Book</a> 。</p>
+<h2 id="什么是拉普拉斯平滑"><a class="markdownIt-Anchor" href="#什么是拉普拉斯平滑"></a> 什么是拉普拉斯平滑？</h2>
+<p>假设——在我们的训练数据中——单词 <code>fubar</code> 出现在一些非垃圾邮件中，但没有出现在任何垃圾邮件中。此时，朴素贝叶斯分类器把任何包含单词 <code>fubar</code>（<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=nt63k3bfXS0">参考</a>）的消息认定为非垃圾邮件，也就是说该消息是垃圾邮件的概率为 0 。</p>
+<p>显然，仅仅因为它还没有发生就给它分配 0 的概率是不合适的。</p>
+<p>加入拉普拉斯平滑就是用来解决这个问题的，将一个常数 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.0037em;">α</span></span></span></span> 加在每个单词出现的次数统计上。我们来观察一下拉普拉斯平滑常数加入前后，在垃圾邮件中看到单词 <em>w</em> 的概率为：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mi>w</mi><mi mathvariant="normal">∣</mi><mi>S</mi><mo stretchy="false">)</mo><mo>=</mo><mfrac><mrow><mi>n</mi><mi>u</mi><mi>m</mi><mi>b</mi><mi>e</mi><mi>r</mi><mtext> </mtext><mi>o</mi><mi>f</mi><mtext> </mtext><mi>s</mi><mi>p</mi><mi>a</mi><mi>m</mi><mtext> </mtext><mi>m</mi><mi>e</mi><mi>s</mi><mi>s</mi><mi>a</mi><mi>g</mi><mi>e</mi><mi>s</mi><mtext> </mtext><mi>c</mi><mi>o</mi><mi>n</mi><mi>t</mi><mi>a</mi><mi>i</mi><mi>n</mi><mi>i</mi><mi>n</mi><mi>g</mi><mtext> </mtext><mi>w</mi></mrow><mrow><mi>t</mi><mi>o</mi><mi>t</mi><mi>a</mi><mi>l</mi><mtext> </mtext><mi>n</mi><mi>u</mi><mi>m</mi><mi>b</mi><mi>e</mi><mi>r</mi><mtext> </mtext><mi>o</mi><mi>f</mi><mtext> </mtext><mi>s</mi><mi>p</mi><mi>a</mi><mi>m</mi><mi>s</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex">P(w|S) = \frac{number\ of\ spam\ messages\ containing\ w}{total\ number\ of\ spams}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.02691em;">w</span><span class="mord">∣</span><span class="mord mathdefault" style="margin-right:0.05764em;">S</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.25188em;vertical-align:-0.8804400000000001em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3714399999999998em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">t</span><span class="mord mathdefault">o</span><span class="mord mathdefault">t</span><span class="mord mathdefault">a</span><span class="mord mathdefault" style="margin-right:0.01968em;">l</span><span class="mspace"> </span><span class="mord mathdefault">n</span><span class="mord mathdefault">u</span><span class="mord mathdefault">m</span><span class="mord mathdefault">b</span><span class="mord mathdefault">e</span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mspace"> </span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="mspace"> </span><span class="mord mathdefault">s</span><span class="mord mathdefault">p</span><span class="mord mathdefault">a</span><span class="mord mathdefault">m</span><span class="mord mathdefault">s</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">n</span><span class="mord mathdefault">u</span><span class="mord mathdefault">m</span><span class="mord mathdefault">b</span><span class="mord mathdefault">e</span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mspace"> </span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="mspace"> </span><span class="mord mathdefault">s</span><span class="mord mathdefault">p</span><span class="mord mathdefault">a</span><span class="mord mathdefault">m</span><span class="mspace"> </span><span class="mord mathdefault">m</span><span class="mord mathdefault">e</span><span class="mord mathdefault">s</span><span class="mord mathdefault">s</span><span class="mord mathdefault">a</span><span class="mord mathdefault" style="margin-right:0.03588em;">g</span><span class="mord mathdefault">e</span><span class="mord mathdefault">s</span><span class="mspace"> </span><span class="mord mathdefault">c</span><span class="mord mathdefault">o</span><span class="mord mathdefault">n</span><span class="mord mathdefault">t</span><span class="mord mathdefault">a</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span><span class="mord mathdefault" style="margin-right:0.03588em;">g</span><span class="mspace"> </span><span class="mord mathdefault" style="margin-right:0.02691em;">w</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.8804400000000001em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
+<p>使用拉普拉斯平滑后就是：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mi>w</mi><mi mathvariant="normal">∣</mi><mi>S</mi><mo stretchy="false">)</mo><mo>=</mo><mfrac><mrow><mi>α</mi><mo>+</mo><mi>n</mi><mi>u</mi><mi>m</mi><mi>b</mi><mi>e</mi><mi>r</mi><mtext> </mtext><mi>o</mi><mi>f</mi><mtext> </mtext><mi>s</mi><mi>p</mi><mi>a</mi><mi>m</mi><mtext> </mtext><mi>m</mi><mi>e</mi><mi>s</mi><mi>s</mi><mi>a</mi><mi>g</mi><mi>e</mi><mi>s</mi><mtext> </mtext><mi>c</mi><mi>o</mi><mi>n</mi><mi>t</mi><mi>a</mi><mi>i</mi><mi>n</mi><mi>i</mi><mi>n</mi><mi>g</mi><mtext> </mtext><mi>w</mi></mrow><mrow><mn>2</mn><mi>α</mi><mo>+</mo><mi>t</mi><mi>o</mi><mi>t</mi><mi>a</mi><mi>l</mi><mtext> </mtext><mi>n</mi><mi>u</mi><mi>m</mi><mi>b</mi><mi>e</mi><mi>r</mi><mtext> </mtext><mi>o</mi><mi>f</mi><mtext> </mtext><mi>s</mi><mi>p</mi><mi>a</mi><mi>m</mi><mi>s</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex">P(w|S) = \frac{\alpha + number\ of\ spam\ messages\ containing\ w}{2\alpha + total\ number\ of\ spams}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.02691em;">w</span><span class="mord">∣</span><span class="mord mathdefault" style="margin-right:0.05764em;">S</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.25188em;vertical-align:-0.8804400000000001em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3714399999999998em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">2</span><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord mathdefault">t</span><span class="mord mathdefault">o</span><span class="mord mathdefault">t</span><span class="mord mathdefault">a</span><span class="mord mathdefault" style="margin-right:0.01968em;">l</span><span class="mspace"> </span><span class="mord mathdefault">n</span><span class="mord mathdefault">u</span><span class="mord mathdefault">m</span><span class="mord mathdefault">b</span><span class="mord mathdefault">e</span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mspace"> </span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="mspace"> </span><span class="mord mathdefault">s</span><span class="mord mathdefault">p</span><span class="mord mathdefault">a</span><span class="mord mathdefault">m</span><span class="mord mathdefault">s</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.0037em;">α</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord mathdefault">n</span><span class="mord mathdefault">u</span><span class="mord mathdefault">m</span><span class="mord mathdefault">b</span><span class="mord mathdefault">e</span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mspace"> </span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.10764em;">f</span><span class="mspace"> </span><span class="mord mathdefault">s</span><span class="mord mathdefault">p</span><span class="mord mathdefault">a</span><span class="mord mathdefault">m</span><span class="mspace"> </span><span class="mord mathdefault">m</span><span class="mord mathdefault">e</span><span class="mord mathdefault">s</span><span class="mord mathdefault">s</span><span class="mord mathdefault">a</span><span class="mord mathdefault" style="margin-right:0.03588em;">g</span><span class="mord mathdefault">e</span><span class="mord mathdefault">s</span><span class="mspace"> </span><span class="mord mathdefault">c</span><span class="mord mathdefault">o</span><span class="mord mathdefault">n</span><span class="mord mathdefault">t</span><span class="mord mathdefault">a</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span><span class="mord mathdefault" style="margin-right:0.03588em;">g</span><span class="mspace"> </span><span class="mord mathdefault" style="margin-right:0.02691em;">w</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.8804400000000001em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
+<p>具体到分类器结构体就是：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">pub</span> <span class="token keyword">struct</span> <span class="token type-definition class-name">NaiveBayesClassifier</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">pub</span> alpha<span class="token punctuation">:</span> <span class="token keyword">f64</span><span class="token punctuation">,</span>
+    <span class="token keyword">pub</span> tokens<span class="token punctuation">:</span> <span class="token class-name">HashSet</span><span class="token operator">&lt;</span><span class="token class-name">String</span><span class="token operator">></span><span class="token punctuation">,</span>
+    <span class="token keyword">pub</span> token_ham_counts<span class="token punctuation">:</span> <span class="token class-name">HashMap</span><span class="token operator">&lt;</span><span class="token class-name">String</span><span class="token punctuation">,</span> <span class="token keyword">i32</span><span class="token operator">></span><span class="token punctuation">,</span>
+    <span class="token keyword">pub</span> token_spam_counts<span class="token punctuation">:</span> <span class="token class-name">HashMap</span><span class="token operator">&lt;</span><span class="token class-name">String</span><span class="token punctuation">,</span> <span class="token keyword">i32</span><span class="token operator">></span><span class="token punctuation">,</span>
+    <span class="token keyword">pub</span> spam_messages_count<span class="token punctuation">:</span> <span class="token keyword">i32</span><span class="token punctuation">,</span>
+    <span class="token keyword">pub</span> ham_messages_count<span class="token punctuation">:</span> <span class="token keyword">i32</span><span class="token punctuation">,</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><code>NaiveBayesClassifier</code> 的实现将围绕一个 <code>train</code> 方法和一个 <code>predict</code> 方法。</p>
+<h2 id="如何训练分类器"><a class="markdownIt-Anchor" href="#如何训练分类器"></a> 如何训练分类器</h2>
+<p><code>train</code> 方法将接收多个 <code>Message</code> ，并循环对每个 <code>Message</code> 进行以下步骤：</p>
+<ul>
+<li>检查邮件是否为垃圾邮件并相应地更新 <code>spam_messages_count</code> 或 <code>ham_messages_count</code>。我们为此创建辅助函数 <code>increment_message_classifications_count</code> 。</li>
+<li>使用 <code>tokenize</code> 函数将消息分词。</li>
+<li>遍历消息中的每个单词，然后：</li>
+<li>将单词插入词汇表 <code>HashSet</code> ，然后更新<code>token_spam_counts</code> 或 <code>token_ham_counts</code> 。我们为此创建辅助函数 <code>increment_token_count</code></li>
+</ul>
+<p>下面是 <code>train</code> 方法的伪代码。如果你愿意，尝试将伪代码转换为 Rust，然后再查看下面的实现。</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust">implementation block <span class="token keyword">for</span> <span class="token class-name">NaiveBayesClassifier</span> <span class="token punctuation">&#123;</span>
+
+	<span class="token function">train</span><span class="token punctuation">(</span><span class="token keyword">self</span><span class="token punctuation">,</span> messages<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">for</span> each message <span class="token keyword">in</span> messages <span class="token punctuation">&#123;</span>
+			<span class="token keyword">self</span><span class="token punctuation">.</span><span class="token function">increment_message_classifications_count</span><span class="token punctuation">(</span>message<span class="token punctuation">)</span>
+			
+			lowercase_text <span class="token operator">=</span> <span class="token function">to_lowercase</span><span class="token punctuation">(</span>message<span class="token punctuation">.</span>text<span class="token punctuation">)</span>
+			<span class="token keyword">for</span> each token <span class="token keyword">in</span> <span class="token function">tokenize</span><span class="token punctuation">(</span>lowercase_text<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+				<span class="token keyword">self</span><span class="token punctuation">.</span>tokens<span class="token punctuation">.</span><span class="token function">insert</span><span class="token punctuation">(</span>tokens<span class="token punctuation">)</span>
+				<span class="token keyword">self</span><span class="token punctuation">.</span><span class="token function">increment_token_count</span><span class="token punctuation">(</span>token<span class="token punctuation">,</span> message<span class="token punctuation">.</span>is_spam<span class="token punctuation">)</span>
+			<span class="token punctuation">&#125;</span>			
+		<span class="token punctuation">&#125;</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token function">increment_message_classifications_count</span><span class="token punctuation">(</span><span class="token keyword">self</span><span class="token punctuation">,</span> message<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">if</span> message<span class="token punctuation">.</span>is_spam <span class="token punctuation">&#123;</span>
+			<span class="token keyword">self</span><span class="token punctuation">.</span>spam_messages_count <span class="token operator">=</span> <span class="token keyword">self</span><span class="token punctuation">.</span>spam_messages_count <span class="token operator">+</span> <span class="token number">1</span>
+		<span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+			<span class="token keyword">self</span><span class="token punctuation">.</span>ham_messages_count <span class="token operator">=</span> <span class="token keyword">self</span><span class="token punctuation">.</span>ham_messages_count <span class="token operator">+</span> <span class="token number">1</span>
+		<span class="token punctuation">&#125;</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token function">increment_token_count</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> <span class="token keyword">self</span><span class="token punctuation">,</span> token<span class="token punctuation">,</span> is_spam<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">if</span> token is not a key of <span class="token keyword">self</span><span class="token punctuation">.</span>token_spam_counts <span class="token punctuation">&#123;</span>
+			insert record with key<span class="token operator">=</span>token and value<span class="token operator">=</span><span class="token number">0</span> into <span class="token keyword">self</span><span class="token punctuation">.</span>token_spam_counts
+		<span class="token punctuation">&#125;</span>
+
+		<span class="token keyword">if</span> token is not a key of <span class="token keyword">self</span><span class="token punctuation">.</span>token_ham_counts <span class="token punctuation">&#123;</span>
+			insert record with key<span class="token operator">=</span>token and value<span class="token operator">=</span><span class="token number">0</span> into <span class="token keyword">self</span><span class="token punctuation">.</span>token_ham_counts
+		<span class="token punctuation">&#125;</span>
+
+		<span class="token keyword">if</span> is_spam <span class="token punctuation">&#123;</span>
+			<span class="token keyword">self</span><span class="token punctuation">.</span>token_spam_counts<span class="token punctuation">[</span>token<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token keyword">self</span><span class="token punctuation">.</span>token_spam_counts<span class="token punctuation">[</span>token<span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token number">1</span>
+		<span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+			<span class="token keyword">self</span><span class="token punctuation">.</span>token_ham_counts<span class="token punctuation">[</span>token<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token keyword">self</span><span class="token punctuation">.</span>token_ham_counts<span class="token punctuation">[</span>token<span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token number">1</span>
+		<span class="token punctuation">&#125;</span>
+	<span class="token punctuation">&#125;</span>
+
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>下面是 Rust 的实现：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">impl</span> <span class="token class-name">NaiveBayesClassifier</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function-definition function">train</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> <span class="token keyword">self</span><span class="token punctuation">,</span> messages<span class="token punctuation">:</span> <span class="token operator">&amp;</span><span class="token punctuation">[</span><span class="token class-name">Message</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">for</span> message <span class="token keyword">in</span> messages<span class="token punctuation">.</span><span class="token function">iter</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">self</span><span class="token punctuation">.</span><span class="token function">increment_message_classifications_count</span><span class="token punctuation">(</span>message<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">for</span> token <span class="token keyword">in</span> <span class="token function">tokenize</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>message<span class="token punctuation">.</span>text<span class="token punctuation">.</span><span class="token function">to_lowercase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                <span class="token keyword">self</span><span class="token punctuation">.</span>tokens<span class="token punctuation">.</span><span class="token function">insert</span><span class="token punctuation">(</span>token<span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">self</span><span class="token punctuation">.</span><span class="token function">increment_token_count</span><span class="token punctuation">(</span>token<span class="token punctuation">,</span> message<span class="token punctuation">.</span>is_spam<span class="token punctuation">)</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">fn</span> <span class="token function-definition function">increment_message_classifications_count</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> <span class="token keyword">self</span><span class="token punctuation">,</span> message<span class="token punctuation">:</span> <span class="token operator">&amp;</span><span class="token class-name">Message</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> message<span class="token punctuation">.</span>is_spam <span class="token punctuation">&#123;</span>
+            <span class="token keyword">self</span><span class="token punctuation">.</span>spam_messages_count <span class="token operator">+=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">self</span><span class="token punctuation">.</span>ham_messages_count <span class="token operator">+=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">fn</span> <span class="token function-definition function">increment_token_count</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> <span class="token keyword">self</span><span class="token punctuation">,</span> token<span class="token punctuation">:</span> <span class="token operator">&amp;</span><span class="token keyword">str</span><span class="token punctuation">,</span> is_spam<span class="token punctuation">:</span> <span class="token keyword">bool</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> <span class="token operator">!</span><span class="token keyword">self</span><span class="token punctuation">.</span>token_spam_counts<span class="token punctuation">.</span><span class="token function">contains_key</span><span class="token punctuation">(</span>token<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">self</span><span class="token punctuation">.</span>token_spam_counts<span class="token punctuation">.</span><span class="token function">insert</span><span class="token punctuation">(</span>token<span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token keyword">if</span> <span class="token operator">!</span><span class="token keyword">self</span><span class="token punctuation">.</span>token_ham_counts<span class="token punctuation">.</span><span class="token function">contains_key</span><span class="token punctuation">(</span>token<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">self</span><span class="token punctuation">.</span>token_ham_counts<span class="token punctuation">.</span><span class="token function">insert</span><span class="token punctuation">(</span>token<span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token keyword">if</span> is_spam <span class="token punctuation">&#123;</span>
+            <span class="token keyword">self</span><span class="token punctuation">.</span><span class="token function">increment_spam_count</span><span class="token punctuation">(</span>token<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">self</span><span class="token punctuation">.</span><span class="token function">increment_ham_count</span><span class="token punctuation">(</span>token<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">fn</span> <span class="token function-definition function">increment_spam_count</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> <span class="token keyword">self</span><span class="token punctuation">,</span> token<span class="token punctuation">:</span> <span class="token operator">&amp;</span><span class="token keyword">str</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token operator">*</span><span class="token keyword">self</span><span class="token punctuation">.</span>token_spam_counts<span class="token punctuation">.</span><span class="token function">get_mut</span><span class="token punctuation">(</span>token<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">fn</span> <span class="token function-definition function">increment_ham_count</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> <span class="token keyword">self</span><span class="token punctuation">,</span> token<span class="token punctuation">:</span> <span class="token operator">&amp;</span><span class="token keyword">str</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token operator">*</span><span class="token keyword">self</span><span class="token punctuation">.</span>token_ham_counts<span class="token punctuation">.</span><span class="token function">get_mut</span><span class="token punctuation">(</span>token<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>请注意，在 HashMap 中增加一个值是非常耗时的。新手 Rust 程序员很难理解下面这行代码在做什么：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token operator">*</span><span class="token keyword">self</span><span class="token punctuation">.</span>token_spam_counts<span class="token punctuation">.</span><span class="token function">get_mut</span><span class="token punctuation">(</span>token<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+=</span> <span class="token number">1</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>为了使代码更明确，我创建了 <code>increment_spam_count</code> 和 <code>increment_ham_count</code> 函数。但我对此并不满意——这仍然很麻烦。如果您对更好的方法有建议，请与我联系。</p>
+<h2 id="如何使用分类器做预测"><a class="markdownIt-Anchor" href="#如何使用分类器做预测"></a> 如何使用分类器做预测</h2>
+<p><code>predict</code> 方法接手一个字符串切片，返回模型对于该消息是否为垃圾邮件的预测结果。</p>
+<p>我们创建两个辅助函数 <code>probabilities_of_message</code> 和 <code>robabilites_of_token</code> 来完成 <code>predict</code> 的任务。</p>
+<p><code>probabilities_of_message</code> returns <em>P(Message|Spam)</em> and <em>P(Message|ham)</em></p>
+<p><code>probabilities_of_token</code> returns <em>P(Token|Spam)</em> and <em>P(Token|ham)</em></p>
+<p>计算输入消息是垃圾邮件的概率需要将每个单词在垃圾邮件中出现的概率相乘。</p>
+<p>概率是介于 0 和 1 之间的浮点数，将许多概率相乘会导致下溢（<a target="_blank" rel="noopener" href="https://learning.oreilly.com/library/view/data-science-from/9781492041122/">参考</a>）。这是因为当计算产生的数字小于计算机可以准确存储的数字（请参阅<a target="_blank" rel="noopener" href="https://www.techopedia.com/definition/712/underflow">这里</a>和<a target="_blank" rel="noopener" href="https://www.amazon.ca/Numerical-Analysis-Richard-Burden/dp/1305253663/ref=asc_df_1305253663/?tag=googleshopc0c-20&amp;linkCode=df0&amp;hvadid=293014842916&amp;hvpos=&amp;hvnetw=g&amp;hvrand=9862733826869340686&amp;hvpone=&amp;hvptwo=&amp;hvqmt=&amp;hvdev=c&amp;hvdvcmdl=&amp;hvlocint=&amp;hvlocphy=9001551&amp;hvtargid=pla-450666638521&amp;psc=1">这里</a>）。因此，我们将使用对数和指数将任务转换为一系列加法：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi mathvariant="normal">Π</mi><mrow><mi>i</mi><mo>=</mo><mn>0</mn></mrow><mi>n</mi></msubsup><msub><mi>p</mi><mi>i</mi></msub><mo>=</mo><mi>exp</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>0</mn></mrow><mi>n</mi></munderover><mi>log</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><msub><mi>p</mi><mi>i</mi></msub><mo fence="true">)</mo></mrow><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">\Pi_{i=0}^{n} p_{i}=\exp \left(\sum_{i=0}^{n} \log \left(p_{i}\right)\right)
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9613919999999999em;vertical-align:-0.247em;"></span><span class="mord"><span class="mord">Π</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.7143919999999999em;"><span style="top:-2.4530000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">0</span></span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">n</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathdefault">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:3.027669em;vertical-align:-1.277669em;"></span><span class="mop">exp</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size4">(</span></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.6513970000000002em;"><span style="top:-1.872331em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">0</span></span></span></span><span style="top:-3.050005em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.3000050000000005em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">n</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.277669em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord mathdefault">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size4">)</span></span></span></span></span></span></span></p>
+<p>因为对于任何实数 a 和 b，</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>a</mi><mi>b</mi><mo>=</mo><mi>e</mi><mi>x</mi><mi>p</mi><mo stretchy="false">(</mo><mi>l</mi><mi>o</mi><mi>g</mi><mo stretchy="false">(</mo><mi>a</mi><mi>b</mi><mo stretchy="false">)</mo><mo stretchy="false">)</mo><mo>=</mo><mi>e</mi><mi>x</mi><mi>p</mi><mo stretchy="false">(</mo><mi>l</mi><mi>o</mi><mi>g</mi><mo stretchy="false">(</mo><mi>a</mi><mo stretchy="false">)</mo><mo>+</mo><mi>l</mi><mi>o</mi><mi>g</mi><mo stretchy="false">(</mo><mi>b</mi><mo stretchy="false">)</mo><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">ab = exp(log(ab))=exp(log(a)+log(b))
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault">a</span><span class="mord mathdefault">b</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault">e</span><span class="mord mathdefault">x</span><span class="mord mathdefault">p</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.01968em;">l</span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.03588em;">g</span><span class="mopen">(</span><span class="mord mathdefault">a</span><span class="mord mathdefault">b</span><span class="mclose">)</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault">e</span><span class="mord mathdefault">x</span><span class="mord mathdefault">p</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.01968em;">l</span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.03588em;">g</span><span class="mopen">(</span><span class="mord mathdefault">a</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.01968em;">l</span><span class="mord mathdefault">o</span><span class="mord mathdefault" style="margin-right:0.03588em;">g</span><span class="mopen">(</span><span class="mord mathdefault">b</span><span class="mclose">)</span><span class="mclose">)</span></span></span></span></span></p>
+<p>我将再次先给出 <code>predict</code> 方法的伪代码：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust">implementation block <span class="token keyword">for</span> <span class="token class-name">NaiveBayesCalssifier</span> <span class="token punctuation">&#123;</span>
+	<span class="token comment">/*...*/</span>
+
+	<span class="token function">predict</span><span class="token punctuation">(</span><span class="token keyword">self</span><span class="token punctuation">,</span> text<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		lower_case_text <span class="token operator">=</span> <span class="token function">to_lowercase</span><span class="token punctuation">(</span>text<span class="token punctuation">)</span>
+		message_tokens <span class="token operator">=</span> <span class="token function">tokenize</span><span class="token punctuation">(</span>text<span class="token punctuation">)</span>
+		<span class="token punctuation">(</span>prob_if_spam<span class="token punctuation">,</span> prob_if_ham<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">self</span><span class="token punctuation">.</span><span class="token function">probabilities_of_message</span><span class="token punctuation">(</span>message_tokens<span class="token punctuation">)</span>
+		<span class="token keyword">return</span> prob_if_spam <span class="token operator">/</span> <span class="token punctuation">(</span>prob_if_spam <span class="token operator">+</span> prob_if_ham<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+	
+	<span class="token function">probabilities_of_message</span><span class="token punctuation">(</span><span class="token keyword">self</span><span class="token punctuation">,</span> message_tokens<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		log_prob_if_spam <span class="token operator">=</span> <span class="token number">0</span>
+		log_prob_if_ham <span class="token operator">=</span> <span class="token number">0</span>
+
+		<span class="token keyword">for</span> each token <span class="token keyword">in</span> <span class="token keyword">self</span><span class="token punctuation">.</span>tokens <span class="token punctuation">&#123;</span>
+			<span class="token punctuation">(</span>prob_if_spam<span class="token punctuation">,</span> prob_if_ham<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">self</span><span class="token punctuation">.</span><span class="token function">probabilites_of_token</span><span class="token punctuation">(</span>token<span class="token punctuation">)</span>
+
+			<span class="token keyword">if</span> message_tokens contains token <span class="token punctuation">&#123;</span>
+				log_prob_if_spam <span class="token operator">=</span> log_prob_if_spam <span class="token operator">+</span> <span class="token function">ln</span><span class="token punctuation">(</span>prob_if_spam<span class="token punctuation">)</span>
+				log_prob_if_ham <span class="token operator">=</span> log_prob_if_ham <span class="token operator">+</span> <span class="token function">ln</span><span class="token punctuation">(</span>prob_if_ham<span class="token punctuation">)</span>
+			<span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+				log_prob_if_spam <span class="token operator">=</span> log_prob_if_spam <span class="token operator">+</span> <span class="token function">ln</span><span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">-</span> prob_if_spam<span class="token punctuation">)</span>
+				log_prob_if_ham <span class="token operator">=</span> log_prob_if_ham <span class="token operator">+</span> <span class="token function">ln</span><span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">-</span> prob_if_ham<span class="token punctuation">)</span>
+			<span class="token punctuation">&#125;</span>
+		<span class="token punctuation">&#125;</span>
+
+		prob_if_spam <span class="token operator">=</span> <span class="token function">exp</span><span class="token punctuation">(</span>log_prob_if_spam<span class="token punctuation">)</span>
+		prob_if_ham <span class="token operator">=</span> <span class="token function">exp</span><span class="token punctuation">(</span>log_prob_if_ham<span class="token punctuation">)</span>
+
+		<span class="token keyword">return</span> <span class="token punctuation">(</span>prob_if_spam<span class="token punctuation">,</span> prob_if_ham<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token function">probabilites_of_token</span><span class="token punctuation">(</span><span class="token keyword">self</span><span class="token punctuation">,</span> token<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		prob_of_token_spam <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">self</span><span class="token punctuation">.</span>token_spam_counts<span class="token punctuation">[</span>token<span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token keyword">self</span><span class="token punctuation">.</span>alpha<span class="token punctuation">)</span> 
+						<span class="token operator">/</span> <span class="token punctuation">(</span><span class="token keyword">self</span><span class="token punctuation">.</span>spam_messages_count <span class="token operator">+</span> <span class="token number">2</span> <span class="token operator">*</span> <span class="token keyword">self</span><span class="token punctuation">.</span>alpha<span class="token punctuation">)</span>
+        
+		prob_of_token_ham <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">self</span><span class="token punctuation">.</span>token_ham_counts<span class="token punctuation">[</span>token<span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token keyword">self</span><span class="token punctuation">.</span>alpha<span class="token punctuation">)</span> 
+						<span class="token operator">/</span> <span class="token punctuation">(</span><span class="token keyword">self</span><span class="token punctuation">.</span>ham_messages_count <span class="token operator">+</span> <span class="token number">2</span> <span class="token operator">*</span> <span class="token keyword">self</span><span class="token punctuation">.</span>alpha<span class="token punctuation">)</span>
+
+		<span class="token keyword">return</span> <span class="token punctuation">(</span>prob_of_token_spam<span class="token punctuation">,</span> prob_of_token_ham<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+	
+	
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>Rust 的具体实现：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">impl</span> <span class="token class-name">NaiveBayesClassifier</span> <span class="token punctuation">&#123;</span>
+
+		<span class="token comment">/*...*/</span>
+
+	<span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function-definition function">predict</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">self</span><span class="token punctuation">,</span> text<span class="token punctuation">:</span> <span class="token operator">&amp;</span><span class="token keyword">str</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token keyword">f64</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">let</span> lower_case_text <span class="token operator">=</span> text<span class="token punctuation">.</span><span class="token function">to_lowercase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">let</span> message_tokens <span class="token operator">=</span> <span class="token function">tokenize</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>lower_case_text<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">let</span> <span class="token punctuation">(</span>prob_if_spam<span class="token punctuation">,</span> prob_if_ham<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">self</span><span class="token punctuation">.</span><span class="token function">probabilities_of_message</span><span class="token punctuation">(</span>message_tokens<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">return</span> prob_if_spam <span class="token operator">/</span> <span class="token punctuation">(</span>prob_if_spam <span class="token operator">+</span> prob_if_ham<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">fn</span> <span class="token function-definition function">probabilities_of_message</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">self</span><span class="token punctuation">,</span> message_tokens<span class="token punctuation">:</span> <span class="token class-name">HashSet</span><span class="token operator">&lt;</span><span class="token operator">&amp;</span><span class="token keyword">str</span><span class="token operator">></span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token punctuation">(</span><span class="token keyword">f64</span><span class="token punctuation">,</span> <span class="token keyword">f64</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">let</span> <span class="token keyword">mut</span> log_prob_if_spam <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">.</span><span class="token punctuation">;</span>
+        <span class="token keyword">let</span> <span class="token keyword">mut</span> log_prob_if_ham <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">.</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">for</span> token <span class="token keyword">in</span> <span class="token keyword">self</span><span class="token punctuation">.</span>tokens<span class="token punctuation">.</span><span class="token function">iter</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">let</span> <span class="token punctuation">(</span>prob_if_spam<span class="token punctuation">,</span> prob_if_ham<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">self</span><span class="token punctuation">.</span><span class="token function">probabilites_of_token</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>token<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            <span class="token keyword">if</span> message_tokens<span class="token punctuation">.</span><span class="token function">contains</span><span class="token punctuation">(</span>token<span class="token punctuation">.</span><span class="token function">as_str</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                log_prob_if_spam <span class="token operator">+=</span> prob_if_spam<span class="token punctuation">.</span><span class="token function">ln</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                log_prob_if_ham <span class="token operator">+=</span> prob_if_ham<span class="token punctuation">.</span><span class="token function">ln</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+                log_prob_if_spam <span class="token operator">+=</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> prob_if_spam<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">ln</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                log_prob_if_ham <span class="token operator">+=</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> prob_if_ham<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">ln</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token keyword">let</span> prob_if_spam <span class="token operator">=</span> log_prob_if_spam<span class="token punctuation">.</span><span class="token function">exp</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">let</span> prob_if_ham <span class="token operator">=</span> log_prob_if_ham<span class="token punctuation">.</span><span class="token function">exp</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">return</span> <span class="token punctuation">(</span>prob_if_spam<span class="token punctuation">,</span> prob_if_ham<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">fn</span> <span class="token function-definition function">probabilites_of_token</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">self</span><span class="token punctuation">,</span> token<span class="token punctuation">:</span> <span class="token operator">&amp;</span><span class="token keyword">str</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token punctuation">(</span><span class="token keyword">f64</span><span class="token punctuation">,</span> <span class="token keyword">f64</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">let</span> prob_of_token_spam <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">self</span><span class="token punctuation">.</span>token_spam_counts<span class="token punctuation">[</span>token<span class="token punctuation">]</span> <span class="token keyword">as</span> <span class="token keyword">f64</span> <span class="token operator">+</span> <span class="token keyword">self</span><span class="token punctuation">.</span>alpha<span class="token punctuation">)</span>
+            <span class="token operator">/</span> <span class="token punctuation">(</span><span class="token keyword">self</span><span class="token punctuation">.</span>spam_messages_count <span class="token keyword">as</span> <span class="token keyword">f64</span> <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> <span class="token keyword">self</span><span class="token punctuation">.</span>alpha<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">let</span> prob_of_token_ham <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">self</span><span class="token punctuation">.</span>token_ham_counts<span class="token punctuation">[</span>token<span class="token punctuation">]</span> <span class="token keyword">as</span> <span class="token keyword">f64</span> <span class="token operator">+</span> <span class="token keyword">self</span><span class="token punctuation">.</span>alpha<span class="token punctuation">)</span>
+            <span class="token operator">/</span> <span class="token punctuation">(</span><span class="token keyword">self</span><span class="token punctuation">.</span>ham_messages_count <span class="token keyword">as</span> <span class="token keyword">f64</span> <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> <span class="token keyword">self</span><span class="token punctuation">.</span>alpha<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">return</span> <span class="token punctuation">(</span>prob_of_token_spam<span class="token punctuation">,</span> prob_of_token_ham<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="如何测试分类器"><a class="markdownIt-Anchor" href="#如何测试分类器"></a> 如何测试分类器</h2>
+<p>让我们对模型做个测试。下面的代码中的样例手动打上了分类标签，然后检查我们的模型是否给出了相同的结果。</p>
+<p>检查代码逻辑是很有必要的，你可以将代码粘贴到 <code>lib.rs</code> 文件的底部以检查你的代码是否有效。</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token comment">// ...lib.rs</span>
+
+<span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function-definition function">new_classifier</span><span class="token punctuation">(</span>alpha<span class="token punctuation">:</span> <span class="token keyword">f64</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">NaiveBayesClassifier</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> <span class="token class-name">NaiveBayesClassifier</span> <span class="token punctuation">&#123;</span>
+        alpha<span class="token punctuation">,</span>
+        tokens<span class="token punctuation">:</span> <span class="token class-name">HashSet</span><span class="token punctuation">::</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        token_ham_counts<span class="token punctuation">:</span> <span class="token class-name">HashMap</span><span class="token punctuation">::</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        token_spam_counts<span class="token punctuation">:</span> <span class="token class-name">HashMap</span><span class="token punctuation">::</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        spam_messages_count<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+        ham_messages_count<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token attribute attr-name">#[cfg(test)]</span>
+<span class="token keyword">mod</span> <span class="token module-declaration namespace">tests</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">use</span> <span class="token keyword">super</span><span class="token punctuation">::</span><span class="token operator">*</span><span class="token punctuation">;</span>
+
+    <span class="token attribute attr-name">#[test]</span>
+    <span class="token keyword">fn</span> <span class="token function-definition function">naive_bayes</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">let</span> train_messages <span class="token operator">=</span> <span class="token punctuation">[</span>
+            <span class="token class-name">Message</span> <span class="token punctuation">&#123;</span>
+                text<span class="token punctuation">:</span> <span class="token string">"Free Bitcoin viagra XXX christmas deals 😻😻😻"</span><span class="token punctuation">,</span>
+                is_spam<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+            <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+            <span class="token class-name">Message</span> <span class="token punctuation">&#123;</span>
+                text<span class="token punctuation">:</span> <span class="token string">"My dear Granddaughter, please explain Bitcoin over Christmas dinner"</span><span class="token punctuation">,</span>
+                is_spam<span class="token punctuation">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+            <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+            <span class="token class-name">Message</span> <span class="token punctuation">&#123;</span>
+                text<span class="token punctuation">:</span> <span class="token string">"Here in my garage..."</span><span class="token punctuation">,</span>
+                is_spam<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+            <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+        <span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">let</span> alpha <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">.</span><span class="token punctuation">;</span>
+        <span class="token keyword">let</span> num_spam_messages <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">.</span><span class="token punctuation">;</span>
+        <span class="token keyword">let</span> num_ham_messages <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">.</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">let</span> <span class="token keyword">mut</span> model <span class="token operator">=</span> <span class="token function">new_classifier</span><span class="token punctuation">(</span>alpha<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        model<span class="token punctuation">.</span><span class="token function">train</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>train_messages<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">let</span> <span class="token keyword">mut</span> expected_tokens<span class="token punctuation">:</span> <span class="token class-name">HashSet</span><span class="token operator">&lt;</span><span class="token class-name">String</span><span class="token operator">></span> <span class="token operator">=</span> <span class="token class-name">HashSet</span><span class="token punctuation">::</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">for</span> message <span class="token keyword">in</span> train_messages<span class="token punctuation">.</span><span class="token function">iter</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">for</span> token <span class="token keyword">in</span> <span class="token function">tokenize</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>message<span class="token punctuation">.</span>text<span class="token punctuation">.</span><span class="token function">to_lowercase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                expected_tokens<span class="token punctuation">.</span><span class="token function">insert</span><span class="token punctuation">(</span>token<span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token keyword">let</span> input_text <span class="token operator">=</span> <span class="token string">"Bitcoin crypto academy Christmas deals"</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">let</span> probs_if_spam <span class="token operator">=</span> <span class="token punctuation">[</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_spam_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "Free"  (not present)</span>
+            <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_spam_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span>      <span class="token comment">// "Bitcoin"  (present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_spam_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "viagra"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_spam_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "XXX"  (not present)</span>
+            <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_spam_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span>      <span class="token comment">// "christmas"  (present)</span>
+            <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_spam_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span>      <span class="token comment">// "deals"  (present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_spam_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "my"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_spam_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "dear"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_spam_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "granddaughter"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_spam_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "please"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_spam_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "explain"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_spam_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "over"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_spam_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "dinner"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_spam_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "here"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_spam_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "in"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_spam_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "garage"  (not present)</span>
+        <span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">let</span> probs_if_ham <span class="token operator">=</span> <span class="token punctuation">[</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_ham_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "Free"  (not present)</span>
+            <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_ham_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span>      <span class="token comment">// "Bitcoin"  (present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_ham_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "viagra"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_ham_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "XXX"  (not present)</span>
+            <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_ham_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span>      <span class="token comment">// "christmas"  (present)</span>
+            <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_ham_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span>      <span class="token comment">// "deals"  (present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_ham_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "my"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_ham_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "dear"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_ham_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "granddaughter"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_ham_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "please"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_ham_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "explain"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_ham_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "over"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_ham_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "dinner"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_ham_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "here"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_ham_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "in"  (not present)</span>
+            <span class="token number">1</span><span class="token punctuation">.</span> <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">.</span> <span class="token operator">+</span> alpha<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token punctuation">(</span>num_ham_messages <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">.</span> <span class="token operator">*</span> alpha<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// "garage"  (not present)</span>
+        <span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">let</span> p_if_spam_log<span class="token punctuation">:</span> <span class="token keyword">f64</span> <span class="token operator">=</span> probs_if_spam<span class="token punctuation">.</span><span class="token function">iter</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span><span class="token closure-params"><span class="token closure-punctuation punctuation">|</span>p<span class="token closure-punctuation punctuation">|</span></span> p<span class="token punctuation">.</span><span class="token function">ln</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">sum</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">let</span> p_if_spam <span class="token operator">=</span> p_if_spam_log<span class="token punctuation">.</span><span class="token function">exp</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">let</span> p_if_ham_log<span class="token punctuation">:</span> <span class="token keyword">f64</span> <span class="token operator">=</span> probs_if_ham<span class="token punctuation">.</span><span class="token function">iter</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span><span class="token closure-params"><span class="token closure-punctuation punctuation">|</span>p<span class="token closure-punctuation punctuation">|</span></span> p<span class="token punctuation">.</span><span class="token function">ln</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">sum</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">let</span> p_if_ham <span class="token operator">=</span> p_if_ham_log<span class="token punctuation">.</span><span class="token function">exp</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// P(message | spam) / (P(messge | spam) + P(message | ham)) rounds to 0.97</span>
+        <span class="token macro property">assert!</span><span class="token punctuation">(</span><span class="token punctuation">(</span>model<span class="token punctuation">.</span><span class="token function">predict</span><span class="token punctuation">(</span>input_text<span class="token punctuation">)</span> <span class="token operator">-</span> p_if_spam <span class="token operator">/</span> <span class="token punctuation">(</span>p_if_spam <span class="token operator">+</span> p_if_ham<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">abs</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span> <span class="token number">0.000001</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>现在可以通过 cargo test 进行测试，如果你成功通过了测试，你用 Rust 实现的朴素贝叶斯模型没有问题了！</p>
+<p>感谢你看到这里。如果您有任何问题或建议，请随时与我们联系。</p>
+<h2 id="references"><a class="markdownIt-Anchor" href="#references"></a> <strong>References</strong></h2>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://learning.oreilly.com/library/view/data-science-from/9781492041122/">Grus, J. (2019). <em>Data Science from Scratch: First Principles with Python, 2nd edition.</em> O’Reilly Media.</a></li>
+<li><a target="_blank" rel="noopener" href="https://greenteapress.com/wp/think-bayes/">Downey, A. (2021). <em>Think Bayes: Bayesian Statistics in Python, 2nd edition.</em> O’Reilly Media.</a></li>
+<li><a target="_blank" rel="noopener" href="https://probml.github.io/pml-book/book0.html">Murphy, K. (2012). <em>Machine Learning: A Probabilistic Perspective.</em> MIT Press.</a></li>
+<li><a target="_blank" rel="noopener" href="https://rust-lang-nursery.github.io/rust-cookbook/text/regex.html">Dhinakaran, V. (2017). <em>Rust Cookbook.</em> Packt.</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=nt63k3bfXS0">Ng, A. (2018). <em>Stanford CS229: Lecture 5 - GDA &amp; Naive Bayes.</em></a></li>
+<li><a target="_blank" rel="noopener" href="https://www.amazon.ca/Numerical-Analysis-Richard-Burden/dp/1305253663/ref=asc_df_1305253663/?tag=googleshopc0c-20&amp;linkCode=df0&amp;hvadid=293014842916&amp;hvpos=&amp;hvnetw=g&amp;hvrand=9862733826869340686&amp;hvpone=&amp;hvptwo=&amp;hvqmt=&amp;hvdev=c&amp;hvdvcmdl=&amp;hvlocint=&amp;hvlocphy=9001551&amp;hvtargid=pla-450666638521&amp;psc=1">Burden, R. Faires, J. Burden, A. (2015). <em>Numerical Analysis, 10th edition.</em> Brooks Cole.</a></li>
+<li>*<a target="_blank" rel="noopener" href="https://www.techopedia.com/definition/712/underflow">Underflow.* Technopedia.</a></li>
+</ol>
+
+  </div>
+  <div>
+    
+      <div 
+        class="post-note note-info copyright" 
+        style="margin-top: 42px">
+        <p>
+          <span style="font-weight: bold;">作者：</span><a 
+            target="_blank" 
+            rel="nofollow noopener noreferrer" 
+            href="/about">
+            Ch3nYe
+          </a>
+        </p>
+        <p>
+          <span style="font-weight: bold;">文章链接：</span><a 
+            target="_blank" 
+            rel="nofollow noopener noreferrer" 
+            href="https://ch3nye.top/%E5%A6%82%E4%BD%95%E7%94%A8%20Rust%20%E5%AE%9E%E7%8E%B0%E6%9C%B4%E7%B4%A0%E8%B4%9D%E5%8F%B6%E6%96%AF%E5%88%86%E7%B1%BB%E5%99%A8/">
+            https://ch3nye.top/%E5%A6%82%E4%BD%95%E7%94%A8%20Rust%20%E5%AE%9E%E7%8E%B0%E6%9C%B4%E7%B4%A0%E8%B4%9D%E5%8F%B6%E6%96%AF%E5%88%86%E7%B1%BB%E5%99%A8/
+          </a>
+        </p>
+        <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+      </div>
+    
+  </div>
+</article>
+<div class="nav">
+  
+    <div class="nav-item-prev">
+      <a 
+        href="/%E4%BB%8Epython%E8%B0%83%E7%94%A8rust-%E4%BD%BF%E7%94%A8rust%E5%8A%A0%E9%80%9F%E4%BD%A0%E7%9A%84python%E4%BB%A3%E7%A0%81/" 
+        class="nav-link">
+        <i class="iconfont icon-left nav-prev-icon"></i>
+        <div>
+          <div class="nav-label">上一篇</div>
+          
+            <div class="nav-title">从python调用rust-使用rust加速你的python代码 </div>
+          
+        </div>
+      </a>
+    </div>
+  
+  
+    <div class="nav-item-next">
+      <a 
+        href="/%E5%85%B3%E4%BA%8E%E7%94%A8Rust%E5%86%99%E7%AE%97%E6%B3%95%E9%A2%98%E7%9A%84%E5%A7%BF%E5%8A%BF%E6%8E%A2%E8%AE%A8%E4%BB%A5%E5%8F%8AWindows11%E8%B0%83%E8%AF%95Rust%E7%9A%84%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/" 
+        class="nav-link">
+        <div>
+          <div class="nav-label">下一篇</div>
+          
+            <div class="nav-title">关于用Rust写算法题的姿势探讨以及Windows11调试Rust的环境配置 </div>
+          
+        </div>
+        <i class="iconfont icon-right nav-next-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+  <div 
+    class="card card-content comment-card" 
+    style="margin-top: 16px;">
+    <div class="comment-card-title">评论</div>
+    
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: '049b30eb10ea05082ef1',
+      clientSecret: 'c33ad95041c69907b3136b895008320f000987db',
+      repo: 'Ch3nYe.github.io',
+      owner: 'Ch3nYe',
+      admin: "Ch3nYe",
+      id: md5(location.href),
+      distractionFreeMode: false,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+  </div>
+
+<div 
+  class="card card-content toc-card" 
+  id="mobiletoc">
+  <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E7%94%A8-rust-%E5%AE%9E%E7%8E%B0%E6%9C%B4%E7%B4%A0%E8%B4%9D%E5%8F%B6%E6%96%AF%E5%88%86%E7%B1%BB%E5%99%A8"><span class="toc-text"> 如何用 Rust 实现朴素贝叶斯分类器</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%9C%B4%E7%B4%A0%E8%B4%9D%E5%8F%B6%E6%96%AF%E5%88%86%E7%B1%BB%E5%99%A8"><span class="toc-text"> 什么是朴素贝叶斯分类器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tokenization-in-rust"><span class="toc-text"> Tokenization in Rust</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%84%E9%80%A0%E7%BB%93%E6%9E%84%E4%BD%93"><span class="toc-text"> 构造结构体</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%8B%89%E6%99%AE%E6%8B%89%E6%96%AF%E5%B9%B3%E6%BB%91"><span class="toc-text"> 什么是拉普拉斯平滑？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E8%AE%AD%E7%BB%83%E5%88%86%E7%B1%BB%E5%99%A8"><span class="toc-text"> 如何训练分类器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8%E5%88%86%E7%B1%BB%E5%99%A8%E5%81%9A%E9%A2%84%E6%B5%8B"><span class="toc-text"> 如何使用分类器做预测</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E6%B5%8B%E8%AF%95%E5%88%86%E7%B1%BB%E5%99%A8"><span class="toc-text"> 如何测试分类器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#references"><span class="toc-text"> References</span></a></li></ol></li></ol>
+</div></main>
+            <aside class="left-column">
+              
+              <div class="card card-author">
+                
+  <img 
+    src="/images/logo.png" 
+    class="author-img"
+    width="88"
+    height="88"
+    alt="author avatar">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a 
+    class="author-posts-count" 
+    href="/archives">
+    <span>41</span>
+    <span>文章</span>
+  </a>
+  <a 
+    class="author-categories-count" 
+    href="/categories">
+    <span>7</span>
+    <span>分类</span>
+  </a>
+  <a 
+    class="author-tags-count" 
+    href="/tags">
+    <span>62</span>
+    <span>标签</span>
+  </a>
+</div>
+
+  <div class="author-card-society">
+    
+      <div class="author-card-society-icon">
+        <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+          <i class="iconfont icon-github society-icon"></i>
+        </a>
+      </div>
+    
+      <div class="author-card-society-icon">
+        <a href="mailto:sud0su@163.com">
+          <i class="iconfont icon-mail society-icon"></i>
+        </a>
+      </div>
+    
+  </div>
+
+              </div>
+               <div class="sticky-tablet">
+  
+  
+    <article class="display-when-two-columns spacer">
+      <div class="card card-content toc-card">
+        <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E7%94%A8-rust-%E5%AE%9E%E7%8E%B0%E6%9C%B4%E7%B4%A0%E8%B4%9D%E5%8F%B6%E6%96%AF%E5%88%86%E7%B1%BB%E5%99%A8"><span class="toc-text"> 如何用 Rust 实现朴素贝叶斯分类器</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%9C%B4%E7%B4%A0%E8%B4%9D%E5%8F%B6%E6%96%AF%E5%88%86%E7%B1%BB%E5%99%A8"><span class="toc-text"> 什么是朴素贝叶斯分类器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tokenization-in-rust"><span class="toc-text"> Tokenization in Rust</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%84%E9%80%A0%E7%BB%93%E6%9E%84%E4%BD%93"><span class="toc-text"> 构造结构体</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%8B%89%E6%99%AE%E6%8B%89%E6%96%AF%E5%B9%B3%E6%BB%91"><span class="toc-text"> 什么是拉普拉斯平滑？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E8%AE%AD%E7%BB%83%E5%88%86%E7%B1%BB%E5%99%A8"><span class="toc-text"> 如何训练分类器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8%E5%88%86%E7%B1%BB%E5%99%A8%E5%81%9A%E9%A2%84%E6%B5%8B"><span class="toc-text"> 如何使用分类器做预测</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E6%B5%8B%E8%AF%95%E5%88%86%E7%B1%BB%E5%99%A8"><span class="toc-text"> 如何测试分类器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#references"><span class="toc-text"> References</span></a></li></ol></li></ol>
+      </div>
+    </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header">
+    <i 
+      class="iconfont icon-fenlei" 
+      style="padding-right: 2px;">
+    </i>分类
+  </div>
+  <div class="categories-list">
+    
+      <a href="/categories/%E7%94%9F%E6%B4%BB/">
+        <div class="categories-list-item">
+          生活
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E5%A4%87%E5%BF%98/">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E6%9D%8E%E5%AE%8F%E6%AF%85%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">15</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">11</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E5%AE%9E%E6%88%98/">
+        <div class="categories-list-item">
+          实战
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%AC%94%E8%AE%B0/">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%BF%BB%E8%AF%91/">
+        <div class="categories-list-item">
+          翻译
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header">
+    <i 
+      class="iconfont icon-biaoqian" 
+      style="padding-right: 2px;">
+    </i>热门标签
+  </div>
+  <div class="tags-list">
+    
+      <a 
+        href="/tags/note/" 
+        title="note">
+        <div class="tags-list-item">note</div>
+      </a>
+    
+      <a 
+        href="/tags/ML/" 
+        title="ML">
+        <div class="tags-list-item">ML</div>
+      </a>
+    
+      <a 
+        href="/tags/Next-Step-of-ML/" 
+        title="Next-Step-of-ML">
+        <div class="tags-list-item">Next-Step-of-ML</div>
+      </a>
+    
+      <a 
+        href="/tags/%E7%AC%94%E8%AE%B0/" 
+        title="笔记">
+        <div class="tags-list-item">笔记</div>
+      </a>
+    
+      <a 
+        href="/tags/%E8%AE%BA%E6%96%87/" 
+        title="论文">
+        <div class="tags-list-item">论文</div>
+      </a>
+    
+      <a 
+        href="/tags/Android/" 
+        title="Android">
+        <div class="tags-list-item">Android</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%80%BB%E7%BB%93/" 
+        title="总结">
+        <div class="tags-list-item">总结</div>
+      </a>
+    
+      <a 
+        href="/tags/Deep-Learning/" 
+        title="Deep-Learning">
+        <div class="tags-list-item">Deep-Learning</div>
+      </a>
+    
+      <a 
+        href="/tags/%E5%AD%A6%E4%B9%A0/" 
+        title="学习">
+        <div class="tags-list-item">学习</div>
+      </a>
+    
+      <a 
+        href="/tags/%E5%AE%9E%E6%88%98/" 
+        title="实战">
+        <div class="tags-list-item">实战</div>
+      </a>
+    
+      <a 
+        href="/tags/crack/" 
+        title="crack">
+        <div class="tags-list-item">crack</div>
+      </a>
+    
+      <a 
+        href="/tags/%E4%BA%8C%E8%BF%9B%E5%88%B6/" 
+        title="二进制">
+        <div class="tags-list-item">二进制</div>
+      </a>
+    
+      <a 
+        href="/tags/Binary/" 
+        title="Binary">
+        <div class="tags-list-item">Binary</div>
+      </a>
+    
+      <a 
+        href="/tags/%E7%BF%BB%E8%AF%91/" 
+        title="翻译">
+        <div class="tags-list-item">翻译</div>
+      </a>
+    
+      <a 
+        href="/tags/Rust/" 
+        title="Rust">
+        <div class="tags-list-item">Rust</div>
+      </a>
+    
+      <a 
+        href="/tags/HTTPS/" 
+        title="HTTPS">
+        <div class="tags-list-item">HTTPS</div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+            </aside>
+            <aside class="right-column">
+              <div class="sticky-widescreen">
+  
+  
+    <article class="card card-content toc-card">
+      <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E7%94%A8-rust-%E5%AE%9E%E7%8E%B0%E6%9C%B4%E7%B4%A0%E8%B4%9D%E5%8F%B6%E6%96%AF%E5%88%86%E7%B1%BB%E5%99%A8"><span class="toc-text"> 如何用 Rust 实现朴素贝叶斯分类器</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%9C%B4%E7%B4%A0%E8%B4%9D%E5%8F%B6%E6%96%AF%E5%88%86%E7%B1%BB%E5%99%A8"><span class="toc-text"> 什么是朴素贝叶斯分类器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tokenization-in-rust"><span class="toc-text"> Tokenization in Rust</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%84%E9%80%A0%E7%BB%93%E6%9E%84%E4%BD%93"><span class="toc-text"> 构造结构体</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%8B%89%E6%99%AE%E6%8B%89%E6%96%AF%E5%B9%B3%E6%BB%91"><span class="toc-text"> 什么是拉普拉斯平滑？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E8%AE%AD%E7%BB%83%E5%88%86%E7%B1%BB%E5%99%A8"><span class="toc-text"> 如何训练分类器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8%E5%88%86%E7%B1%BB%E5%99%A8%E5%81%9A%E9%A2%84%E6%B5%8B"><span class="toc-text"> 如何使用分类器做预测</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E6%B5%8B%E8%AF%95%E5%88%86%E7%B1%BB%E5%99%A8"><span class="toc-text"> 如何测试分类器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#references"><span class="toc-text"> References</span></a></li></ol></li></ol>
+    </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header">
+    <i 
+      class="iconfont icon-wenzhang_huaban" 
+      style="padding-right: 2px;">
+    </i>最近文章
+  </div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-04-13</div>
+        <a href="/%E4%BB%8Epython%E8%B0%83%E7%94%A8rust-%E4%BD%BF%E7%94%A8rust%E5%8A%A0%E9%80%9F%E4%BD%A0%E7%9A%84python%E4%BB%A3%E7%A0%81/"><div class="recent-posts-item-content">从python调用rust-使用rust加速你的python代码</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-03-28</div>
+        <a href="/%E5%A6%82%E4%BD%95%E7%94%A8%20Rust%20%E5%AE%9E%E7%8E%B0%E6%9C%B4%E7%B4%A0%E8%B4%9D%E5%8F%B6%E6%96%AF%E5%88%86%E7%B1%BB%E5%99%A8/"><div class="recent-posts-item-content">如何用 Rust 实现朴素贝叶斯分类器</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-03-25</div>
+        <a href="/%E5%85%B3%E4%BA%8E%E7%94%A8Rust%E5%86%99%E7%AE%97%E6%B3%95%E9%A2%98%E7%9A%84%E5%A7%BF%E5%8A%BF%E6%8E%A2%E8%AE%A8%E4%BB%A5%E5%8F%8AWindows11%E8%B0%83%E8%AF%95Rust%E7%9A%84%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/"><div class="recent-posts-item-content">关于用Rust写算法题的姿势探讨以及Windows11调试Rust的环境配置</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-02-17</div>
+        <a href="/Note-Nero/"><div class="recent-posts-item-content">Note 《Neural reverse engineering of stripped binaries using augmented control flow graphs》</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+     
+    <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>
+          Copyright ©
+          
+            2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a 
+          href="/" 
+          class="footer-link">
+          ch3nye's blog
+        </a>
+      </div>
+    </div>
+
+    
+      <div class="footer-dsc">
+        
+          Powered by
+          <a 
+            href="https://hexo.io/" 
+            class="footer-link" 
+            target="_blank" 
+            rel="nofollow noopener noreferrer">
+            &nbsp;Hexo
+          </a>
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          Theme -
+          <a 
+            href="https://github.com/theme-kaze" 
+            class="footer-link" 
+            target="_blank"
+            rel="nofollow noopener noreferrer">
+            &nbsp;Kaze
+          </a>
+        
+      </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+          本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+<!-- Default Statcounter code for My Blog https://ch3nye.top -->
+<script type="text/javascript">
+var sc_project=12696483; 
+var sc_invisible=1; 
+var sc_security="0f70f90d"; 
+</script>
+<script type="text/javascript"
+src="https://www.statcounter.com/counter/counter.js" async></script>
+<noscript><div class="statcounter"><a title="Web Analytics"
+href="https://statcounter.com/" target="_blank"><img class="statcounter"
+src="https://c.statcounter.com/12696483/0/0f70f90d/1/" alt="Web Analytics"
+referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
+<!-- End of Statcounter Code -->
+</footer> 
+    
+  <a 
+    role="button" 
+    id="scrollbutton" 
+    class="basebutton" 
+    aria-label="回到顶部">
+    <i class="iconfont icon-arrowleft button-icon"></i>
+  </a>
+
+<a 
+  role="button" 
+  id="menubutton"
+  aria-label="menu button"
+  class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="popbutton" 
+  class="basebutton" 
+  aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="darkbutton" 
+  class="basebutton darkwidget" 
+  aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="searchbutton" 
+  class="basebutton searchwidget" 
+  aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a> 
+     
+     
+      
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+ 
+     
+     
+      <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img')
+    var i
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a')
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'))
+      wrapper.setAttribute('aria-label', 'illustration')
+      wrapper.style.cssText =
+        'width: 100%; display: flex; justify-content: center;'
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt
+      wrapper.dataset.nolink = true
+      img[i].before(wrapper)
+      wrapper.append(img[i])
+      var divWrap = document.createElement('div')
+      divWrap.classList.add('gallery')
+      wrapper.before(divWrap)
+      divWrap.append(wrapper)
+    }
+    baguetteBox.run('.gallery')
+  }
+</script>
+<script>
+  loadScript(
+    "/js/lib/lightbox/baguetteBox.min.js",
+    addImgLayout
+  )
+</script>
+ 
+     
+     
+    <script src="/js/main.js"></script> 
+    
+      <script> 
+        loadScript('/js/lib/busuanzi.min.js') 
+      </script>
+     
+    
+      <script>
+        var addLazyload = function () {
+          var observer = lozad('.lozad', {
+            load: function (el) {
+              el.srcset = el.getAttribute('data-src')
+            },
+            loaded: function (el) {
+              el.classList.add('loaded')
+            },
+          })
+          observer.observe()
+        }
+      </script>
+      <script>
+        loadScript('/js/lib/lozad.min.js', addLazyload)
+      </script>
+     
+    
+      <script>
+        var googleAnalytics = function () {
+          window.dataLayer = window.dataLayer || []
+          function gtag() {
+            dataLayer.push(arguments)
+          }
+          gtag('js', new Date())
+          gtag('config', 'G-WHGL11014T')
+        }
+    </script>
+      <script>
+        loadScript(
+          'https://www.googletagmanager.com/gtag/js?id=' +
+            'G-WHGL11014T',
+          googleAnalytics
+        )
+      </script>
+    
+    
+      <script>
+        setTimeout(() => {localSearch("search.json")}, 0)
+      </script>
+    
+  </body>
+</html>
