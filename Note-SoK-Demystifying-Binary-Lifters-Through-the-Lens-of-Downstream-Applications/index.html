@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+  <meta charset="UTF-8">
+  <meta 
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta 
+    http-equiv="X-UA-Compatible" 
+    content="ie=edge">
+  <meta 
+    name="theme-color" 
+    content="#fff" 
+    id="theme-color">
+  <meta 
+    name="description" 
+    content="网络安全 Android ML CTF">
+  <link 
+    rel="icon" 
+    href="/images/logo.png">
+  <title>Note 《SoK Demystifying Binary Lifters Through the Lens of Downstream Applications》</title>
+  
+    
+      <meta 
+        property="og:title" 
+        content="Note 《SoK Demystifying Binary Lifters Through the Lens of Downstream Applications》">
+    
+    
+      <meta 
+        property="og:url" 
+        content="https://ch3nye.top/Note-SoK-Demystifying-Binary-Lifters-Through-the-Lens-of-Downstream-Applications/index.html">
+    
+    
+      <meta 
+        property="og:img" 
+        content="/images/logo.png">
+    
+    
+      <meta 
+        property="og:img" 
+        content="网络安全 Android ML CTF">
+    
+    
+      <meta 
+        property="og:type" 
+        content="article">
+      <meta 
+        property="og:article:published_time" 
+        content="2022-06-01">
+      <meta 
+        property="og:article:modified_time" 
+        content="2022-06-01">
+      <meta 
+        property="og:article:author" 
+        content="Ch3nYe">
+      
+        
+          <meta 
+            property="og:article:tag" 
+            content="论文">
+        
+          <meta 
+            property="og:article:tag" 
+            content="笔记">
+        
+          <meta 
+            property="og:article:tag" 
+            content="CFG">
+        
+          <meta 
+            property="og:article:tag" 
+            content="Binary">
+        
+          <meta 
+            property="og:article:tag" 
+            content="Disassembly">
+        
+          <meta 
+            property="og:article:tag" 
+            content="Sok">
+        
+      
+    
+  
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+    function loadCSS(href, data, attr) {
+      var sheet = document.createElement('link');
+      sheet.ref = 'stylesheet';
+      sheet.href = href;
+      sheet.dataset[data] = attr;
+      document.head.appendChild(sheet);
+    }
+    function changeCSS(cssFile, data, attr) {
+      var oldlink = document.querySelector(data);
+      var newlink = document.createElement("link");
+      newlink.setAttribute("rel", "stylesheet");
+      newlink.setAttribute("href", cssFile);
+      newlink.dataset.prism = attr;
+      document.head.replaceChild(newlink, oldlink);
+    }
+  </script>
+  
+    
+      
+      
+      
+      
+        
+        
+        
+        <script>
+          function prismThemeChange() {
+            if(document.getElementById('theme-color').dataset.mode === 'dark') {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism-tomorrow.min.css', '[data-prism]', 'prism-tomorrow');
+              } else {
+                loadCSS('/js/lib/prism/prism-tomorrow.min.css', 'prism', 'prism-tomorrow');
+              }
+            } else {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism.min.css', '[data-prism]', 'prism');
+              } else {
+                loadCSS('/js/lib/prism/prism.min.css', 'prism', 'prism');
+              }
+            }
+          }
+          prismThemeChange()
+        </script>
+      
+      
+        
+        <link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+      
+    
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+  </script>
+  
+    <script>
+      var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+        document.getElementById('theme-color').dataset.mode = getCssMediaQuery();
+        prismThemeChange();
+      }
+    };
+    setDarkmode();
+    </script>
+  
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+    <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  <link rel="stylesheet" href="/css/main.css">
+  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+  
+    <link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+  <body>
+    <div class="wrapper">
+       
+      <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+        <img 
+          class="navbar-logo-img"
+          width="32"
+          height="32"
+          src="/images/logo.png" 
+          alt="blog logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+      <a 
+        href="/" 
+        class="navbar-menu-item">
+        
+          首页
+        
+      </a>
+    
+      <a 
+        href="/archives" 
+        class="navbar-menu-item">
+        
+          归档
+        
+      </a>
+    
+      <a 
+        href="/tags" 
+        class="navbar-menu-item">
+        
+          标签
+        
+      </a>
+    
+      <a 
+        href="/categories" 
+        class="navbar-menu-item">
+        
+          分类
+        
+      </a>
+    
+      <a 
+        href="/about" 
+        class="navbar-menu-item">
+        
+          关于
+        
+      </a>
+    
+      <a 
+        href="/links" 
+        class="navbar-menu-item">
+        
+          友链
+        
+      </a>
+    
+      <a 
+        href="/shuoshuo" 
+        class="navbar-menu-item">
+        
+          说说
+        
+      </a>
+    
+    <a 
+      class="navbar-menu-item darknavbar" 
+      id="dark">
+      <i class="iconfont icon-weather"></i>
+    </a>
+    <a 
+      class="navbar-menu-item searchnavbar" 
+      id="search">
+      <i 
+        class="iconfont icon-search" 
+        style="font-size: 1.2rem; font-weight: 400;">
+      </i>
+    </a>
+  </div>
+</nav> 
+      
+      <div 
+        id="local-search" 
+        style="display: none">
+        <input
+          class="navbar-menu-item"
+          id="search-input"
+          placeholder="请输入搜索内容..." />
+        <div id="search-content"></div>
+      </div>
+      
+      <div class="section-wrap">
+        <div class="container">
+          <div class="columns">
+            <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      Note 《SoK Demystifying Binary Lifters Through the Lens of Downstream Applications》
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2022-05-31T16:00:00.000Z">
+      <i 
+        class="iconfont icon-calendar" 
+        style="margin-right: 2px;">
+      </i>
+      <span>2022-06-01</span>
+    </time>
+    
+      <span class="dot"></span>
+      
+        <a 
+          href="/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" 
+          class="post-meta-link">
+          论文阅读
+        </a>
+      
+    
+    
+      <span class="dot"></span>
+      <span>4.5k 字</span>
+    
+  </div>
+  
+    <div 
+      class="post-meta post-show-meta" 
+      style="margin-top: -10px;">
+      <div style="display: flex; align-items: center;">
+        <i 
+          class="iconfont icon-biaoqian" 
+          style="margin-right: 2px; font-size: 1.15rem;">
+        </i>
+        
+          
+          <a 
+            href="/tags/%E8%AE%BA%E6%96%87/" 
+            class="post-meta-link">
+            论文
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/%E7%AC%94%E8%AE%B0/" 
+            class="post-meta-link">
+            笔记
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/CFG/" 
+            class="post-meta-link">
+            CFG
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/Binary/" 
+            class="post-meta-link">
+            Binary
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/Disassembly/" 
+            class="post-meta-link">
+            Disassembly
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/Sok/" 
+            class="post-meta-link">
+            Sok
+          </a>
+        
+      </div>
+    </div>
+  
+  </header>
+  <div 
+    id="section" 
+    class="post-content">
+    <h1 id="sok-demystifying-binary-lifters-through-the-lens-of-downstream-applications"><a class="markdownIt-Anchor" href="#sok-demystifying-binary-lifters-through-the-lens-of-downstream-applications"></a> SoK: Demystifying Binary Lifters Through the Lens of Downstream Applications</h1>
+<blockquote>
+<p>Link: <a target="_blank" rel="noopener" href="https://www.computer.org/csdl/proceedings-article/sp/2022/131600a453/1wKCev3wlbO">https://www.computer.org/csdl/proceedings-article/sp/2022/131600a453/1wKCev3wlbO</a><br />
+Publisher: 2022, S&amp;P</p>
+</blockquote>
+<h1 id="摘要"><a class="markdownIt-Anchor" href="#摘要"></a> 摘要</h1>
+<p>最近的研究有表明，二进制lifter 可以生成功能和逻辑正确的 LLVM IR 代码，即使对于复杂的情况也能成功。</p>
+<p>本文从新的评估视角对二进制lifter 进行了深入研究。解释二进制lifter 的”表现力“，揭露其恢复出来的LLVM IR 可以多好地支持下游二进制分析任务。为此，我们通过编译 C/C++ 程序和提升相应的可执行文件来生成相对应的两种 LLVM IR 代码。然后，我们将这两种 LLVM IR 代码提供给三个关键下游应用程序（指针分析、可辨别性分析（discriminability analysis）和反编译），并检查是否产生了不一致的分析结果。我们从由各种编译器、不同的优化选项和不同的架构生成的总共 252,063 个可执行文件中研究了由行业或学术界开发的四种流行的静态和动态 LLVM IR lifter 。</p>
+<p>我们的研究结果表明，现代二进制lifter 提供了非常适合可辨别性分析和反编译的 IR 代码，并表明这种二进制lifter 可以应用于常见的基于相似性或代码理解的安全分析（例如，binary diffing）。然而，提升的 IR 代码似乎不适合严格的静态分析（例如，指针分析）。</p>
+<p>为了更全面地了解二进制lifter 的实用性，我们还在三个安全分析任务（Asan 地址错误检查、binary diffing和 C 反编译）上比较了 <em>支持lifter的方法</em> 与 <em>仅使用二进制汇编</em> 的工具之间的性能。我们总结了我们的发现，并为正确使用和进一步增强二进制lifter 提出了建议。我们还探索了使用提升的 IR 代码提高指针分析准确性的实用方法：用lifted IR 增强 Debin（一种用于预测调试信息的工具）。</p>
+<blockquote>
+<p>Debin! 世界线收束了。</p>
+</blockquote>
+<h1 id="0x1-introduction"><a class="markdownIt-Anchor" href="#0x1-introduction"></a> 0x1 Introduction</h1>
+<p>贡献</p>
+<ul>
+<li>提出了一个对二进制lifter 评估的新视角，区别于过去的功能正确性视角，我们关注在lifted IR 需求的视角，即其得到的IR是否能很好的支持下游任务。</li>
+<li>我们选取了三种安全研究场景下的基本下游任务，为了顺利的评估各种静态和动态的lifter，我们投入了相当大的人工。我们的研究是在交叉编译器、交叉优化和跨架构设置中进行的。为了获取更综合的评估结构，我们还在三个主流的安全任务中直接比较了支持lifter和纯二进制汇编两种 方法。</li>
+<li>我们研究的结果和意义：现代二进制lifter 的限制——支持严格的静态分析的能力，其解决方案——使用Debin。我们的发现为用户提供了关于如何使用 LLVM 基础设施分析低级二进制代码以实现安全目的的指南，并指出了开发人员需要对Lifter 改进的方向。</li>
+</ul>
+<h1 id="0x2-preliminaries"><a class="markdownIt-Anchor" href="#0x2-preliminaries"></a> 0x2 Preliminaries</h1>
+<p>预备知识。</p>
+<p><img src="/images/Binary_Lifters_0.png" alt="Binary_Lifters_0" / srcset="/images/LoadingImage.gif" data-src="/images/Binary_Lifters_0.png" class="lozad post-image"></p>
+<p>静态和动态lifter的工作流。”Static“和”Dynamic“分别表示静态反汇编和动态二进制翻译。</p>
+<p>本章介绍了上图中每个阶段大概是怎么做的，以及现代lifter 在各个阶段的不同做法，或者说特性。</p>
+<h1 id="0x3-motivation-example"><a class="markdownIt-Anchor" href="#0x3-motivation-example"></a> 0x3 Motivation Example</h1>
+<p><img src="/images/Binary_Lifters_1.png" alt="Binary_Lifters_1" / srcset="/images/LoadingImage.gif" data-src="/images/Binary_Lifters_1.png" class="lozad post-image"></p>
+<p>fig2 给出了一个study case，关于C源码© 其编译的LLVM IR，和通过编译后的二进制文件lifted IR。</p>
+<p><strong>Emulation-Style IR (EIR) vs. High-Level IR (HIR).</strong></p>
+<p>关于这两种IR，后文Sec6 给出常见的lifter 生成的类似fig2©的EIR，或者更高级的HIR类似于fig2(b)编译的IR code。Sec2 中讲述的Refinement 技术就是把EIR转换成HIR的过程。Sec2 指出为了弥合EIR和CIR 之间在局部变量上的差别，现代lifter 实现了一些analysis passes 和启发式方法去恢复局部变量，另外，对变量类型的精确恢复也有助于静态分析，见Sec6-B。然而不是所有lifter 都实现了refinement 过程，本节中的例子McSema 就没有refinement，其他lifter 的情况我们会在Sec6详细展示。</p>
+<p>为了便于表述，由 Clang 从源代码编译的 LLVM IR 被称为Compiled IR (CIR)，Lifter根据emulation 范式产生的emulation-style IR 称为EIR，通过refinement之后的EIR称为high-level IR (HIR)。</p>
+<p><strong>Transformations Involved in Emitting EIR and HIR.</strong></p>
+<p>在构建lifter codebase 过程中投入了大量的人工努力，我们把汇编代码提升到IR 的过程中使用到的transformations 分成三类：</p>
+<ol>
+<li>
+<p>optimizations offered by the LLVM framework</p>
+<p>simplifies lifted IR code in a functionality-preserving manner.</p>
+</li>
+<li>
+<p>simple optimizations developed by lifters</p>
+<p>移除臃肿的 utility functions, 如果正确实现的话这个transformation也应该生成 functionality-preserving</p>
+</li>
+<li>
+<p>transformations recovering high-level program features developed by lifters</p>
+<p>尝试恢复编译期间扔掉的信息</p>
+</li>
+</ol>
+<p>根据人工分析总结，Lifter使用1和2能生成EIR，结合123才能生成HIR。</p>
+<h1 id="0x4-study-overview"><a class="markdownIt-Anchor" href="#0x4-study-overview"></a> 0x4 Study Overview</h1>
+<p>关于如何度量IR的好坏，我们将Compiled IR Code 的表现作为上界，使用三个下游任务作为评估方法，通过lifted IR Code 和Compiled IR Code 之间的性能的接近程度作为衡量标准。具体到每个任务上的评估度量标准后面会讲。</p>
+<p>接下来介绍了三个下游任务：</p>
+<ul>
+<li><strong>Pointer Analysis</strong>
+<ul>
+<li>本研究的第一部分：是否可以使用lifted IR 代码傻瓜式（即不对IR做修改）的启动指针分析。</li>
+<li>使用SOTA的 LLVM pointer analysis library: <a target="_blank" rel="noopener" href="https://github.com/SVF-tools/SVF">SVF</a>。</li>
+</ul>
+</li>
+<li><strong>Discriminability Analysis</strong>
+<ul>
+<li>可辨别性分析是各种基于相似度分析的安全应用的基础，比如恶意代码聚类，代码剽窃检测等应用。</li>
+<li>我们扩展了在 LLVM 框架中开发的代码嵌入(code embedding)工具 <a target="_blank" rel="noopener" href="https://github.com/spcl/ncc">ncc</a> 。将代码映射到数值空间，根据其余弦距离判断相似度。ncc 使用”Contextual Flow Graph“来理解LLVM IR代码，这个Graph 结合了IR 数据流和控制流特征。然后ncc 使用基于图神经网络的模型生成程序的数值向量。ncc也提供了一个分类模型用于分类GNN生成的数值向量，这个模型训练在POJ-104。</li>
+<li>使用ncc的分类来评估IR代码的好坏，即越高的分类精度表明更容易确定两个 LLVM IR 程序的（不）相似性。</li>
+</ul>
+</li>
+<li><strong>C Decompilation</strong>
+<ul>
+<li>这里评估的方法是：compiled IR 和lifted IR 代码是否可以反编译得到相似质量的反编译 C 代码。</li>
+<li>使用的反编译工具是<a target="_blank" rel="noopener" href="https://github.com/avast/retdec/tree/master/src/llvmir2hll">llvmir2hll</a>，它是retdec的一部分。</li>
+</ul>
+</li>
+</ul>
+<h1 id="0x5-study-setup"><a class="markdownIt-Anchor" href="#0x5-study-setup"></a> 0x5 Study Setup</h1>
+<h2 id="a-binary-lifters"><a class="markdownIt-Anchor" href="#a-binary-lifters"></a> A. Binary Lifters</h2>
+<p>本文所调研的Lifter如下表所示：</p>
+<p><img src="/images/Binary_Lifters_2.png" alt="Binary_Lifters_2" / srcset="/images/LoadingImage.gif" data-src="/images/Binary_Lifters_2.png" class="lozad post-image"></p>
+<p>提一嘴BinRec，这是最近才发布的动态lifter，它以可执行文件作为输入，采用符号执行引擎<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>S</mi><mn>2</mn></msup><mi>E</mi></mrow><annotation encoding="application/x-tex">S^2E</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span></span></span></span> 挖掘可执行路径，该引擎运行在QEMU上，它对于每条记录下来的路径都可以生成一条LLVM IR 路径。<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>S</mi><mn>2</mn></msup><mi>E</mi></mrow><annotation encoding="application/x-tex">S^2E</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span></span></span></span> 提供RevGen 用于生成LLVM IR，RevGen 使用IDA-Pro 和McSema 作为前端，这和我们的评估有重叠，<strong>所以本文实验中BinRec 不使用RevGen</strong> 。BinRec 代表最先进的动态lifter，<strong>其设计目标之一就是functional correctness</strong>，这在我们后面的实验中得到了很好的证明。</p>
+<p>作者对上述四个工具做了一番介绍，然后总结：这四个工具可能是本文撰写时三个最好的静态lifter和一个最好的动态lifter。</p>
+<h2 id="b-downstream-task-setup-and-test-case-selection"><a class="markdownIt-Anchor" href="#b-downstream-task-setup-and-test-case-selection"></a> B. Downstream Task Setup and Test Case Selection</h2>
+<p><strong>Pointer Analysis.</strong></p>
+<p>我们使用 SVF 提供的所有 24 个流量敏感测试用例。对于每个测试程序，一些pointer pairs 使用 MustAlias 、MayAlias 或 NoAlias 进行注释。它们是指针分析任务的true label。我们研究提升和编译的 IR 代码是否可以支持 SVF 生成正确的指针分析结果。</p>
+<p><strong>Discriminability Analysis.</strong></p>
+<p>我们使用 ncc 论文中的默认设置将 POJ-104 数据集中的程序拆分为训练、验证和测试集。每个数据集都将被编译或提升为 LLVM IR 程序。所以，最后我们会分别创建5个train、 valid、 test set，对应五个被测试的lifter tools。</p>
+<p>使用ncc 做分类任务，准确率越高，说明提供给ncc 的IR 质量越好。</p>
+<p><strong>C Decompilation.</strong></p>
+<p>将IR 代码丢给llvmir2hll 做反编译，根据反编译代码的质量评估IR的质量。</p>
+<p>代码的结构性越好说明越可读，关于代码结构性的度量标准参考了别人的评估标准，选取了一个指标：统计 <code>#goto</code> 语句的数量，越少的 goto 语句说明可读性越好。</p>
+<p>另一个指标是，函数平均代码长度LOC（lines of Code），基于朴素的理解代码越冗长可读性越差。由于McSema 中包含用于模拟机器指令的工具函数，这会增加IR 代码长度，所以我们计算每个用户定义的函数的平均 LOC，而不是整个二进制文件的反编译代码。</p>
+<p>从SPEC INT 2006测试套件（共九个程序）收集C程序，排除了三个C++程序。</p>
+<h2 id="c-changes-made-on-ir-lifters-and-downstream-applications"><a class="markdownIt-Anchor" href="#c-changes-made-on-ir-lifters-and-downstream-applications"></a> C. Changes Made on IR Lifters and Downstream Applications</h2>
+<p><img src="/images/Binary_Lifters_3.png" alt="Binary_Lifters_3" / srcset="/images/LoadingImage.gif" data-src="/images/Binary_Lifters_3.png" class="lozad post-image"></p>
+<p>上表是我们为了使数据集中的二进制文件可以正确的被处理所做出的人工努力，我们对几个lifter 和下游任务的ncc、llvmir2hll都做出了很多修改，才使得任务可以进行。具体修改<a target="_blank" rel="noopener" href="https://www.dropbox.com/s/lqskhqrbiunz44j/lifter-sm.pdf">参考</a>。</p>
+<h1 id="0x6-findings"><a class="markdownIt-Anchor" href="#0x6-findings"></a> 0x6 Findings</h1>
+<h2 id="a-binary-lifting-results"><a class="markdownIt-Anchor" href="#a-binary-lifting-results"></a> A. Binary Lifting Results</h2>
+<p><img src="/images/Binary_Lifters_4.png" alt="Binary_Lifters_4" / srcset="/images/LoadingImage.gif" data-src="/images/Binary_Lifters_4.png" class="lozad post-image"></p>
+<p>上表是上一小节中三个任务上的所有测试样例，和其中做lifting 失败的样例数量统计。</p>
+<p>简单<strong>分析</strong>一下：</p>
+<p>数据集：SVF和POJ数据集中的文件比较小，可以在几秒内完成lift，而SPEC中的二进制程序比较大需要数分钟至数小时才能完成。</p>
+<p>Lifters：</p>
+<ul>
+<li>BinRec：速度远远慢于其他lifter，因为BinRec 使用符号执行探索程序路径。SVF中有两个程序是BinRec 无法分析的（异常退出）, POJ数据集程序数量众多，我们设置超时时长为10mins，21.6%的程序没有分析完成，最终该数据集上的函数覆盖率是93%。这里分析速度较慢不能怪BinRec，因为我们在Sec5中说了不使用BinRec的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>S</mi><mn>2</mn></msup><mi>E</mi></mrow><annotation encoding="application/x-tex">S^2E</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span></span></span></span> 的RevGen技术，如果我们用上这个技术或者换成其他更好的符号执行引擎，是可以很快的完成分析的。在SPEC 上我们对每个用例执行了50h的分析，平均函数覆盖率是23%，这样的覆盖率阻碍了IR 反编译性能的评估，在Sec6-D详细描述。</li>
+<li>mctoll：在SVF数据集中，有7个不能分析，有7个生成了broken IR。SPEC数据集中的所有样本都不能分析。</li>
+<li>RetDec：总体来说取得了最好的可用性，不能分析的样本最少。</li>
+</ul>
+<h2 id="b-pointer-analysis"><a class="markdownIt-Anchor" href="#b-pointer-analysis"></a> B. Pointer Analysis</h2>
+<p><img src="/images/Binary_Lifters_5.png" alt="Binary_Lifters_5" / srcset="/images/LoadingImage.gif" data-src="/images/Binary_Lifters_5.png" class="lozad post-image"></p>
+<p>SVF数据集上对测试程序中pointer pairs 做了注释（MustAlias MayAlias NoAlias），测试lifted IR能否正确的恢复出这些注释。后面几列是SVF对各种IR做SVFG分析的时候产生的空间和时间消耗。</p>
+<p>结论就是，所有lifter产生的IR都完蛋了，原因是这些IR很难正确的执行严格的静态分析。</p>
+<p>只有RetDec完成了一点指针分析，我们来简单说一下。</p>
+<p><img src="/images/Binary_Lifters_6.png" alt="Binary_Lifters_6" / srcset="/images/LoadingImage.gif" data-src="/images/Binary_Lifters_6.png" class="lozad post-image"></p>
+<p>RetDec对SVF数据集中的24个程序的分析结果的人工检查，可以看到仅有1个分析正确，由16个虽然是不正确但是可以通过人工修复。以下是修复结果：</p>
+<p><img src="/images/Binary_Lifters_7.png" alt="Binary_Lifters_7" / srcset="/images/LoadingImage.gif" data-src="/images/Binary_Lifters_7.png" class="lozad post-image"></p>
+<p>人工修复了16个SVF数据集中由RetDec提升得到的IR程序，用于修正指针分析结果。人工修正了213个不精确的变量类型，50个函数原型错误，新加入和调整了几个语句。完成对IR的人工修正后，最后实际上通过指针分析得到的变量恢复也就只有两个。。。</p>
+<p>Lifted IR 难以用于严格的指针分析的原因<strong>总结</strong>为：</p>
+<p>（1）类型恢复的困难，准确来说是难以区分指针类型和非指针类型。恢复复合数据类型比如结构体和数组，仍然是一个难题。</p>
+<p>（2）函数类型恢复困难，准确来说，要使得lifted IR 和编译生成的IR 相似是很难的。</p>
+<p><strong>可能的改进方法</strong>：</p>
+<ol>
+<li>我们进一步人工研究了lifters的源码，发现在评估中CIR和HIR的不一致性并不是主要来自于工具的bug。而是，<strong>这些lifter 没有完全实现本领域（指针分析）的研究成果</strong>。现存研究所提出的进行变量恢复和类型推断的静态分析技术，例如VSA。函数原型推断也可以使用相似的方法或者使用AI技术。</li>
+<li>而且，我们也注意到McSema 使用商业工具IDApro作为它的逆向前端，它目前只是使用IDApro获取函数边界，我们建议McSema利用IDApro的函数原型信息。</li>
+</ol>
+<p>总的来说，我们lifters 开发人员更多的采用学术研究成果，或者尽可能发掘其使用的第三方工具的全部潜力。</p>
+<h2 id="c-discriminability-analysis"><a class="markdownIt-Anchor" href="#c-discriminability-analysis"></a> C. Discriminability Analysis</h2>
+<p>在POJ-104 生成的各种IR数据集上，使用ncc 做分类任务。</p>
+<p><img src="/images/Binary_Lifters_8.png" alt="Binary_Lifters_8" / srcset="/images/LoadingImage.gif" data-src="/images/Binary_Lifters_8.png" class="lozad post-image"></p>
+<p>POJ上平均分类准确率，准确率越高说明lifter 生成的IR 越好，越利于各种基于相似度的任务。</p>
+<p><img src="/images/Binary_Lifters_9.png" alt="Binary_Lifters_9" / srcset="/images/LoadingImage.gif" data-src="/images/Binary_Lifters_9.png" class="lozad post-image"></p>
+<p>不同类别而上各个lifter 生成的IR 的表现。RetDec 在某些类别上甚至好于Clang</p>
+<p><strong>总结</strong>：RetDec 和mctoll 展现了很不错的在Discriminability Analysis 上的性能，我们还做了binary-diffing tasks，其结果和这里一致，放在论文的附录中。</p>
+<p>这里的结果虽然不能说是非常精确，但是至少能给研究者在使用binary lifter上提供一些选择的参考，尤其是在做相似度任务的时候，例如code patch search。</p>
+<p>原文这里还分析了有效性威胁，关于DNN-based Discriminability Analysis的潜在偏差。</p>
+<h2 id="d-decompilation-analysis"><a class="markdownIt-Anchor" href="#d-decompilation-analysis"></a> D. Decompilation Analysis</h2>
+<p><img src="/images/Binary_Lifters_10.png" alt="Binary_Lifters_10" / srcset="/images/LoadingImage.gif" data-src="/images/Binary_Lifters_10.png" class="lozad post-image"></p>
+<p>可见clang 和retdec 得到的IR通过llvmir2hll 得到的类源码的可读性最好。</p>
+<p><strong>总结</strong>：RetDec恢复的紧凑IR 代码在很大程度上提高了反编译C代码的结构性和可读性。</p>
+<h2 id="e-functionality-correctness-of-lifted-ir-programs"><a class="markdownIt-Anchor" href="#e-functionality-correctness-of-lifted-ir-programs"></a> E. Functionality Correctness of Lifted IR Programs</h2>
+<p>所谓Functionality Correctness我们的测试方法是重编译IR代码，看编译的二进制文件是否能完成正确执行。</p>
+<p>这里SVF数据集中的程序相对简单没有输出，所以我们只采用POJ和SPEC中的程序作为功能正确性的测试。</p>
+<p>对于POJ 中的104个任务，我们人工阅读源码，来构造输入，我们最终确定了86个程序的输入输出。</p>
+<p>对于九个SPEC 程序，我们使用脚本进行测试。</p>
+<p>结果如下：</p>
+<p><img src="/images/Binary_Lifters_11.png" alt="Binary_Lifters_11" / srcset="/images/LoadingImage.gif" data-src="/images/Binary_Lifters_11.png" class="lozad post-image"></p>
+<p>在BinRec的论文中，作者用SPEC做了函数功能正确性的测试，所以我们直接根据作者的建议正确配置了 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>S</mi><mn>2</mn></msup><mi>E</mi></mrow><annotation encoding="application/x-tex">S^2E</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mord mathdefault" style="margin-right:0.05764em;">E</span></span></span></span> 符号执行引擎去提升POJ测试用例，结果是全都成功了。</p>
+<p>此外本文还对跨平台和跨编译选项做了进一步研究。</p>
+<h1 id="0x7-cross-platform-evaluation"><a class="markdownIt-Anchor" href="#0x7-cross-platform-evaluation"></a> 0x7 Cross-Platform Evaluation</h1>
+<p>本节对lifters在ARM架构上的表现。RetDec和McSema支持64bit ARM架构。</p>
+<p><img src="/images/Binary_Lifters_12.png" alt="Binary_Lifters_12" / srcset="/images/LoadingImage.gif" data-src="/images/Binary_Lifters_12.png" class="lozad post-image"></p>
+<p>可见只有McSema有1%的失败，其他都lifting 成功了。</p>
+<p>测试结果：</p>
+<p><img src="/images/Binary_Lifters_13.png" alt="Binary_Lifters_13" / srcset="/images/LoadingImage.gif" data-src="/images/Binary_Lifters_13.png" class="lozad post-image"></p>
+<p>指针分析的结果比x86平台还差一些，</p>
+<p>discriminability分析的准确率和x86平台差不多，</p>
+<p>C反编译任务上，RetDec和x86平台稍好一些；McSema在LOC上和x86平台持平，在goto语句数量上比x86平台高很多。</p>
+<p>对于功能正确性来说，这两个lifter 在ARM 平台上的表现都很差。</p>
+<h1 id="0x8-cross-compiler-optimization-evaluation"><a class="markdownIt-Anchor" href="#0x8-cross-compiler-optimization-evaluation"></a> 0x8. CROSS-COMPILER &amp; OPTIMIZATION EVALUATION</h1>
+<p>跨编译器和优化选项，之前的实验都是使用不带任何优化的clang编译的，我们使用gcc（7.5.0版），和完整的编译器优化（-O3）进行实验。关于lifting 成功和失败的样本情况，在附录中给出，总的来说就是和TABLE V一致。</p>
+<p><img src="/images/Binary_Lifters_14.png" alt="Binary_Lifters_14" / srcset="/images/LoadingImage.gif" data-src="/images/Binary_Lifters_14.png" class="lozad post-image"></p>
+<p>本组实验中McSema0给出了非常差的结构，所以这里就不展示McSema0了。NA是因为mctoll lifted IR 没能成功完成反编译。BinRec 中的括号内是函数全覆盖的数值（应该是BinRec 动态分析太慢，没有完成所有函数的覆盖就人工停掉了）。</p>
+<h1 id="0x9-comparison-with-binary-only-tools"><a class="markdownIt-Anchor" href="#0x9-comparison-with-binary-only-tools"></a> 0x9 COMPARISON WITH BINARY-ONLY TOOLS</h1>
+<p>原文附录ABC做了三个实验探讨纯binary tools 和lifter 在三个分析任务上的优劣。</p>
+<ol>
+<li>
+<p>Appx. A RetDec、McSema和RetroWrite 在 Address sanitizer(Asan)(地址错误检查) 任务。</p>
+<p>原理上来讲，RetroWrite没有像lifters一样努力恢复变量，特别是RetDec虽然不精确但是可以恢复变量和函数的局部栈空间。这从概念上将RetroWrite于lifters 区分开来，鉴于它只能粗粒度的栈帧级的Asan insertion。</p>
+<p>从经验上来讲，我们通过在Juliet 测试数据集上插入Asan 检查来评估三个工具。由于RetDec生成的IR 在功能正确性上就有严重缺失，所以对其lifted IR 做异常检测任务评估是没有意义的。McSema正确提升了2,187个用例，在这些用例上，其表现和RetroWrite相当。</p>
+<p>关于更多两者之间的优点和缺点的分析，见附录A。</p>
+</li>
+<li>
+<p>Appx. B 比较RetDec 与 DeepBinDiff、BinDiff 在binary diffing 任务。</p>
+<p><img src="/images/Binary_Lifters_15.png" alt="Binary_Lifters_15" / srcset="/images/LoadingImage.gif" data-src="/images/Binary_Lifters_15.png" class="lozad post-image"></p>
+<p>RetDec 和纯binary的两个工具具有相似的性能，这说明了lifters在恶意软件聚类和CVE/补丁搜索上具有良好的潜力。</p>
+</li>
+<li>
+<p>Appx. C 比较lifters 和 IDAPro、Ghidra 在C 反编译任务。</p>
+<p><img src="/images/Binary_Lifters_16.png" alt="Binary_Lifters_16" / srcset="/images/LoadingImage.gif" data-src="/images/Binary_Lifters_16.png" class="lozad post-image"></p>
+<p>多数情况下IDA能生成结构性更好的代码，但是lifters 也表相出相当不错的反编译质量，并且他们都是免费的。XD</p>
+</li>
+</ol>
+<h1 id="0x10-总结"><a class="markdownIt-Anchor" href="#0x10-总结"></a> 0x10 总结</h1>
+<blockquote>
+<p>根据你想做的任务选择你的英雄。</p>
+</blockquote>
+<p><img src="/images/Binary_Lifters_17.png" alt="Binary_Lifters_17" / srcset="/images/LoadingImage.gif" data-src="/images/Binary_Lifters_17.png" class="lozad post-image"></p>
+
+  </div>
+  <div>
+    
+      <div 
+        class="post-note note-info copyright" 
+        style="margin-top: 42px">
+        <p>
+          <span style="font-weight: bold;">作者：</span><a 
+            target="_blank" 
+            rel="nofollow noopener noreferrer" 
+            href="/about">
+            Ch3nYe
+          </a>
+        </p>
+        <p>
+          <span style="font-weight: bold;">文章链接：</span><a 
+            target="_blank" 
+            rel="nofollow noopener noreferrer" 
+            href="https://ch3nye.top/Note-SoK-Demystifying-Binary-Lifters-Through-the-Lens-of-Downstream-Applications/">
+            https://ch3nye.top/Note-SoK-Demystifying-Binary-Lifters-Through-the-Lens-of-Downstream-Applications/
+          </a>
+        </p>
+        <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+      </div>
+    
+  </div>
+</article>
+<div class="nav">
+  
+  
+    <div class="nav-item-next">
+      <a 
+        href="/Rust%E7%B1%BB%E5%9E%8B%E7%B3%BB%E7%BB%9F%E5%9B%BE%E7%81%B5%E5%AE%8C%E5%A4%87%E7%9A%84%E8%AF%81%E6%98%8E/" 
+        class="nav-link">
+        <div>
+          <div class="nav-label">下一篇</div>
+          
+            <div class="nav-title">Rust类型系统图灵完备的证明 </div>
+          
+        </div>
+        <i class="iconfont icon-right nav-next-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+  <div 
+    class="card card-content comment-card" 
+    style="margin-top: 16px;">
+    <div class="comment-card-title">评论</div>
+    
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: '049b30eb10ea05082ef1',
+      clientSecret: 'c33ad95041c69907b3136b895008320f000987db',
+      repo: 'Ch3nYe.github.io',
+      owner: 'Ch3nYe',
+      admin: "Ch3nYe",
+      id: md5(location.href),
+      distractionFreeMode: false,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+  </div>
+
+<div 
+  class="card card-content toc-card" 
+  id="mobiletoc">
+  <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#sok-demystifying-binary-lifters-through-the-lens-of-downstream-applications"><span class="toc-text"> SoK: Demystifying Binary Lifters Through the Lens of Downstream Applications</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%91%98%E8%A6%81"><span class="toc-text"> 摘要</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x1-introduction"><span class="toc-text"> 0x1 Introduction</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x2-preliminaries"><span class="toc-text"> 0x2 Preliminaries</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x3-motivation-example"><span class="toc-text"> 0x3 Motivation Example</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x4-study-overview"><span class="toc-text"> 0x4 Study Overview</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x5-study-setup"><span class="toc-text"> 0x5 Study Setup</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#a-binary-lifters"><span class="toc-text"> A. Binary Lifters</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#b-downstream-task-setup-and-test-case-selection"><span class="toc-text"> B. Downstream Task Setup and Test Case Selection</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c-changes-made-on-ir-lifters-and-downstream-applications"><span class="toc-text"> C. Changes Made on IR Lifters and Downstream Applications</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x6-findings"><span class="toc-text"> 0x6 Findings</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#a-binary-lifting-results"><span class="toc-text"> A. Binary Lifting Results</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#b-pointer-analysis"><span class="toc-text"> B. Pointer Analysis</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c-discriminability-analysis"><span class="toc-text"> C. Discriminability Analysis</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#d-decompilation-analysis"><span class="toc-text"> D. Decompilation Analysis</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#e-functionality-correctness-of-lifted-ir-programs"><span class="toc-text"> E. Functionality Correctness of Lifted IR Programs</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x7-cross-platform-evaluation"><span class="toc-text"> 0x7 Cross-Platform Evaluation</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x8-cross-compiler-optimization-evaluation"><span class="toc-text"> 0x8. CROSS-COMPILER &amp; OPTIMIZATION EVALUATION</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x9-comparison-with-binary-only-tools"><span class="toc-text"> 0x9 COMPARISON WITH BINARY-ONLY TOOLS</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x10-%E6%80%BB%E7%BB%93"><span class="toc-text"> 0x10 总结</span></a></li></ol>
+</div></main>
+            <aside class="left-column">
+              
+              <div class="card card-author">
+                
+  <img 
+    src="/images/logo.png" 
+    class="author-img"
+    width="88"
+    height="88"
+    alt="author avatar">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a 
+    class="author-posts-count" 
+    href="/archives">
+    <span>43</span>
+    <span>文章</span>
+  </a>
+  <a 
+    class="author-categories-count" 
+    href="/categories">
+    <span>7</span>
+    <span>分类</span>
+  </a>
+  <a 
+    class="author-tags-count" 
+    href="/tags">
+    <span>65</span>
+    <span>标签</span>
+  </a>
+</div>
+
+  <div class="author-card-society">
+    
+      <div class="author-card-society-icon">
+        <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+          <i class="iconfont icon-github society-icon"></i>
+        </a>
+      </div>
+    
+      <div class="author-card-society-icon">
+        <a href="mailto:sud0su@163.com">
+          <i class="iconfont icon-mail society-icon"></i>
+        </a>
+      </div>
+    
+  </div>
+
+              </div>
+               <div class="sticky-tablet">
+  
+  
+    <article class="display-when-two-columns spacer">
+      <div class="card card-content toc-card">
+        <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#sok-demystifying-binary-lifters-through-the-lens-of-downstream-applications"><span class="toc-text"> SoK: Demystifying Binary Lifters Through the Lens of Downstream Applications</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%91%98%E8%A6%81"><span class="toc-text"> 摘要</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x1-introduction"><span class="toc-text"> 0x1 Introduction</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x2-preliminaries"><span class="toc-text"> 0x2 Preliminaries</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x3-motivation-example"><span class="toc-text"> 0x3 Motivation Example</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x4-study-overview"><span class="toc-text"> 0x4 Study Overview</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x5-study-setup"><span class="toc-text"> 0x5 Study Setup</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#a-binary-lifters"><span class="toc-text"> A. Binary Lifters</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#b-downstream-task-setup-and-test-case-selection"><span class="toc-text"> B. Downstream Task Setup and Test Case Selection</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c-changes-made-on-ir-lifters-and-downstream-applications"><span class="toc-text"> C. Changes Made on IR Lifters and Downstream Applications</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x6-findings"><span class="toc-text"> 0x6 Findings</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#a-binary-lifting-results"><span class="toc-text"> A. Binary Lifting Results</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#b-pointer-analysis"><span class="toc-text"> B. Pointer Analysis</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c-discriminability-analysis"><span class="toc-text"> C. Discriminability Analysis</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#d-decompilation-analysis"><span class="toc-text"> D. Decompilation Analysis</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#e-functionality-correctness-of-lifted-ir-programs"><span class="toc-text"> E. Functionality Correctness of Lifted IR Programs</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x7-cross-platform-evaluation"><span class="toc-text"> 0x7 Cross-Platform Evaluation</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x8-cross-compiler-optimization-evaluation"><span class="toc-text"> 0x8. CROSS-COMPILER &amp; OPTIMIZATION EVALUATION</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x9-comparison-with-binary-only-tools"><span class="toc-text"> 0x9 COMPARISON WITH BINARY-ONLY TOOLS</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x10-%E6%80%BB%E7%BB%93"><span class="toc-text"> 0x10 总结</span></a></li></ol>
+      </div>
+    </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header">
+    <i 
+      class="iconfont icon-fenlei" 
+      style="padding-right: 2px;">
+    </i>分类
+  </div>
+  <div class="categories-list">
+    
+      <a href="/categories/%E7%94%9F%E6%B4%BB/">
+        <div class="categories-list-item">
+          生活
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E5%A4%87%E5%BF%98/">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E6%9D%8E%E5%AE%8F%E6%AF%85%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">15</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">12</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E5%AE%9E%E6%88%98/">
+        <div class="categories-list-item">
+          实战
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%AC%94%E8%AE%B0/">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%BF%BB%E8%AF%91/">
+        <div class="categories-list-item">
+          翻译
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header">
+    <i 
+      class="iconfont icon-biaoqian" 
+      style="padding-right: 2px;">
+    </i>热门标签
+  </div>
+  <div class="tags-list">
+    
+      <a 
+        href="/tags/note/" 
+        title="note">
+        <div class="tags-list-item">note</div>
+      </a>
+    
+      <a 
+        href="/tags/ML/" 
+        title="ML">
+        <div class="tags-list-item">ML</div>
+      </a>
+    
+      <a 
+        href="/tags/Next-Step-of-ML/" 
+        title="Next-Step-of-ML">
+        <div class="tags-list-item">Next-Step-of-ML</div>
+      </a>
+    
+      <a 
+        href="/tags/%E7%AC%94%E8%AE%B0/" 
+        title="笔记">
+        <div class="tags-list-item">笔记</div>
+      </a>
+    
+      <a 
+        href="/tags/%E8%AE%BA%E6%96%87/" 
+        title="论文">
+        <div class="tags-list-item">论文</div>
+      </a>
+    
+      <a 
+        href="/tags/Android/" 
+        title="Android">
+        <div class="tags-list-item">Android</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%80%BB%E7%BB%93/" 
+        title="总结">
+        <div class="tags-list-item">总结</div>
+      </a>
+    
+      <a 
+        href="/tags/Binary/" 
+        title="Binary">
+        <div class="tags-list-item">Binary</div>
+      </a>
+    
+      <a 
+        href="/tags/Deep-Learning/" 
+        title="Deep-Learning">
+        <div class="tags-list-item">Deep-Learning</div>
+      </a>
+    
+      <a 
+        href="/tags/%E7%BF%BB%E8%AF%91/" 
+        title="翻译">
+        <div class="tags-list-item">翻译</div>
+      </a>
+    
+      <a 
+        href="/tags/%E5%AD%A6%E4%B9%A0/" 
+        title="学习">
+        <div class="tags-list-item">学习</div>
+      </a>
+    
+      <a 
+        href="/tags/%E5%AE%9E%E6%88%98/" 
+        title="实战">
+        <div class="tags-list-item">实战</div>
+      </a>
+    
+      <a 
+        href="/tags/crack/" 
+        title="crack">
+        <div class="tags-list-item">crack</div>
+      </a>
+    
+      <a 
+        href="/tags/%E4%BA%8C%E8%BF%9B%E5%88%B6/" 
+        title="二进制">
+        <div class="tags-list-item">二进制</div>
+      </a>
+    
+      <a 
+        href="/tags/Rust/" 
+        title="Rust">
+        <div class="tags-list-item">Rust</div>
+      </a>
+    
+      <a 
+        href="/tags/HTTPS/" 
+        title="HTTPS">
+        <div class="tags-list-item">HTTPS</div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+            </aside>
+            <aside class="right-column">
+              <div class="sticky-widescreen">
+  
+  
+    <article class="card card-content toc-card">
+      <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#sok-demystifying-binary-lifters-through-the-lens-of-downstream-applications"><span class="toc-text"> SoK: Demystifying Binary Lifters Through the Lens of Downstream Applications</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%91%98%E8%A6%81"><span class="toc-text"> 摘要</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x1-introduction"><span class="toc-text"> 0x1 Introduction</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x2-preliminaries"><span class="toc-text"> 0x2 Preliminaries</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x3-motivation-example"><span class="toc-text"> 0x3 Motivation Example</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x4-study-overview"><span class="toc-text"> 0x4 Study Overview</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x5-study-setup"><span class="toc-text"> 0x5 Study Setup</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#a-binary-lifters"><span class="toc-text"> A. Binary Lifters</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#b-downstream-task-setup-and-test-case-selection"><span class="toc-text"> B. Downstream Task Setup and Test Case Selection</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c-changes-made-on-ir-lifters-and-downstream-applications"><span class="toc-text"> C. Changes Made on IR Lifters and Downstream Applications</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x6-findings"><span class="toc-text"> 0x6 Findings</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#a-binary-lifting-results"><span class="toc-text"> A. Binary Lifting Results</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#b-pointer-analysis"><span class="toc-text"> B. Pointer Analysis</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c-discriminability-analysis"><span class="toc-text"> C. Discriminability Analysis</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#d-decompilation-analysis"><span class="toc-text"> D. Decompilation Analysis</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#e-functionality-correctness-of-lifted-ir-programs"><span class="toc-text"> E. Functionality Correctness of Lifted IR Programs</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x7-cross-platform-evaluation"><span class="toc-text"> 0x7 Cross-Platform Evaluation</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x8-cross-compiler-optimization-evaluation"><span class="toc-text"> 0x8. CROSS-COMPILER &amp; OPTIMIZATION EVALUATION</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x9-comparison-with-binary-only-tools"><span class="toc-text"> 0x9 COMPARISON WITH BINARY-ONLY TOOLS</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x10-%E6%80%BB%E7%BB%93"><span class="toc-text"> 0x10 总结</span></a></li></ol>
+    </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header">
+    <i 
+      class="iconfont icon-wenzhang_huaban" 
+      style="padding-right: 2px;">
+    </i>最近文章
+  </div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-06-01</div>
+        <a href="/Note-SoK-Demystifying-Binary-Lifters-Through-the-Lens-of-Downstream-Applications/"><div class="recent-posts-item-content">Note 《SoK Demystifying Binary Lifters Through the Lens of Downstream Applications》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-05-04</div>
+        <a href="/Rust%E7%B1%BB%E5%9E%8B%E7%B3%BB%E7%BB%9F%E5%9B%BE%E7%81%B5%E5%AE%8C%E5%A4%87%E7%9A%84%E8%AF%81%E6%98%8E/"><div class="recent-posts-item-content">Rust类型系统图灵完备的证明</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-04-13</div>
+        <a href="/%E4%BB%8Epython%E8%B0%83%E7%94%A8rust-%E4%BD%BF%E7%94%A8rust%E5%8A%A0%E9%80%9F%E4%BD%A0%E7%9A%84python%E4%BB%A3%E7%A0%81/"><div class="recent-posts-item-content">从python调用rust-使用rust加速你的python代码</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-03-28</div>
+        <a href="/%E5%A6%82%E4%BD%95%E7%94%A8%20Rust%20%E5%AE%9E%E7%8E%B0%E6%9C%B4%E7%B4%A0%E8%B4%9D%E5%8F%B6%E6%96%AF%E5%88%86%E7%B1%BB%E5%99%A8/"><div class="recent-posts-item-content">如何用 Rust 实现朴素贝叶斯分类器</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+     
+    <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>
+          Copyright ©
+          
+            2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a 
+          href="/" 
+          class="footer-link">
+          ch3nye's blog
+        </a>
+      </div>
+    </div>
+
+    
+      <div class="footer-dsc">
+        
+          Powered by
+          <a 
+            href="https://hexo.io/" 
+            class="footer-link" 
+            target="_blank" 
+            rel="nofollow noopener noreferrer">
+            &nbsp;Hexo
+          </a>
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          Theme -
+          <a 
+            href="https://github.com/theme-kaze" 
+            class="footer-link" 
+            target="_blank"
+            rel="nofollow noopener noreferrer">
+            &nbsp;Kaze
+          </a>
+        
+      </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+          本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+<!-- Default Statcounter code for My Blog https://ch3nye.top -->
+<script type="text/javascript">
+var sc_project=12696483; 
+var sc_invisible=1; 
+var sc_security="0f70f90d"; 
+</script>
+<script type="text/javascript"
+src="https://www.statcounter.com/counter/counter.js" async></script>
+<noscript><div class="statcounter"><a title="Web Analytics"
+href="https://statcounter.com/" target="_blank"><img class="statcounter"
+src="https://c.statcounter.com/12696483/0/0f70f90d/1/" alt="Web Analytics"
+referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
+<!-- End of Statcounter Code -->
+</footer> 
+    
+  <a 
+    role="button" 
+    id="scrollbutton" 
+    class="basebutton" 
+    aria-label="回到顶部">
+    <i class="iconfont icon-arrowleft button-icon"></i>
+  </a>
+
+<a 
+  role="button" 
+  id="menubutton"
+  aria-label="menu button"
+  class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="popbutton" 
+  class="basebutton" 
+  aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="darkbutton" 
+  class="basebutton darkwidget" 
+  aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="searchbutton" 
+  class="basebutton searchwidget" 
+  aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a> 
+     
+     
+      
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+ 
+     
+     
+      <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img')
+    var i
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a')
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'))
+      wrapper.setAttribute('aria-label', 'illustration')
+      wrapper.style.cssText =
+        'width: 100%; display: flex; justify-content: center;'
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt
+      wrapper.dataset.nolink = true
+      img[i].before(wrapper)
+      wrapper.append(img[i])
+      var divWrap = document.createElement('div')
+      divWrap.classList.add('gallery')
+      wrapper.before(divWrap)
+      divWrap.append(wrapper)
+    }
+    baguetteBox.run('.gallery')
+  }
+</script>
+<script>
+  loadScript(
+    "/js/lib/lightbox/baguetteBox.min.js",
+    addImgLayout
+  )
+</script>
+ 
+     
+     
+    <script src="/js/main.js"></script> 
+    
+      <script> 
+        loadScript('/js/lib/busuanzi.min.js') 
+      </script>
+     
+    
+      <script>
+        var addLazyload = function () {
+          var observer = lozad('.lozad', {
+            load: function (el) {
+              el.srcset = el.getAttribute('data-src')
+            },
+            loaded: function (el) {
+              el.classList.add('loaded')
+            },
+          })
+          observer.observe()
+        }
+      </script>
+      <script>
+        loadScript('/js/lib/lozad.min.js', addLazyload)
+      </script>
+     
+    
+      <script>
+        var googleAnalytics = function () {
+          window.dataLayer = window.dataLayer || []
+          function gtag() {
+            dataLayer.push(arguments)
+          }
+          gtag('js', new Date())
+          gtag('config', 'G-WHGL11014T')
+        }
+    </script>
+      <script>
+        loadScript(
+          'https://www.googletagmanager.com/gtag/js?id=' +
+            'G-WHGL11014T',
+          googleAnalytics
+        )
+      </script>
+    
+    
+      <script>
+        setTimeout(() => {localSearch("search.json")}, 0)
+      </script>
+    
+  </body>
+</html>
