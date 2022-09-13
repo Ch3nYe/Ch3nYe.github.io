@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+  <meta charset="UTF-8">
+  <meta 
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta 
+    http-equiv="X-UA-Compatible" 
+    content="ie=edge">
+  <meta 
+    name="theme-color" 
+    content="#fff" 
+    id="theme-color">
+  <meta 
+    name="description" 
+    content="网络安全 Android ML CTF">
+  <link 
+    rel="icon" 
+    href="/images/logo.png">
+  <title>Note 《SafeDrop Detecting Memory Deallocation Bugs of Rust Programs via Static Data-Flow Analysis》</title>
+  
+    
+      <meta 
+        property="og:title" 
+        content="Note 《SafeDrop Detecting Memory Deallocation Bugs of Rust Programs via Static Data-Flow Analysis》">
+    
+    
+      <meta 
+        property="og:url" 
+        content="https://ch3nye.top/Note-SafeDrop-Detecting-Memory-Deallocation-Bugs-of-Rust/index.html">
+    
+    
+      <meta 
+        property="og:img" 
+        content="/images/logo.png">
+    
+    
+      <meta 
+        property="og:img" 
+        content="网络安全 Android ML CTF">
+    
+    
+      <meta 
+        property="og:type" 
+        content="article">
+      <meta 
+        property="og:article:published_time" 
+        content="2022-09-13">
+      <meta 
+        property="og:article:modified_time" 
+        content="2022-09-13">
+      <meta 
+        property="og:article:author" 
+        content="Ch3nYe">
+      
+        
+          <meta 
+            property="og:article:tag" 
+            content="论文">
+        
+          <meta 
+            property="og:article:tag" 
+            content="笔记">
+        
+          <meta 
+            property="og:article:tag" 
+            content="Rust">
+        
+          <meta 
+            property="og:article:tag" 
+            content="static-analysis">
+        
+      
+    
+  
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+    function loadCSS(href, data, attr) {
+      var sheet = document.createElement('link');
+      sheet.ref = 'stylesheet';
+      sheet.href = href;
+      sheet.dataset[data] = attr;
+      document.head.appendChild(sheet);
+    }
+    function changeCSS(cssFile, data, attr) {
+      var oldlink = document.querySelector(data);
+      var newlink = document.createElement("link");
+      newlink.setAttribute("rel", "stylesheet");
+      newlink.setAttribute("href", cssFile);
+      newlink.dataset.prism = attr;
+      document.head.replaceChild(newlink, oldlink);
+    }
+  </script>
+  
+    
+      
+      
+      
+      
+        
+        
+        
+        <script>
+          function prismThemeChange() {
+            if(document.getElementById('theme-color').dataset.mode === 'dark') {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism-tomorrow.min.css', '[data-prism]', 'prism-tomorrow');
+              } else {
+                loadCSS('/js/lib/prism/prism-tomorrow.min.css', 'prism', 'prism-tomorrow');
+              }
+            } else {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism.min.css', '[data-prism]', 'prism');
+              } else {
+                loadCSS('/js/lib/prism/prism.min.css', 'prism', 'prism');
+              }
+            }
+          }
+          prismThemeChange()
+        </script>
+      
+      
+        
+        <link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+      
+    
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+  </script>
+  
+    <script>
+      var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+        document.getElementById('theme-color').dataset.mode = getCssMediaQuery();
+        prismThemeChange();
+      }
+    };
+    setDarkmode();
+    </script>
+  
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+    <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  <link rel="stylesheet" href="/css/main.css">
+  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+  
+    <link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+  <body>
+    <div class="wrapper">
+       
+      <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+        <img 
+          class="navbar-logo-img"
+          width="32"
+          height="32"
+          src="/images/logo.png" 
+          alt="blog logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+      <a 
+        href="/" 
+        class="navbar-menu-item">
+        
+          首页
+        
+      </a>
+    
+      <a 
+        href="/archives" 
+        class="navbar-menu-item">
+        
+          归档
+        
+      </a>
+    
+      <a 
+        href="/tags" 
+        class="navbar-menu-item">
+        
+          标签
+        
+      </a>
+    
+      <a 
+        href="/categories" 
+        class="navbar-menu-item">
+        
+          分类
+        
+      </a>
+    
+      <a 
+        href="/about" 
+        class="navbar-menu-item">
+        
+          关于
+        
+      </a>
+    
+      <a 
+        href="/links" 
+        class="navbar-menu-item">
+        
+          友链
+        
+      </a>
+    
+      <a 
+        href="/shuoshuo" 
+        class="navbar-menu-item">
+        
+          说说
+        
+      </a>
+    
+    <a 
+      class="navbar-menu-item darknavbar" 
+      id="dark">
+      <i class="iconfont icon-weather"></i>
+    </a>
+    <a 
+      class="navbar-menu-item searchnavbar" 
+      id="search">
+      <i 
+        class="iconfont icon-search" 
+        style="font-size: 1.2rem; font-weight: 400;">
+      </i>
+    </a>
+  </div>
+</nav> 
+      
+      <div 
+        id="local-search" 
+        style="display: none">
+        <input
+          class="navbar-menu-item"
+          id="search-input"
+          placeholder="请输入搜索内容..." />
+        <div id="search-content"></div>
+      </div>
+      
+      <div class="section-wrap">
+        <div class="container">
+          <div class="columns">
+            <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      Note 《SafeDrop Detecting Memory Deallocation Bugs of Rust Programs via Static Data-Flow Analysis》
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2022-09-12T16:00:00.000Z">
+      <i 
+        class="iconfont icon-calendar" 
+        style="margin-right: 2px;">
+      </i>
+      <span>2022-09-13</span>
+    </time>
+    
+      <span class="dot"></span>
+      
+        <a 
+          href="/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" 
+          class="post-meta-link">
+          论文阅读
+        </a>
+      
+    
+    
+      <span class="dot"></span>
+      <span>6.4k 字</span>
+    
+  </div>
+  
+    <div 
+      class="post-meta post-show-meta" 
+      style="margin-top: -10px;">
+      <div style="display: flex; align-items: center;">
+        <i 
+          class="iconfont icon-biaoqian" 
+          style="margin-right: 2px; font-size: 1.15rem;">
+        </i>
+        
+          
+          <a 
+            href="/tags/%E8%AE%BA%E6%96%87/" 
+            class="post-meta-link">
+            论文
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/%E7%AC%94%E8%AE%B0/" 
+            class="post-meta-link">
+            笔记
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/Rust/" 
+            class="post-meta-link">
+            Rust
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/static-analysis/" 
+            class="post-meta-link">
+            static-analysis
+          </a>
+        
+      </div>
+    </div>
+  
+  </header>
+  <div 
+    id="section" 
+    class="post-content">
+    <h1 id="safedrop-detecting-memory-deallocation-bugs-of-rust-programs-via-static-data-flow-analysis"><a class="markdownIt-Anchor" href="#safedrop-detecting-memory-deallocation-bugs-of-rust-programs-via-static-data-flow-analysis"></a> SafeDrop: Detecting Memory Deallocation Bugs of Rust Programs via Static Data-Flow Analysis</h1>
+<p>论文链接: <a target="_blank" rel="noopener" href="https://arxiv.org/abs/2103.15420">https://arxiv.org/abs/2103.15420</a> Publisher: 2021, TOSEM, <a target="_blank" rel="noopener" href="https://hxuhack.github.io/publication/list">XuHui</a></p>
+<br>
+<p>因为写论文加上身体出毛病等等各种原因，最近一个季度啥都没post，本来计划每个月至少发一篇笔记之类的来督促自己学习，现在看来还是小命要紧，以后放慢进度，稳健工作，遇到有趣的工作我就尽量写点笔记发出来。😁</p>
+<br>
+<blockquote>
+<p>TL;DR 在Rust 编译过程中产生的 MIR 上，结合别名分析+数据流的静态分析方法，该方法针对它所分析的对象（MIR）设计了几种内存错误的pattern，通过静态分析检测内存释放bug。</p>
+</blockquote>
+<br>
+<h1 id="0-摘要"><a class="markdownIt-Anchor" href="#0-摘要"></a> 0 摘要</h1>
+<p>Rust 是一个新兴的编程语言，旨在防止内存安全bug。然而现阶段 Rust 的设计也带来了一些副作用，使得内存安全问题的仍然存在。具体来说，它使用 OBRM（ownership-based resource management）和对未使用的资源强制自动回收（无垃圾回收器）。这使得Rust 程序也许会出现无效内存回收导致use after free 或 double free。文本研究无效的内存回收，提出了SafeDrop，这是一个静态的path-sensitive 数据流分析方法，用于探测上述bugs。我们的方法根据数据流图递归地分析每个Rust crate 的 API ，并且抽取每个数据流的所有aliases。实验结果证明我们的方法可以成功的检测到所有现存的CVEs。分析增加的开销对比原始的编译时间（编译阶段分析）从1%到110.7%不等。我们进一步应用我们的工具在真实世界的Rust crates，并且找到了8个存在无效内存释放的Rust crates。</p>
+<h1 id="1-intro"><a class="markdownIt-Anchor" href="#1-intro"></a> 1 Intro</h1>
+<p>本文工作针对真实世界中的Rust Crates 查找一种特定类型的内存安全bug，这项工作与 <a target="_blank" rel="noopener" href="https://zh.m.wikipedia.org/zh-hans/RAII">RAII</a>（资源获取即初始化）相关。具体来说Rust 使用 OBRM (ownership-based resource management) 模型，这个模型假定资源在其所有者创建时被分配内存，一旦其所有者离开当前区域这个资源就应该被释放。理想情况下，Rust 应该保证没有悬垂指针和内存泄漏，即使程序产生异常。然而实际上我们观察到真实世界中Rust 存在 UAF (e.g., CVE-2019-16140) 和 Double Free 漏洞 (e.g., CVE-2019-16144)。</p>
+<p>一般来说，内存释放错误是由unsafe 的代码触发的。 Rust 中需要unsafe 的 API 来提供对实现更细节的低级控制和抽象。而误用unsafe 代码可能会造成上述内存中的错误。而且更要命的是，当前的Rust 编译器在不安全代码的内存安全风险方面做得很少，只是假设开发人员应该负责使用它们。由于内存安全是Rust 提倡的最重要的特性，如果可能的话，减少这种风险是极其重要的。</p>
+<p>为了解决这个问题，本文提出了 SafeDrop，一种静态路径敏感的数据流分析方法，用于检测由于自动释放机制导致的内存安全错误。SafeDrop 迭代地分析 Rust crate 的每个 API，并检查 <a target="_blank" rel="noopener" href="https://rust-lang.github.io/rfcs/1211-mir.html">Rust MIR</a>（中级中间表示）中的每个 drop 语句是否可以安全执行。我们的方法采用meet-over-path（MOP）[1] 方法，并基于改进的Tarjan算法[11]提取每个函数的所有有价值的路径，这有效地消除了具有相同别名关系的循环中的冗余路径。</p>
+<p>我们已将我们的方法实现为 Rust 编译器 v1.52 的一个 query（pass），并对此类类型的现有 CVEs 进行了实际实验。实验结果证明我们的方法可以在有限的误报之下成功地检测到所有现存的CVEs。</p>
+<br>
+<p><strong>贡献总结：</strong></p>
+<ul>
+<li>我们的论文是第一次尝试研究“与 RAII 的副作用相关的“ Rust 中的内存释放错误。我们系统地讨论了该问题并提取了此类错误的几种常见模式。虽然我们的工作焦点是 Rust，但这个问题也可能存在于其他具有 RAII 的编程语言中。</li>
+<li>我们设计并实现了一种新的路径敏感的数据流分析方法来检测内存释放错误。它包含多种精心设计，以便在不牺牲太多精度的情况下实现可扩展性，包括用于路径敏感分析的改进的 Tarjan 算法和用于过程间分析的基于缓存的策略。</li>
+<li>我们已经对现有的 Rust CVEs 进行了实际实验，并验证了我们方法的有效性和效率。此外，我们发现 8 个 Rust crate 包含尚未发现的无效内存释放问题。</li>
+</ul>
+<h1 id="2-preliminaries"><a class="markdownIt-Anchor" href="#2-preliminaries"></a> 2 Preliminaries</h1>
+<p>主要阐述了以下四个方面内容，不赘述</p>
+<ul>
+<li>Rust 的内存管理</li>
+<li>Rust 编译器的基础知识</li>
+<li>Rust 的借用（Borrow）检查器</li>
+<li>Rust 编译器的Soundness 限制</li>
+</ul>
+<p><img src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM.png" alt="SafeDrop_2022_TOSEM" / srcset="/images/LoadingImage.gif" data-src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM.png" class="lozad post-image"></p>
+<p>上图是Rust编译器的处理过程。</p>
+<br>
+<p>本章总结，当前Rust 编译器并没有算法来保证unsafe 代码中Raw pointer 和内存回收的安全性，这是本文分析的造成Rust 内存回收错误的主要原因。</p>
+<h1 id="3-problem-statement"><a class="markdownIt-Anchor" href="#3-problem-statement"></a> 3 Problem Statement</h1>
+<p>Rust 强制执行 RAII 并自动释放未使用的资源。在实践中，这种机制可能会错误地drop一些内存单元，并且容易出现内存安全问题。基于有缺陷的 <code>Drop()</code> 的出现，我们将这个问题分类为两种情况：1）在正常的执行路径上的无效drop；2）在异常处理路径上的无效drop。</p>
+<p><img src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM1.png" alt="SafeDrop_2022_TOSEM" / srcset="/images/LoadingImage.gif" data-src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM1.png" class="lozad post-image"></p>
+<p>上图是Rust 中会引发内存安全问题的 PoC（proof-of-concept）样例。</p>
+<h2 id="31-motivating-example"><a class="markdownIt-Anchor" href="#31-motivating-example"></a> 3.1 Motivating Example</h2>
+<h3 id="invalid-drop-of-normal-execution"><a class="markdownIt-Anchor" href="#invalid-drop-of-normal-execution"></a> Invalid Drop of Normal Execution.</h3>
+<p>Fig 2a 中 <code>genvec()</code> 函数是一个内部不安全的构造函数，它基于raw指针 ptr 创建向量 v。在这个 PoC 中，字符串 s 和向量 v 共享相同的内存空间。函数return后字符串自动释放，向量 v 成为一个指向已释放缓冲区的悬空指针，之后在 main 函数中使用此向量将导致 use-after-free。即使不再使用向量，当控制流超出 v 的作用范围，它将被自动丢弃并导致双重释放。在实践中发现了很多这样的bug，比如CVE-2019-16140是use-after-free，CVE-2018-20996 和 CVE-2019-16144 是double free。</p>
+<p>Fig 2b 将上述问题以 MIR 的形式展示出来。_1 在 bb0 中创建了一个新的字符串并且在 bb5 中返回了基于_1创建的向量 _0 ，其别名传播链是1-&gt;5-&gt;4-&gt;3-&gt;2-&gt;8-&gt;0. 因此 _0 包含一个 _1 的别名指针。也就是说，drop _1 会导致 _0 变成悬垂指针。</p>
+<p>为什么借用检查器不能添加对raw指针的支持来检测此类问题？问题在于Rust处理函数调用时的权衡设计。例如，_2 是通过调用<code>deref_mut(mov _5)</code>创建的 并且它的参数 _5 是 _1 的可变别名。为了简单起见，Rust 假定每个参数都应该：要么将它的所有权转移给callee函数，要么通过 copy-trait 复制变量，并且复制体不与母本共享所有权。这样的假定使得借用检查器免于做复杂的过程间分析。而由于这个决定，使得 unsafe Rust 代码可能出现漏洞。请注意，<code>from_raw_parts()</code> 是一个 unsafe 函数，并且它在本例中是导致内存回收的原因。‘unsafe’ 标记在 MIR 层就被剥离了，Rust 编译器在 MIR 中是看不到的，也就不能区分安全代码的边界了。此外，当前 Rust 的编译器没有加入为 raw pointer做 alias checking 的功能。因此，上述问题解决起来是不太容易的。</p>
+<h3 id="invalid-drop-of-exception-handling"><a class="markdownIt-Anchor" href="#invalid-drop-of-exception-handling"></a> Invalid Drop of Exception Handling.</h3>
+<p>在一些现实世界的错误中，内存释放问题仅存在于异常处理路径中，因为程序会出现恐慌并进入<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Call_stack#Unwinding">unwinding</a>（栈展开）过程。例如，如果程序崩溃，CVE-2019-16880 和 CVE-2019-16881 就会出现双重释放问题； CVE-2019-15552 和 CVE 2019-15553 可能会在异常处理中 drop 未初始化的内存。Fig 2 中的 PoCs 展示了这个问题。</p>
+<p>假设开发者通过增加一个 <code>mem::forget()</code> 修复了这个bug，在 Fig 2a+b 中能防止bb6 drop(_1)。然而，如果你在 <code>mem::forget()</code> 和创建向量 v 之间访问 v ，那么你的访问仍然是漏洞程序。如果程序在这些点上panic了，那么根据RAII的原则，Rust应该在栈展开的时候调用 <code>Drop()</code> 释放资源。如果存在具有“别名 drop-trait” 的实例（变量），删除这些实例会导致双重释放问题。此外，<code>mem::forget(s)</code> 拿走了字符串 s 的全部所有权，它通常尽可能晚地使用，以便其他语句仍然可以使用该字符串。</p>
+<p>同样，drop 未初始化的内存也是异常处理过程中的一个常见问题。Fig 2c 和 Fig 2d 演示了一个 PoC，它首先应用一个未初始化的缓冲区，然后再对其进行初始化。但是，如果程序在缓冲区完全初始化之前发生恐慌，堆栈展开过程将丢弃那些未初始化的内存，如果缓冲区有指针，这类似于 use-after-free，毕竟调用drop的时候这些指针还未初始化。</p>
+<h2 id="32-problem-definition"><a class="markdownIt-Anchor" href="#32-problem-definition"></a> 3.2 Problem Definition</h2>
+<p>Definition 3.1 (Dropping buffers in use). 如果程序错误的释放了一些后续会被访问的缓冲区, 这可能导致悬垂指针最终导致 use-after-free 和 double-free.</p>
+<p>Definition 3.2 (Dropping invalid pointers). 如果无效指针成为悬垂状态，那么移除这个指针会造成double-free; 如果无效指针指向的未初始化的空间中包含指针类型，删除该指针可能会递归删除其嵌套指针并导致无效的内存访问。</p>
+<h2 id="33-typical-patterns"><a class="markdownIt-Anchor" href="#33-typical-patterns"></a> 3.3 Typical Patterns</h2>
+<p>清单2：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token comment">// Listing 2: Typical patterns checked for invalid memory deallocation in SafeDrop.</span>
+<span class="token comment">// (UAF: use after free; DF: double free; IMA: invalid memory access)</span>
+<span class="token class-name">Pattern</span> <span class="token number">1</span><span class="token punctuation">:</span> <span class="token class-name">GetPtr</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">UnsafeConstruct</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">Drop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">Use</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token constant">UAF</span>
+<span class="token class-name">Pattern</span> <span class="token number">2</span><span class="token punctuation">:</span> <span class="token class-name">GetPtr</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">UnsafeConstruct</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">Drop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">Drop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token constant">DF</span>
+<span class="token class-name">Pattern</span> <span class="token number">3</span><span class="token punctuation">:</span> <span class="token class-name">GetPtr</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">Drop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">UnsafeConstruct</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">Use</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token constant">UAF</span>
+<span class="token class-name">Pattern</span> <span class="token number">4</span><span class="token punctuation">:</span> <span class="token class-name">GetPtr</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">Drop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">UnsafeConstruct</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">Drop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token constant">DF</span>
+<span class="token class-name">Pattern</span> <span class="token number">5</span><span class="token punctuation">:</span> <span class="token class-name">GetPtr</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">Drop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">Use</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token constant">UAF</span>
+<span class="token class-name">Pattern</span> <span class="token number">6</span><span class="token punctuation">:</span> <span class="token class-name">Uninitialized</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">Use</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token constant">IMA</span>
+<span class="token class-name">Pattern</span> <span class="token number">7</span><span class="token punctuation">:</span> <span class="token class-name">Uninitialized</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">Drop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token constant">IMA</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我们说明了此类错误的几种典型模式。请注意，由于正常执行路径和异常处理路径的数据流方法是相似的，因此我们不会在这些模式中进一步区分它们。清单 2 从语句序列的角度总结了 7 种典型的无效内存释放模式。</p>
+<p>模式 1 和模式 2 对应于我们的Fig 2b 的 PoC，它会导致 UAF 或 DF。我们使用 <code>GetPtr()</code> 作为获取指向具有 drop-trait 的实例的 raw 指针的一般表示，并使用 <code>UnsafeConstruct()</code> 来表示用于构造新别名的 unsafe 函数调用（例如，<code>from_raw_part()</code>）。</p>
+<p>模式 3 和模式 4 类似，但交换了 <code>UnsafeConstruct()</code> 和 <code>Drop()</code> 的顺序。</p>
+<p>模式 5 没有 <code>UnsafeConstruct()</code>，但直接使用悬空指针并导致 use-after-free。</p>
+<p>模式 6 和模式 7 对应于我们的Fig 2d 的 PoC，它与未初始化的内存有关。我们使用 <code>Uninitialized()</code> 来表示没有初始化的具有 drop-trait 的实例的构造函数。使用未初始化的内存或直接删除它都容易受到无效内存访问 (IMA) 的影响。</p>
+<h1 id="4-approach"><a class="markdownIt-Anchor" href="#4-approach"></a> 4 Approach</h1>
+<h2 id="41-overall-framework"><a class="markdownIt-Anchor" href="#41-overall-framework"></a> 4.1 Overall Framework</h2>
+<p>我们使用路径敏感的数据流分析方法来解决这个问题，并将其集成到名为 SafeDrop 的Rust 编译器中。下图Fig 3为总览：</p>
+<p><img src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM2.png" alt="SafeDrop_2022_TOSEM" / srcset="/images/LoadingImage.gif" data-src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM2.png" class="lozad post-image"></p>
+<p>方法的关键步骤：</p>
+<ul>
+<li>
+<p>Path Extraction</p>
+<p>SafeDrop 采用 meet-over-paths 方法来实现路径敏感。由于函数的路径可能是无限的，我们采用一种基于 Tarjan 算法的改进算法来合并冗余路径并生成“生成树”。遍历这棵树，最后枚举出所有有价值的路径。</p>
+</li>
+</ul>
+<br>
+<ul>
+<li>
+<p>Alias Analysis</p>
+<p>SafeDrop 对字段敏感（field-sensitivity）。此步骤分析变量之间的别名关系以及每个数据流的复合类型的字段。 SafeDrop 也是过程间的，上下文无关的。它缓存并重用获得到的 “被调用者(callees)在返回值和参数之间的别名关系”。</p>
+</li>
+</ul>
+<br>
+<ul>
+<li>
+<p>Invalid Drop Detection</p>
+<p>基于上面建立的别名集合，这一步在所有数据流上和记录的可疑代码片段上，搜索所有漏洞pattern。</p>
+</li>
+</ul>
+<br>
+<p>下面来详细说一下这几个步骤。</p>
+<h2 id="42-path-extraction"><a class="markdownIt-Anchor" href="#42-path-extraction"></a> 4.2 Path Extraction</h2>
+<p>meet-over-paths method 会遍历函数的cfg，枚举所有有价值的路径。在SafeDrop中，有价值路径应该满足两个标准：</p>
+<p>1）有价值的路径应该是多个代码块的唯一的集合，其中必须包含开始节点（函数入口）和推出节点。</p>
+<p>2）不能是任何其他有价值路径的子集。</p>
+<p>如果在第二个标准有冲突的路径，我们只选择具有更多独特代码块的路径。这样，我们就不必重复遍历循环，而只需要考虑循环块的最大集合。有效性可以根据SSA形式的代码的别名分析规则自我解释。</p>
+<p>我们使用修改的Tarjan算法来移除冗余路径。这个算法的细节如下：</p>
+<p><img src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM3.png" alt="SafeDrop_2022_TOSEM" / srcset="/images/LoadingImage.gif" data-src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM3.png" class="lozad post-image"></p>
+<p>1-6 首先使用改进的 Trajan 算法生成图的生成树</p>
+<p>7 遍历生成树访问所有有价值的路径</p>
+<p>传统的 Tarjan 算法用于分解图的强连通分量（SCC）并简洁地去除循环（line 2）。因此，SafeDrop 可以将强连通分量收缩为点，并生成该图的生成树（line 3）。理想情况下，生成树枚举所有有价值的路径，而不需要重复遍历循环。但是，由于某些特定的 Rust 语句，这种粗粒度的方法可能会导致不正确的分析结果。例如，Rust 对枚举类型引入了一种批判性设计，这使得传统的 Tarjan 算法不太准确，因此我们应该进行一些修改。Fig 4 展示了这样一个例外情况以及我们相应的解决方案:</p>
+<p><img src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM4.png" alt="SafeDrop_2022_TOSEM" / srcset="/images/LoadingImage.gif" data-src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM4.png" class="lozad post-image"></p>
+<p>解释一下，Fig 4 使用了一种特定类型的终结符 <code>SwitchInt()</code> ，这就是导致不准确的原因。 <code>SwitchInt()</code> 的参数是一个枚举类型，枚举的变化（A or B）决定控制流的走向，例如Fig 4a 中的node 3 在收缩SCCs到一个点后，由 <code>SwitchInt()</code> 链接的分支互相排斥的，因为 A 和 B 是互斥体。</p>
+<p>因此，SafeDrop 明确地将连续的 𝑘 个 <code>SwitchInt()</code> 指向相同的枚举参数，其中包含 𝑛 个可能的变体（line 5），为所有终止符枚举每个变体一次以解决互斥冲突（line 4-6 ）。这种做法可以修剪不可达路径，并且为不同变体（Fig 4b 中node 1 的上部分支）构建独立路径，而不影响其他终结符（Fig 4b 中node 1 的下部分支）。该方法最终将本期的时间复杂度从<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>𝑂</mi><mo stretchy="false">(</mo><msup><mi>𝑛</mi><mi>𝑘</mi></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">𝑂(𝑛^𝑘)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.099108em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord"><span class="mord mathdefault">n</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span>降低到<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>𝑂</mi><mo stretchy="false">(</mo><mi>𝑛</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">𝑂(𝑛)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord mathdefault">n</span><span class="mclose">)</span></span></span></span> 。</p>
+<p>接下来遍历所有生成树，该过程将抽取出所有有价值的路径。</p>
+<p>由于 SafeDrop 实现了meet-over-paths方案，因此它为每条路径分配了独立的遍历状态，在遇到多分支节点时备份状态，从递归返回时将恢复状态（line 18）。这个操作保证了进入不同分支前遍历状态的一致性。</p>
+<p>尽管我们利用修改后的 Tarjan 算法来删除冗余路径，但路径爆炸并非完全不可避免。未解决的路径爆炸主要是由嵌套的条件语句而不是循环产生的，因此我们为其设置了一个较大的阈值。如果计数器超过上限，SafeDrop 将执行传统的半格方案，这是精度和速度之间的权衡。</p>
+<h2 id="43-alias-analysis"><a class="markdownIt-Anchor" href="#43-alias-analysis"></a> 4.3 Alias Analysis</h2>
+<p>SafeDrop 对每个路径执行别名分析并为每个程序点建立别名集（算法1 Line 11）。在本小节中，我们首先讨论别名分析的基本规则，然后介绍我们如何执行过程间别名分析。</p>
+<h3 id="basic-rules-for-alias-analysis"><a class="markdownIt-Anchor" href="#basic-rules-for-alias-analysis"></a> Basic Rules for Alias Analysis.</h3>
+<p>… 暂时省略，待补充</p>
+<br>
+<p>清单3：别名分析中的类型过滤器。当且仅当以递归方式过滤所有字段并且这些类型应同时实现 Copy trait 时，才会过滤带有星号的复合类型。</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token class-name">Value</span> <span class="token punctuation">:</span><span class="token operator">=</span> <span class="token class-name">Type</span><span class="token punctuation">::</span><span class="token class-name">Bool</span>          <span class="token punctuation">:</span> <span class="token class-name">The</span> primitive boolean <span class="token keyword">type</span><span class="token punctuation">.</span>
+    <span class="token operator">|</span> <span class="token punctuation">:</span><span class="token operator">=</span> <span class="token class-name">Type</span><span class="token punctuation">::</span><span class="token class-name">Char</span>          <span class="token punctuation">:</span> <span class="token class-name">The</span> primitive character <span class="token keyword">type</span><span class="token punctuation">.</span>
+    <span class="token operator">|</span> <span class="token punctuation">:</span><span class="token operator">=</span> <span class="token class-name">Type</span><span class="token punctuation">::</span><span class="token class-name">Int</span>           <span class="token punctuation">:</span> <span class="token class-name">The</span> primitive signed<span class="token operator">-</span>integer <span class="token keyword">type</span><span class="token punctuation">.</span>
+    <span class="token operator">|</span> <span class="token punctuation">:</span><span class="token operator">=</span> <span class="token class-name">Type</span><span class="token punctuation">::</span><span class="token class-name">UInt</span>          <span class="token punctuation">:</span> <span class="token class-name">The</span> primitive unsigned<span class="token operator">-</span>integer <span class="token keyword">type</span><span class="token punctuation">.</span>
+    <span class="token operator">|</span> <span class="token punctuation">:</span><span class="token operator">=</span> <span class="token class-name">Type</span><span class="token punctuation">::</span><span class="token class-name">Float</span>         <span class="token punctuation">:</span> <span class="token class-name">The</span> primitive floating<span class="token operator">-</span>point <span class="token keyword">type</span><span class="token punctuation">.</span>
+    <span class="token operator">|</span> <span class="token punctuation">:</span><span class="token operator">=</span> <span class="token class-name">Type</span><span class="token punctuation">::</span><span class="token class-name">Array</span>        <span class="token operator">*</span><span class="token punctuation">:</span> <span class="token class-name">The</span> homogeneous product types<span class="token punctuation">.</span>
+    <span class="token operator">|</span> <span class="token punctuation">:</span><span class="token operator">=</span> <span class="token class-name">Type</span><span class="token punctuation">::</span><span class="token class-name">Structure</span>    <span class="token operator">*</span><span class="token punctuation">:</span> <span class="token class-name">The</span> named product types<span class="token punctuation">.</span>
+    <span class="token operator">|</span> <span class="token punctuation">:</span><span class="token operator">=</span> <span class="token class-name">Type</span><span class="token punctuation">::</span><span class="token class-name">Tuple</span>        <span class="token operator">*</span><span class="token punctuation">:</span> <span class="token class-name">The</span> anonymous product types<span class="token punctuation">.</span>
+    <span class="token operator">|</span> <span class="token punctuation">:</span><span class="token operator">=</span> <span class="token class-name">Type</span><span class="token punctuation">::</span><span class="token class-name">Enumeration</span>  <span class="token operator">*</span><span class="token punctuation">:</span> <span class="token class-name">The</span> tagged <span class="token keyword">union</span> <span class="token type-definition class-name">types</span><span class="token punctuation">.</span>
+    <span class="token operator">|</span> <span class="token punctuation">:</span><span class="token operator">=</span> <span class="token class-name">Type</span><span class="token punctuation">::</span><span class="token class-name">Union</span>        <span class="token operator">*</span><span class="token punctuation">:</span> <span class="token class-name">The</span> untagged <span class="token keyword">union</span> <span class="token type-definition class-name">types</span><span class="token punctuation">.</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>清单4：别名关系的标准以及赋值中对右值的匹配操作。SafeDrop 对move赋值使用零开销的设计，因为这是右值的所有权和别名关系的转移。SafeDrop 在分析之前构造一个指向变量（field）的映射，并在遇到move赋值时将映射从 RValue 传输到 LValue。</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token class-name">LValue</span> <span class="token punctuation">:</span><span class="token operator">=</span> <span class="token class-name">Use</span><span class="token punctuation">::</span><span class="token class-name">Copy</span><span class="token punctuation">(</span><span class="token class-name">RValue</span><span class="token punctuation">)</span>    <span class="token operator">=></span> e<span class="token punctuation">.</span>g<span class="token punctuation">.</span> <span class="token constant">_2</span> <span class="token operator">=</span> <span class="token constant">_1</span> <span class="token class-name">Use</span> <span class="token class-name">Copy</span> <span class="token class-name">Trait</span>
+     <span class="token operator">|</span> <span class="token punctuation">:</span><span class="token operator">=</span> <span class="token class-name">Use</span><span class="token punctuation">::</span><span class="token class-name">Move</span><span class="token punctuation">(</span><span class="token class-name">RValue</span><span class="token punctuation">)</span>  <span class="token operator">*</span> <span class="token operator">=></span> e<span class="token punctuation">.</span>g<span class="token punctuation">.</span> <span class="token constant">_2</span> <span class="token operator">=</span> <span class="token keyword">move</span> <span class="token constant">_1</span> <span class="token class-name">Use</span> <span class="token class-name">Drop</span> <span class="token class-name">Trait</span>
+     <span class="token operator">|</span> <span class="token punctuation">:</span><span class="token operator">=</span> <span class="token class-name">Cast</span><span class="token punctuation">::</span><span class="token class-name">Copy</span><span class="token punctuation">(</span><span class="token class-name">RValue</span><span class="token punctuation">)</span>   <span class="token operator">=></span> e<span class="token punctuation">.</span>g<span class="token punctuation">.</span> <span class="token constant">_2</span> <span class="token operator">=</span> <span class="token constant">_1</span> <span class="token keyword">as</span> <span class="token keyword">i32</span> <span class="token class-name">Cast</span> <span class="token class-name">Types</span>
+     <span class="token operator">|</span> <span class="token punctuation">:</span><span class="token operator">=</span> <span class="token class-name">Cast</span><span class="token punctuation">::</span><span class="token class-name">Move</span><span class="token punctuation">(</span><span class="token class-name">RValue</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token operator">=></span> e<span class="token punctuation">.</span>g<span class="token punctuation">.</span> <span class="token constant">_2</span> <span class="token operator">=</span> <span class="token keyword">move</span> <span class="token constant">_1</span> <span class="token keyword">as</span> <span class="token keyword">i32</span>
+     <span class="token operator">|</span> <span class="token punctuation">:</span><span class="token operator">=</span> <span class="token class-name">Ref</span><span class="token punctuation">(</span><span class="token class-name">RValue</span><span class="token punctuation">)</span>          <span class="token operator">=></span> e<span class="token punctuation">.</span>g<span class="token punctuation">.</span> <span class="token constant">_2</span> <span class="token operator">=</span> <span class="token operator">&amp;</span><span class="token keyword">mut</span> <span class="token constant">_1</span> <span class="token class-name">Create</span> <span class="token class-name">Reference</span>
+     <span class="token operator">|</span> <span class="token punctuation">:</span><span class="token operator">=</span> <span class="token class-name">AddressOf</span><span class="token punctuation">(</span><span class="token class-name">RValue</span><span class="token punctuation">)</span>    <span class="token operator">=></span> e<span class="token punctuation">.</span>g<span class="token punctuation">.</span> <span class="token constant">_2</span> <span class="token operator">=</span> <span class="token operator">*</span><span class="token keyword">mut</span> <span class="token constant">_1</span> <span class="token class-name">Create</span> <span class="token class-name">Raw</span> <span class="token class-name">Pointer</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="inter-procedural-alias-analysis"><a class="markdownIt-Anchor" href="#inter-procedural-alias-analysis"></a> Inter-Procedural Alias Analysis.</h3>
+<p>基本的别名分析是过程内方法。它流敏感地分析每条语句，将每个程序的别名关系存储为不相交的集合。然而，这样的分析是unsound的，因为它忽略了函数调用。如果执行路径上包含函数调用，我们将执行过程间的别名分析，来获取调用参数和返回值之间的别名关系。</p>
+<br>
+<p><strong>Callee Analysis.</strong> 程序的调用链嵌入在每个基本块的终结符中，包含参数、返回值和内部被调用者ID。随着函数调用的到来，SafeDrop 调用一个查询，通过其内部 ID 向编译器询问被调用者的最终优化的 MIR。 然后 SafeDrop 遍历这个 MIR 并为其变量建立别名集。被调用者上的别名分析最终返回一个包含参数和返回值之间的别名关系的结果给它的调用者。</p>
+<br>
+<p><strong>Recursion Refinement.</strong> SafeDrop 采用**不动点迭代(fixed-point iteration)**的方法解决递归调用问题，它维护一个调用栈来确保每个函数ID只在栈上出现一次。函数第一次到达时将它的ID入栈，SafeDrop 将在返回值和参数之间设置默认别名关系（false），并中止调用它自己以防止无限递归。考虑到递归调用通常会退出并且别名关系可能同时发生变化，分析器应该使用更新的别名结果重新执行 SafeDrop 的分析算法到堆栈中的函数，直到最终的别名关系达到不动点。</p>
+<br>
+<p><strong>Cache Refinement.</strong> 由于 SafeDrop 是一种通过meet-over-paths的方法，因此参数和返回值之间的别名结果是所有有价值路径的并集（算法1 line15）。即，一个参数与返回值有别名关系，只要它至少有一个路径。 SafeDrop 只需要对给定函数分析一次。第一次遍历该函数后，分析结果会被缓存到哈希表中（line 9），再次遇到该函数时分析器可以直接得到结果。</p>
+<h2 id="44-rules-for-invalid-drop-detection"><a class="markdownIt-Anchor" href="#44-rules-for-invalid-drop-detection"></a> 4.4 Rules for Invalid Drop Detection</h2>
+<p>一次内存释放的安全性通常取决于别名集。对于每条路径，SafeDrop 对每个内存释放语句都会执行流敏感的检测，以确认它是否会引发内存安全问题（line 12）。如果检测到内存释放错误，SafeDrop 将会记录此问题的类型和相关源代码，然后将结果合并到path末尾（line 15）。</p>
+<br>
+<p>SafeDrop 维护一个污点集来记录释放的缓冲区以及返回的悬空指针。它将dropping变量添加到污点集中，如果在path终止符中找到 <code>Drop()</code> 就将其标记为污点源。对于复合类型的变量，SafeDrop 会增加每个drop-trait 字段到污点集中，而不时整个变量。污点源在别名集中传播并污染其他别名。 然后 SafeDrop 迭代检查程序使用的变量和每个程序点的污点集中的所有元素之间的别名关系。有个例外，我们将 <code>uninitialized()</code> 构造的变量插入到污点集作为变量声明的时间，如果稍后初始化，则删除该变量。</p>
+<br>
+<p>根据Sec3中描述的几种存在漏洞的典型模式。我们总结了四个规则来判断path是否存在由无效内存释放引起的内存安全问题，所有这些规则都将应用于正常执行和异常处理path上，如下所示。</p>
+<ul>
+<li><strong>Use After Free</strong>: The taint set contains the alias of the using variable in a statement or passing this variable to a function.</li>
+<li><strong>Double Free</strong>: The taint set contains the alias of the dropping variable in a Drop() terminator.</li>
+<li><strong>Invalid Memory Access</strong>: The taint set contains an uninitialized variable at the time of using and dropping.</li>
+<li><strong>Dangling Pointer</strong>: The taint set contains the alias of the returned pointer. Although it loses the using context, this pointer is actually buggy and highly unsafe to use.</li>
+</ul>
+<br>
+<p>使用SafeDrop分析后，一条规则标记为 true 标志表示此函数内部存在对应类型的内存安全问题。这些标志被缓存到哈希表中，作为过程间分析（line 9）之后的分析结果的一部分。对于每个路径，当 SafeDrop 完成对选定路径的遍历（line 15）时，这些标志以及参数和返回值之间的别名关系将被合并。</p>
+<h2 id="45-corner-case-handling"><a class="markdownIt-Anchor" href="#45-corner-case-handling"></a> 4.5 Corner Case Handling</h2>
+<p><img src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM5.png" alt="SafeDrop_2022_TOSEM" / srcset="/images/LoadingImage.gif" data-src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM5.png" class="lozad post-image"></p>
+<p>修改后的 Tarjan 算法生成生成树以提取有价值的路径，这个过程消除了循环中的冗余遍历。但是，存在一种引入大量误报的极端情况，我们以Fig 5 为例。在Fig 5 中，_1被初始化并drop在 SCC (2-3-4-5-6-7-8-9)上。 在路径 1-2-3-4-5-6-10 中节点 10 的释放是安全的，在路径 1-(2-3-4-5-6-7-8-9)-10 中被视为无效drop。第二条路径确实是误报，因为 _1 在节点 4 中更新，但我们省略了从节点 2 到节点 6 的两次遍历。</p>
+<p>因此我们做出了细化：SafeDrop会记录变量的定义块，并验证是否“指向同一变量的重复drop的分支” 是在 “SCC中定义块和释放块之间”。细化的正确性是基于别名分析中别名关系合并的单调性。</p>
+<h1 id="5-experiment"><a class="markdownIt-Anchor" href="#5-experiment"></a> 5 Experiment</h1>
+<p>Tabel 1：已被报告过的CVEs上的实验结果。这些CVEs包含四种bug（UAF=use after free, DF=double free, DP=dangling pointer, IMA=Invalid memory access）。这里的结果已通过人工检查和分类。报告的 bug 在表中被分类为 True Positive/False Positive (TP/FP)（使用 “-” 代表 0/0 ），我们还统计了方法数和代码行数来表示 crate 大小.</p>
+<p><img src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM6.png" alt="SafeDrop_2022_TOSEM" / srcset="/images/LoadingImage.gif" data-src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM6.png" class="lozad post-image"></p>
+<br>
+<p>Tabel 2：适应性的实验结果。我们选择了一些使用unsafe代码块的crates来测试本文方法。这8个crate中的问题是未曾被人报告过的。</p>
+<p><img src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM7.png" alt="SafeDrop_2022_TOSEM" / srcset="/images/LoadingImage.gif" data-src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM7.png" class="lozad post-image"></p>
+<br>
+<p>下图是一个样例，这是一个异常处理path上的无效drop，匹配了清单2 中的pattern 2。</p>
+<p><img src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM8.png" alt="SafeDrop_2022_TOSEM" / srcset="/images/LoadingImage.gif" data-src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM8.png" class="lozad post-image"></p>
+<br>
+<p><strong>效率</strong>：</p>
+<p>我们在比较了原始编译器的编译时间和SafeDrop分析时间，可见SafeDrop不会消耗过长的分析时间（通常不会超过原始编译时间的 2 倍）。</p>
+<p><img src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM9.png" alt="SafeDrop_2022_TOSEM" / srcset="/images/LoadingImage.gif" data-src="/images/SafeDrop_2022_TOSEM/SafeDrop_2022_TOSEM9.png" class="lozad post-image"></p>
+<h2 id="validity"><a class="markdownIt-Anchor" href="#validity"></a> validity</h2>
+<p><strong>False Positives.</strong></p>
+<p>过程间别名分析严重依赖于query optimize_mir 来获取被调用者的 MIR 。但是，由于编译器的内部设计，SafeDrop 无法捕获某些 MIR，例如某些特定的 trait 实现。SafeDrop的补救措施是，在运行类型过滤器之后，我们的方法会在未过滤的参数和返回值之间建立别名关系。通过这种操作提升别名辨识的soundness，虽然这可能导致一些false positive，但是就不会丢失别名信息了。由于这些情况并不普遍，并且类型过滤器可以识别大多数明显的错误，因此在 SafeDrop 中的误报仍然是可管理的（可接受的）。特别是，我们删除了从 Clone trait 建立的别名，因为函数 <code>clone()</code> 的返回值是对原始变量的深拷贝。</p>
+<br>
+<p><strong>False Negatives.</strong></p>
+<p>Rust 对内联函数采用了一些tricky的设计，这可能导致一些误报。query可以成功地从编译器获取这些函数的 MIR，但 MIR 内容是空的。因此 SafeDrop 会丢失一些别名关系。此外，SafeDrop 不支持primitive array type, closure, raw pointer offset, 和 function pointer，这可能会导致漏报。</p>
+<br>
+<p>参考文献：</p>
+<p>论文链接: <a target="_blank" rel="noopener" href="https://arxiv.org/abs/2103.15420">https://arxiv.org/abs/2103.15420</a> Publisher: 2021, TOSEM</p>
+<p>【1】Glenn Ammons and James R. Larus. 1998. Improving Data-Flow Analysis with Path Profiles. In Proceedings of the ACM SIGPLAN 1998 Conference on Programming Language Design and Implementation (Montreal, Quebec, Canada) (PLDI ’98). Association for Computing Machinery, New York, NY, USA, 72–84. <a target="_blank" rel="noopener" href="https://doi.org/10.1145/277650.277665">https://doi.org/10.1145/277650.277665</a></p>
+<p>【11】Harold N. Gabow and Robert Endre Tarjan. 1983. A Linear-Time Algorithm for a Special Case of Disjoint Set Union. In Proceedings of the Fifteenth Annual ACM Symposium on Theory of Computing. Association for Computing Machinery.</p>
+
+  </div>
+  <div>
+    
+      <div 
+        class="post-note note-info copyright" 
+        style="margin-top: 42px">
+        <p>
+          <span style="font-weight: bold;">作者：</span><a 
+            target="_blank" 
+            rel="nofollow noopener noreferrer" 
+            href="/about">
+            Ch3nYe
+          </a>
+        </p>
+        <p>
+          <span style="font-weight: bold;">文章链接：</span><a 
+            target="_blank" 
+            rel="nofollow noopener noreferrer" 
+            href="https://ch3nye.top/Note-SafeDrop-Detecting-Memory-Deallocation-Bugs-of-Rust/">
+            https://ch3nye.top/Note-SafeDrop-Detecting-Memory-Deallocation-Bugs-of-Rust/
+          </a>
+        </p>
+        <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+      </div>
+    
+  </div>
+</article>
+<div class="nav">
+  
+  
+    <div class="nav-item-next">
+      <a 
+        href="/Note-SoK-Demystifying-Binary-Lifters-Through-the-Lens-of-Downstream-Applications/" 
+        class="nav-link">
+        <div>
+          <div class="nav-label">下一篇</div>
+          
+            <div class="nav-title">Note 《SoK Demystifying Binary Lifters Through the Lens of Downstream Applications》 </div>
+          
+        </div>
+        <i class="iconfont icon-right nav-next-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+  <div 
+    class="card card-content comment-card" 
+    style="margin-top: 16px;">
+    <div class="comment-card-title">评论</div>
+    
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: '049b30eb10ea05082ef1',
+      clientSecret: 'c33ad95041c69907b3136b895008320f000987db',
+      repo: 'Ch3nYe.github.io',
+      owner: 'Ch3nYe',
+      admin: "Ch3nYe",
+      id: md5(location.href),
+      distractionFreeMode: false,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+  </div>
+
+<div 
+  class="card card-content toc-card" 
+  id="mobiletoc">
+  <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#safedrop-detecting-memory-deallocation-bugs-of-rust-programs-via-static-data-flow-analysis"><span class="toc-text"> SafeDrop: Detecting Memory Deallocation Bugs of Rust Programs via Static Data-Flow Analysis</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0-%E6%91%98%E8%A6%81"><span class="toc-text"> 0 摘要</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#1-intro"><span class="toc-text"> 1 Intro</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-preliminaries"><span class="toc-text"> 2 Preliminaries</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3-problem-statement"><span class="toc-text"> 3 Problem Statement</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#31-motivating-example"><span class="toc-text"> 3.1 Motivating Example</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#invalid-drop-of-normal-execution"><span class="toc-text"> Invalid Drop of Normal Execution.</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#invalid-drop-of-exception-handling"><span class="toc-text"> Invalid Drop of Exception Handling.</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#32-problem-definition"><span class="toc-text"> 3.2 Problem Definition</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#33-typical-patterns"><span class="toc-text"> 3.3 Typical Patterns</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#4-approach"><span class="toc-text"> 4 Approach</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#41-overall-framework"><span class="toc-text"> 4.1 Overall Framework</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#42-path-extraction"><span class="toc-text"> 4.2 Path Extraction</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#43-alias-analysis"><span class="toc-text"> 4.3 Alias Analysis</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#basic-rules-for-alias-analysis"><span class="toc-text"> Basic Rules for Alias Analysis.</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#inter-procedural-alias-analysis"><span class="toc-text"> Inter-Procedural Alias Analysis.</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#44-rules-for-invalid-drop-detection"><span class="toc-text"> 4.4 Rules for Invalid Drop Detection</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#45-corner-case-handling"><span class="toc-text"> 4.5 Corner Case Handling</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#5-experiment"><span class="toc-text"> 5 Experiment</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#validity"><span class="toc-text"> validity</span></a></li></ol></li></ol>
+</div></main>
+            <aside class="left-column">
+              
+              <div class="card card-author">
+                
+  <img 
+    src="/images/logo.png" 
+    class="author-img"
+    width="88"
+    height="88"
+    alt="author avatar">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a 
+    class="author-posts-count" 
+    href="/archives">
+    <span>44</span>
+    <span>文章</span>
+  </a>
+  <a 
+    class="author-categories-count" 
+    href="/categories">
+    <span>7</span>
+    <span>分类</span>
+  </a>
+  <a 
+    class="author-tags-count" 
+    href="/tags">
+    <span>66</span>
+    <span>标签</span>
+  </a>
+</div>
+
+  <div class="author-card-society">
+    
+      <div class="author-card-society-icon">
+        <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+          <i class="iconfont icon-github society-icon"></i>
+        </a>
+      </div>
+    
+      <div class="author-card-society-icon">
+        <a href="mailto:sud0su@163.com">
+          <i class="iconfont icon-mail society-icon"></i>
+        </a>
+      </div>
+    
+  </div>
+
+              </div>
+               <div class="sticky-tablet">
+  
+  
+    <article class="display-when-two-columns spacer">
+      <div class="card card-content toc-card">
+        <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#safedrop-detecting-memory-deallocation-bugs-of-rust-programs-via-static-data-flow-analysis"><span class="toc-text"> SafeDrop: Detecting Memory Deallocation Bugs of Rust Programs via Static Data-Flow Analysis</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0-%E6%91%98%E8%A6%81"><span class="toc-text"> 0 摘要</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#1-intro"><span class="toc-text"> 1 Intro</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-preliminaries"><span class="toc-text"> 2 Preliminaries</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3-problem-statement"><span class="toc-text"> 3 Problem Statement</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#31-motivating-example"><span class="toc-text"> 3.1 Motivating Example</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#invalid-drop-of-normal-execution"><span class="toc-text"> Invalid Drop of Normal Execution.</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#invalid-drop-of-exception-handling"><span class="toc-text"> Invalid Drop of Exception Handling.</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#32-problem-definition"><span class="toc-text"> 3.2 Problem Definition</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#33-typical-patterns"><span class="toc-text"> 3.3 Typical Patterns</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#4-approach"><span class="toc-text"> 4 Approach</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#41-overall-framework"><span class="toc-text"> 4.1 Overall Framework</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#42-path-extraction"><span class="toc-text"> 4.2 Path Extraction</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#43-alias-analysis"><span class="toc-text"> 4.3 Alias Analysis</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#basic-rules-for-alias-analysis"><span class="toc-text"> Basic Rules for Alias Analysis.</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#inter-procedural-alias-analysis"><span class="toc-text"> Inter-Procedural Alias Analysis.</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#44-rules-for-invalid-drop-detection"><span class="toc-text"> 4.4 Rules for Invalid Drop Detection</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#45-corner-case-handling"><span class="toc-text"> 4.5 Corner Case Handling</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#5-experiment"><span class="toc-text"> 5 Experiment</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#validity"><span class="toc-text"> validity</span></a></li></ol></li></ol>
+      </div>
+    </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header">
+    <i 
+      class="iconfont icon-fenlei" 
+      style="padding-right: 2px;">
+    </i>分类
+  </div>
+  <div class="categories-list">
+    
+      <a href="/categories/%E7%94%9F%E6%B4%BB/">
+        <div class="categories-list-item">
+          生活
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E5%A4%87%E5%BF%98/">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E6%9D%8E%E5%AE%8F%E6%AF%85%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">15</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">13</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E5%AE%9E%E6%88%98/">
+        <div class="categories-list-item">
+          实战
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%AC%94%E8%AE%B0/">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%BF%BB%E8%AF%91/">
+        <div class="categories-list-item">
+          翻译
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header">
+    <i 
+      class="iconfont icon-biaoqian" 
+      style="padding-right: 2px;">
+    </i>热门标签
+  </div>
+  <div class="tags-list">
+    
+      <a 
+        href="/tags/note/" 
+        title="note">
+        <div class="tags-list-item">note</div>
+      </a>
+    
+      <a 
+        href="/tags/ML/" 
+        title="ML">
+        <div class="tags-list-item">ML</div>
+      </a>
+    
+      <a 
+        href="/tags/%E7%AC%94%E8%AE%B0/" 
+        title="笔记">
+        <div class="tags-list-item">笔记</div>
+      </a>
+    
+      <a 
+        href="/tags/Next-Step-of-ML/" 
+        title="Next-Step-of-ML">
+        <div class="tags-list-item">Next-Step-of-ML</div>
+      </a>
+    
+      <a 
+        href="/tags/%E8%AE%BA%E6%96%87/" 
+        title="论文">
+        <div class="tags-list-item">论文</div>
+      </a>
+    
+      <a 
+        href="/tags/Android/" 
+        title="Android">
+        <div class="tags-list-item">Android</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%80%BB%E7%BB%93/" 
+        title="总结">
+        <div class="tags-list-item">总结</div>
+      </a>
+    
+      <a 
+        href="/tags/Rust/" 
+        title="Rust">
+        <div class="tags-list-item">Rust</div>
+      </a>
+    
+      <a 
+        href="/tags/Binary/" 
+        title="Binary">
+        <div class="tags-list-item">Binary</div>
+      </a>
+    
+      <a 
+        href="/tags/Deep-Learning/" 
+        title="Deep-Learning">
+        <div class="tags-list-item">Deep-Learning</div>
+      </a>
+    
+      <a 
+        href="/tags/%E7%BF%BB%E8%AF%91/" 
+        title="翻译">
+        <div class="tags-list-item">翻译</div>
+      </a>
+    
+      <a 
+        href="/tags/%E5%AD%A6%E4%B9%A0/" 
+        title="学习">
+        <div class="tags-list-item">学习</div>
+      </a>
+    
+      <a 
+        href="/tags/%E5%AE%9E%E6%88%98/" 
+        title="实战">
+        <div class="tags-list-item">实战</div>
+      </a>
+    
+      <a 
+        href="/tags/crack/" 
+        title="crack">
+        <div class="tags-list-item">crack</div>
+      </a>
+    
+      <a 
+        href="/tags/%E4%BA%8C%E8%BF%9B%E5%88%B6/" 
+        title="二进制">
+        <div class="tags-list-item">二进制</div>
+      </a>
+    
+      <a 
+        href="/tags/HTTPS/" 
+        title="HTTPS">
+        <div class="tags-list-item">HTTPS</div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+            </aside>
+            <aside class="right-column">
+              <div class="sticky-widescreen">
+  
+  
+    <article class="card card-content toc-card">
+      <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#safedrop-detecting-memory-deallocation-bugs-of-rust-programs-via-static-data-flow-analysis"><span class="toc-text"> SafeDrop: Detecting Memory Deallocation Bugs of Rust Programs via Static Data-Flow Analysis</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0-%E6%91%98%E8%A6%81"><span class="toc-text"> 0 摘要</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#1-intro"><span class="toc-text"> 1 Intro</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-preliminaries"><span class="toc-text"> 2 Preliminaries</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3-problem-statement"><span class="toc-text"> 3 Problem Statement</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#31-motivating-example"><span class="toc-text"> 3.1 Motivating Example</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#invalid-drop-of-normal-execution"><span class="toc-text"> Invalid Drop of Normal Execution.</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#invalid-drop-of-exception-handling"><span class="toc-text"> Invalid Drop of Exception Handling.</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#32-problem-definition"><span class="toc-text"> 3.2 Problem Definition</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#33-typical-patterns"><span class="toc-text"> 3.3 Typical Patterns</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#4-approach"><span class="toc-text"> 4 Approach</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#41-overall-framework"><span class="toc-text"> 4.1 Overall Framework</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#42-path-extraction"><span class="toc-text"> 4.2 Path Extraction</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#43-alias-analysis"><span class="toc-text"> 4.3 Alias Analysis</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#basic-rules-for-alias-analysis"><span class="toc-text"> Basic Rules for Alias Analysis.</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#inter-procedural-alias-analysis"><span class="toc-text"> Inter-Procedural Alias Analysis.</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#44-rules-for-invalid-drop-detection"><span class="toc-text"> 4.4 Rules for Invalid Drop Detection</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#45-corner-case-handling"><span class="toc-text"> 4.5 Corner Case Handling</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#5-experiment"><span class="toc-text"> 5 Experiment</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#validity"><span class="toc-text"> validity</span></a></li></ol></li></ol>
+    </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header">
+    <i 
+      class="iconfont icon-wenzhang_huaban" 
+      style="padding-right: 2px;">
+    </i>最近文章
+  </div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-09-13</div>
+        <a href="/Note-SafeDrop-Detecting-Memory-Deallocation-Bugs-of-Rust/"><div class="recent-posts-item-content">Note 《SafeDrop Detecting Memory Deallocation Bugs of Rust Programs via Static Data-Flow Analysis》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-06-01</div>
+        <a href="/Note-SoK-Demystifying-Binary-Lifters-Through-the-Lens-of-Downstream-Applications/"><div class="recent-posts-item-content">Note 《SoK Demystifying Binary Lifters Through the Lens of Downstream Applications》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-05-04</div>
+        <a href="/Rust%E7%B1%BB%E5%9E%8B%E7%B3%BB%E7%BB%9F%E5%9B%BE%E7%81%B5%E5%AE%8C%E5%A4%87%E7%9A%84%E8%AF%81%E6%98%8E/"><div class="recent-posts-item-content">Rust类型系统图灵完备的证明</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-04-13</div>
+        <a href="/%E4%BB%8Epython%E8%B0%83%E7%94%A8rust-%E4%BD%BF%E7%94%A8rust%E5%8A%A0%E9%80%9F%E4%BD%A0%E7%9A%84python%E4%BB%A3%E7%A0%81/"><div class="recent-posts-item-content">从python调用rust-使用rust加速你的python代码</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+     
+    <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>
+          Copyright ©
+          
+            2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a 
+          href="/" 
+          class="footer-link">
+          ch3nye's blog
+        </a>
+      </div>
+    </div>
+
+    
+      <div class="footer-dsc">
+        
+          Powered by
+          <a 
+            href="https://hexo.io/" 
+            class="footer-link" 
+            target="_blank" 
+            rel="nofollow noopener noreferrer">
+            &nbsp;Hexo
+          </a>
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          Theme -
+          <a 
+            href="https://github.com/theme-kaze" 
+            class="footer-link" 
+            target="_blank"
+            rel="nofollow noopener noreferrer">
+            &nbsp;Kaze
+          </a>
+        
+      </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+          本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+<!-- Default Statcounter code for My Blog https://ch3nye.top -->
+<script type="text/javascript">
+var sc_project=12696483; 
+var sc_invisible=1; 
+var sc_security="0f70f90d"; 
+</script>
+<script type="text/javascript"
+src="https://www.statcounter.com/counter/counter.js" async></script>
+<noscript><div class="statcounter"><a title="Web Analytics"
+href="https://statcounter.com/" target="_blank"><img class="statcounter"
+src="https://c.statcounter.com/12696483/0/0f70f90d/1/" alt="Web Analytics"
+referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
+<!-- End of Statcounter Code -->
+</footer> 
+    
+  <a 
+    role="button" 
+    id="scrollbutton" 
+    class="basebutton" 
+    aria-label="回到顶部">
+    <i class="iconfont icon-arrowleft button-icon"></i>
+  </a>
+
+<a 
+  role="button" 
+  id="menubutton"
+  aria-label="menu button"
+  class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="popbutton" 
+  class="basebutton" 
+  aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="darkbutton" 
+  class="basebutton darkwidget" 
+  aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="searchbutton" 
+  class="basebutton searchwidget" 
+  aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a> 
+     
+     
+      
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+ 
+     
+     
+      <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img')
+    var i
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a')
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'))
+      wrapper.setAttribute('aria-label', 'illustration')
+      wrapper.style.cssText =
+        'width: 100%; display: flex; justify-content: center;'
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt
+      wrapper.dataset.nolink = true
+      img[i].before(wrapper)
+      wrapper.append(img[i])
+      var divWrap = document.createElement('div')
+      divWrap.classList.add('gallery')
+      wrapper.before(divWrap)
+      divWrap.append(wrapper)
+    }
+    baguetteBox.run('.gallery')
+  }
+</script>
+<script>
+  loadScript(
+    "/js/lib/lightbox/baguetteBox.min.js",
+    addImgLayout
+  )
+</script>
+ 
+     
+     
+    <script src="/js/main.js"></script> 
+    
+      <script> 
+        loadScript('/js/lib/busuanzi.min.js') 
+      </script>
+     
+    
+      <script>
+        var addLazyload = function () {
+          var observer = lozad('.lozad', {
+            load: function (el) {
+              el.srcset = el.getAttribute('data-src')
+            },
+            loaded: function (el) {
+              el.classList.add('loaded')
+            },
+          })
+          observer.observe()
+        }
+      </script>
+      <script>
+        loadScript('/js/lib/lozad.min.js', addLazyload)
+      </script>
+     
+    
+      <script>
+        var googleAnalytics = function () {
+          window.dataLayer = window.dataLayer || []
+          function gtag() {
+            dataLayer.push(arguments)
+          }
+          gtag('js', new Date())
+          gtag('config', 'G-WHGL11014T')
+        }
+    </script>
+      <script>
+        loadScript(
+          'https://www.googletagmanager.com/gtag/js?id=' +
+            'G-WHGL11014T',
+          googleAnalytics
+        )
+      </script>
+    
+    
+      <script>
+        setTimeout(() => {localSearch("search.json")}, 0)
+      </script>
+    
+  </body>
+</html>
