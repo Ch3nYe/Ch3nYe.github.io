@@ -458,6 +458,9 @@
     id="section" 
     class="post-content">
     <h1 id="symlm-predicting-function-names-in-stripped-binaries-via-context-sensitive-execution-aware-code-embeddings"><a class="markdownIt-Anchor" href="#symlm-predicting-function-names-in-stripped-binaries-via-context-sensitive-execution-aware-code-embeddings"></a> SymLM: Predicting Function Names in Stripped Binaries via Context-Sensitive Execution-Aware Code Embeddings</h1>
+<blockquote>
+<p>Publisher: CCS 2022</p>
+</blockquote>
 <h1 id="0-abstract"><a class="markdownIt-Anchor" href="#0-abstract"></a> 0 Abstract</h1>
 <p>现有方法尚未成功建模以穷举所有函数的执行行为，并且对于未见过的二进制的泛化能力很差。为了进一步推动函数名恢复任务的研究，我们提出了一个用于函数符号名预测和二进制语言建模的框架（SymLM Symbol name prediction and binary Language Modeling framework），该框架使用新型神经网络架构——一个融合encoder，该网络可以通过联合建模“the execution behavior of the calling context and instructions”（学习函数指令的语义和它在过程间CFG上的callers和callees的语义），来学习二进制函数的综合语义。我们从27个开源工程中收集了1,431,169个二进制函数来评估我们的框架，这些工程通过交叉编译得到（O0-O3，x86、x64、ARM、MIPS，4 obfuscations）。SymLM 在 precision、recall 和 F1 方面优于之前最先进的函数名预测工具 15.4%、59.6% 和 35.0%，具有更好的泛化性和抗混淆性。消融实验证明我们的设计（例如calling context 组件和execution behavior 组件）大幅提升了函数名预测模型的表现。最终我们的样例研究进一步展示了 SymLM 在分析固件映像中的实际表现。</p>
 <blockquote>
