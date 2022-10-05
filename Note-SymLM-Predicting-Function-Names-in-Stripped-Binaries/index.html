@@ -531,8 +531,7 @@
 <h3 id="training-and-inference"><a class="markdownIt-Anchor" href="#training-and-inference"></a> Training and Inference</h3>
 <p>为了学习从函数语义向量到函数名的映射，我们使用带有调试信息的二进制文件提取数据集训练 SymLM，其中函数名标签从符号表中解析得到。对于训练，SymLM 首先将完整的函数语义编码为嵌入，然后预处理函数名标签，通过多层感知 (MLP) 解码器将函数语义嵌入解码为要预测的名称，最后通过最小化预测损失进行训练。在推理阶段，SymLM 将剥离的二进制文件作为输入，并根据函数的语义嵌入预测函数名tokens，其中生成函数名时 SymLM 也利用到了 CodeWordNet 生成多个同义词。</p>
 <h1 id="4-detailed-design"><a class="markdownIt-Anchor" href="#4-detailed-design"></a> 4 DETAILED DESIGN</h1>
-<p>omit<br />
-。。。</p>
+<p>。。。</p>
 <h1 id="5-evaluation"><a class="markdownIt-Anchor" href="#5-evaluation"></a> 5 EVALUATION</h1>
 <p>使用Ghidra 作为反编译工具，基于TREX 实现了microtrace-based pretrained model，增加了1864 行新代码。我们使用NLTK 和SentencePiece 构建了我们的函数名处理组件，使用Gensim 构建了CodeWordNet 。开发了一个Ghidra插件和脚本来反编译二进制和解析调试信息。其他部分使用Pytorch 和fairseq 实现。</p>
 <p>评估指标（同NFRE和NERO）：</p>
@@ -746,16 +745,16 @@
   </div>
   <div class="categories-list">
     
-      <a href="/categories/%E7%94%9F%E6%B4%BB/">
+      <a href="/categories/%E5%A4%87%E5%BF%98/">
         <div class="categories-list-item">
-          生活
+          备忘
           <span class="categories-list-item-badge">2</span>
         </div>
       </a>
     
-      <a href="/categories/%E5%A4%87%E5%BF%98/">
+      <a href="/categories/%E7%94%9F%E6%B4%BB/">
         <div class="categories-list-item">
-          备忘
+          生活
           <span class="categories-list-item-badge">2</span>
         </div>
       </a>
