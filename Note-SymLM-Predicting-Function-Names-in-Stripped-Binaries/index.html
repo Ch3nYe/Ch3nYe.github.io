@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+  <meta charset="UTF-8">
+  <meta 
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta 
+    http-equiv="X-UA-Compatible" 
+    content="ie=edge">
+  <meta 
+    name="theme-color" 
+    content="#fff" 
+    id="theme-color">
+  <meta 
+    name="description" 
+    content="网络安全 Android ML CTF">
+  <link 
+    rel="icon" 
+    href="/images/logo.png">
+  <title>Note 《SymLM Predicting Function Names in Stripped Binaries via Context-Sensitive Execution-Aware Code Embeddings》</title>
+  
+    
+      <meta 
+        property="og:title" 
+        content="Note 《SymLM Predicting Function Names in Stripped Binaries via Context-Sensitive Execution-Aware Code Embeddings》">
+    
+    
+      <meta 
+        property="og:url" 
+        content="https://ch3nye.top/Note-SymLM-Predicting-Function-Names-in-Stripped-Binaries/index.html">
+    
+    
+      <meta 
+        property="og:img" 
+        content="/images/logo.png">
+    
+    
+      <meta 
+        property="og:img" 
+        content="网络安全 Android ML CTF">
+    
+    
+      <meta 
+        property="og:type" 
+        content="article">
+      <meta 
+        property="og:article:published_time" 
+        content="2022-10-05">
+      <meta 
+        property="og:article:modified_time" 
+        content="2022-10-06">
+      <meta 
+        property="og:article:author" 
+        content="Ch3nYe">
+      
+        
+          <meta 
+            property="og:article:tag" 
+            content="论文">
+        
+          <meta 
+            property="og:article:tag" 
+            content="笔记">
+        
+          <meta 
+            property="og:article:tag" 
+            content="Binary">
+        
+          <meta 
+            property="og:article:tag" 
+            content="Transformer">
+        
+          <meta 
+            property="og:article:tag" 
+            content="MLP">
+        
+          <meta 
+            property="og:article:tag" 
+            content="Word2Vec">
+        
+          <meta 
+            property="og:article:tag" 
+            content="Reassignment">
+        
+          <meta 
+            property="og:article:tag" 
+            content="ICFG">
+        
+      
+    
+  
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+    function loadCSS(href, data, attr) {
+      var sheet = document.createElement('link');
+      sheet.ref = 'stylesheet';
+      sheet.href = href;
+      sheet.dataset[data] = attr;
+      document.head.appendChild(sheet);
+    }
+    function changeCSS(cssFile, data, attr) {
+      var oldlink = document.querySelector(data);
+      var newlink = document.createElement("link");
+      newlink.setAttribute("rel", "stylesheet");
+      newlink.setAttribute("href", cssFile);
+      newlink.dataset.prism = attr;
+      document.head.replaceChild(newlink, oldlink);
+    }
+  </script>
+  
+    
+      
+      
+      
+      
+        
+        
+        
+        <script>
+          function prismThemeChange() {
+            if(document.getElementById('theme-color').dataset.mode === 'dark') {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism-tomorrow.min.css', '[data-prism]', 'prism-tomorrow');
+              } else {
+                loadCSS('/js/lib/prism/prism-tomorrow.min.css', 'prism', 'prism-tomorrow');
+              }
+            } else {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism.min.css', '[data-prism]', 'prism');
+              } else {
+                loadCSS('/js/lib/prism/prism.min.css', 'prism', 'prism');
+              }
+            }
+          }
+          prismThemeChange()
+        </script>
+      
+      
+        
+        <link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+      
+    
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+  </script>
+  
+    <script>
+      var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+        document.getElementById('theme-color').dataset.mode = getCssMediaQuery();
+        prismThemeChange();
+      }
+    };
+    setDarkmode();
+    </script>
+  
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+    <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  <link rel="stylesheet" href="/css/main.css">
+  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+  
+    <link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+  <body>
+    <div class="wrapper">
+       
+      <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+        <img 
+          class="navbar-logo-img"
+          width="32"
+          height="32"
+          src="/images/logo.png" 
+          alt="blog logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+      <a 
+        href="/" 
+        class="navbar-menu-item">
+        
+          首页
+        
+      </a>
+    
+      <a 
+        href="/archives" 
+        class="navbar-menu-item">
+        
+          归档
+        
+      </a>
+    
+      <a 
+        href="/tags" 
+        class="navbar-menu-item">
+        
+          标签
+        
+      </a>
+    
+      <a 
+        href="/categories" 
+        class="navbar-menu-item">
+        
+          分类
+        
+      </a>
+    
+      <a 
+        href="/about" 
+        class="navbar-menu-item">
+        
+          关于
+        
+      </a>
+    
+      <a 
+        href="/links" 
+        class="navbar-menu-item">
+        
+          友链
+        
+      </a>
+    
+      <a 
+        href="/shuoshuo" 
+        class="navbar-menu-item">
+        
+          说说
+        
+      </a>
+    
+    <a 
+      class="navbar-menu-item darknavbar" 
+      id="dark">
+      <i class="iconfont icon-weather"></i>
+    </a>
+    <a 
+      class="navbar-menu-item searchnavbar" 
+      id="search">
+      <i 
+        class="iconfont icon-search" 
+        style="font-size: 1.2rem; font-weight: 400;">
+      </i>
+    </a>
+  </div>
+</nav> 
+      
+      <div 
+        id="local-search" 
+        style="display: none">
+        <input
+          class="navbar-menu-item"
+          id="search-input"
+          placeholder="请输入搜索内容..." />
+        <div id="search-content"></div>
+      </div>
+      
+      <div class="section-wrap">
+        <div class="container">
+          <div class="columns">
+            <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      Note 《SymLM Predicting Function Names in Stripped Binaries via Context-Sensitive Execution-Aware Code Embeddings》
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2022-10-04T16:00:00.000Z">
+      <i 
+        class="iconfont icon-calendar" 
+        style="margin-right: 2px;">
+      </i>
+      <span>2022-10-05</span>
+    </time>
+    
+      <span class="dot"></span>
+      
+        <a 
+          href="/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" 
+          class="post-meta-link">
+          论文阅读
+        </a>
+      
+    
+    
+      <span class="dot"></span>
+      <span>3.6k 字</span>
+    
+  </div>
+  
+    <div 
+      class="post-meta post-show-meta" 
+      style="margin-top: -10px;">
+      <div style="display: flex; align-items: center;">
+        <i 
+          class="iconfont icon-biaoqian" 
+          style="margin-right: 2px; font-size: 1.15rem;">
+        </i>
+        
+          
+          <a 
+            href="/tags/%E8%AE%BA%E6%96%87/" 
+            class="post-meta-link">
+            论文
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/%E7%AC%94%E8%AE%B0/" 
+            class="post-meta-link">
+            笔记
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/Binary/" 
+            class="post-meta-link">
+            Binary
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/Transformer/" 
+            class="post-meta-link">
+            Transformer
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/MLP/" 
+            class="post-meta-link">
+            MLP
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/Word2Vec/" 
+            class="post-meta-link">
+            Word2Vec
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/Reassignment/" 
+            class="post-meta-link">
+            Reassignment
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/ICFG/" 
+            class="post-meta-link">
+            ICFG
+          </a>
+        
+      </div>
+    </div>
+  
+  </header>
+  <div 
+    id="section" 
+    class="post-content">
+    <h1 id="symlm-predicting-function-names-in-stripped-binaries-via-context-sensitive-execution-aware-code-embeddings"><a class="markdownIt-Anchor" href="#symlm-predicting-function-names-in-stripped-binaries-via-context-sensitive-execution-aware-code-embeddings"></a> SymLM: Predicting Function Names in Stripped Binaries via Context-Sensitive Execution-Aware Code Embeddings</h1>
+<h1 id="0-abstract"><a class="markdownIt-Anchor" href="#0-abstract"></a> 0 Abstract</h1>
+<p>现有方法尚未成功建模以穷举所有函数的执行行为，并且对于未见过的二进制的泛化能力很差。为了进一步推动函数名恢复任务的研究，我们提出了一个用于函数符号名预测和二进制语言建模的框架（SymLM Symbol name prediction and binary Language Modeling framework），该框架使用新型神经网络架构——一个融合encoder，该网络可以通过联合建模“the execution behavior of the calling context and instructions”（学习函数指令的语义和它在过程间CFG上的callers和callees的语义），来学习二进制函数的综合语义。我们从27个开源工程中收集了1,431,169个二进制函数来评估我们的框架，这些工程通过交叉编译得到（O0-O3，x86、x64、ARM、MIPS，4 obfuscations）。SymLM 在 precision、recall 和 F1 方面优于之前最先进的函数名预测工具 15.4%、59.6% 和 35.0%，具有更好的泛化性和抗混淆性。消融实验证明我们的设计（例如calling context 组件和execution behavior 组件）大幅提升了函数名预测模型的表现。最终我们的样例研究进一步展示了 SymLM 在分析固件映像中的实际表现。</p>
+<blockquote>
+<p>calling context（调用上下文）：指一个函数调用的函数，和调用它的函数。</p>
+</blockquote>
+<h1 id="1-introduction"><a class="markdownIt-Anchor" href="#1-introduction"></a> 1 INTRODUCTION</h1>
+<p><strong>Our Approch.</strong></p>
+<p>为了解决函数名中自然语言的一些问题，比如同义词问题，OOV问题，我们构建了CodeWordNet来捕捉特定领域的函数名token的表征。</p>
+<p>我们广泛的实验表明 SymLM 是准确的：在各种架构和优化选项中实现了 0.634 precision、0.677 recall 和 0.655 F1。在 F1 上SymLM超过SOTA的工具35%。通过学习上下文敏感的函数语义，我们证明了SymLM比现有工作具有更好的泛化性和健壮性。在针对未见过的二进制函数的评估中，其F1比SOTA工具高出295.5%。另外，消融研究进一步证明了 SymLM 设计：融合calling context 的有效性。例如，语义融合encoder可以将 SymLM 的 F1 分数提高多达 36.2%。我们还将 SymLM 应用于现实世界的物联网固件，它成功地预测了固件映像中的函数名称</p>
+<p><strong>Contributions.</strong></p>
+<ul>
+<li>我们设计了一个新型神经网络架构，SymLM，用于学习保存在调用上下文和函数指令的执行行为中的综合函数语义。</li>
+<li>我们构建了CodeWordNet模块，以使用指定领域的分布式表征来测量函数名的语义距离，并通过预处理解决 OOV 问题。</li>
+<li>我们通过超越现有工作推进了函数名称预测的最新技术，并展示了 SymLM 的通用性、抗混淆性、组件有效性和实际用例。我们的代码和数据集发布在 <a target="_blank" rel="noopener" href="https://github.com/OSUSecLab/SymLM">https://github.com/OSSecLab/SymLM</a></li>
+</ul>
+<h1 id="2-background-and-motivation"><a class="markdownIt-Anchor" href="#2-background-and-motivation"></a> 2 BACKGROUND AND MOTIVATION</h1>
+<h2 id="21-problem-definition"><a class="markdownIt-Anchor" href="#21-problem-definition"></a> 2.1 Problem Definition</h2>
+<p>。。。</p>
+<h2 id="22-challenges"><a class="markdownIt-Anchor" href="#22-challenges"></a> 2.2 Challenges</h2>
+<p>C1: Limited Semantic Information in Stripped Binaries.</p>
+<br>
+<p>C2: Variety of Compilation Settings and Obfuscations.</p>
+<br>
+<p>C3: Ambiguous Function Names and Various Naming Methods</p>
+<p>函数名中的单词常出现原始词干的变形，比如时态，缩写，甚至拼写错误，而且同样功能的函数常被赋予不同的名字。开发人员使用的分隔符是多种多样的，比如大写字母、下划线甚至数字。</p>
+<p>因此，函数名的模糊性和命名方法的多样性使得函数名的预测变得困难。</p>
+<br>
+<p>C4: The Out-Of-Vocabulary (OOV) Issue.</p>
+<p>在整个函数名级别，我们对二进制数据集的调查显示，21.7% 的函数名只出现过一次。尽管我们可以通过将名称拆分为各个单词来缓解这个问题，但 OOV 比率仍然相对较高，例如 ARM 二进制文件为 5.8%（test 中的label 出现train 中没有的单词）。</p>
+<br>
+<p>C5: Calling Context Modeling.</p>
+<p>现有的作品都没有考虑调用上下文的执行行为，包括已经初步尝试对函数的执行行为建模的最新工作（Sec 2.4 TREX）。另外，虽然 NERO 构建了函数调用图并将函数调用点的信息作为其模型的输入，但它并没有充分考虑被调用函数的行为。</p>
+<h2 id="23-prior-efforts-and-our-motivations"><a class="markdownIt-Anchor" href="#23-prior-efforts-and-our-motivations"></a> 2.3 Prior Efforts and Our Motivations</h2>
+<p>。。。</p>
+<h2 id="24-microtrace-based-pretraining"><a class="markdownIt-Anchor" href="#24-microtrace-based-pretraining"></a> 2.4 Microtrace-Based Pretraining</h2>
+<p>本文课题组先前的工作，TREX 提出了一种通过预训练micro-execution trace value 的方式建模执指令的执行语义。TREX 在二进制相似度搜索领域取得了不错的成果。</p>
+<p><img src="/images/SymLM_2022_CCS/SymLM.png" alt="SymLM" / srcset="/images/LoadingImage.gif" data-src="/images/SymLM_2022_CCS/SymLM.png" class="lozad post-image"></p>
+<p>上图Fig2 展示了TREX 的预训练模型，模型输入指令，和对应的由微执行产生的值。当盖住操作符，模型要预测执行逻辑 <em>eax?3=4</em> 。预训练后，TREX 生成每条指令的语义嵌入（向量表示），可进一步用于检测具有相似执行行为的二进制函数。StateFormer 作为其后续研究也通过学习函数执行语义来推断变量类型。而这两者都不是为函数名预测设计的，所以他们不能解决上述C3 C4两个挑战。</p>
+<p><strong>Missing Calling Context.</strong> 不幸的是，TREX 也没有考虑函数调用的副作用，所以它只能学习部分函数语义， StateFormer 也存在同样的问题。这限制了它们在面临挑战 C5 时对二进制函数语义的理解。为了弥补这个缺陷，我们提出了 SymLM，基于 microtrace 的预训练模型，来学习完整函数语义用于预测函数名。</p>
+<h1 id="3-overview"><a class="markdownIt-Anchor" href="#3-overview"></a> 3 OVERVIEW</h1>
+<p><img src="/images/SymLM_2022_CCS/SymLM1.png" alt="SymLM1" / srcset="/images/LoadingImage.gif" data-src="/images/SymLM_2022_CCS/SymLM1.png" class="lozad post-image"></p>
+<p>上图展示了SymLM的工作流，主要是3个关键步骤：</p>
+<p>1）Function Semantics Encoding：理解二进制函数综合语义并编码到向量表征形式；</p>
+<p>2）Function Name Preprocessing and CodeWordNet Training：建模函数名语义，缓解自然语言的模糊性，减少OOV的token；</p>
+<p>3）Training and Inference：训练模型将函数语义向量映射到函数名。</p>
+<br>
+<p>下面将分别阐述一下这三个步骤中的细节，辅助理解fig3 SymLM的工作流。</p>
+<h3 id="function-semantics-encoding"><a class="markdownIt-Anchor" href="#function-semantics-encoding"></a> Function Semantics Encoding</h3>
+<p>首先，构建过程间控制流图ICFGs，如Fig3 step1，其中节点3（函数）可能调用内部节点4（内部函数）或者外部节点5（外部函数）。</p>
+<p>接下来，SymLM 采取下面两个步骤构造函数内部指令的嵌入 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><mi mathvariant="script">I</mi></msub></mrow><annotation encoding="application/x-tex">E_\mathcal{I}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.07382em;">I</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>：</p>
+<ol>
+<li>使用microtrace-based 预训练模型（fig2）生成函数tokens 的embedding，这个预训练模型在fig3中就是Transformer</li>
+<li>下采样token embeddings 生成结构化表征（<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><mi mathvariant="script">I</mi></msub></mrow><annotation encoding="application/x-tex">E_\mathcal{I}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.07382em;">I</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>）。例如，对于节点3，使用 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msubsup><mi>E</mi><mn>3</mn><mrow><mi>i</mi><mi>n</mi></mrow></msubsup></mrow><annotation encoding="application/x-tex">E^{in}_3</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0727719999999998em;vertical-align:-0.24810799999999997em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.824664em;"><span style="top:-2.4518920000000004em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">i</span><span class="mord mathdefault mtight">n</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.24810799999999997em;"><span></span></span></span></span></span></span></span></span></span> 指代这个函数的指令嵌入。</li>
+</ol>
+<p>为了产生函数的上下文嵌入 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><mi mathvariant="script">C</mi></msub></mrow><annotation encoding="application/x-tex">E_\mathcal{C}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.05834em;">C</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> ，需要同时嵌入节点callers和callees的执行行为信息。对于其他的内部函数可以用上述方法分别生成其 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><mi mathvariant="script">I</mi></msub></mrow><annotation encoding="application/x-tex">E_\mathcal{I}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.07382em;">I</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 向量，而对于外部函数比如节点5，SymLM 通过查找embedding table 来获取其嵌入 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><mi mathvariant="script">I</mi></msub></mrow><annotation encoding="application/x-tex">E_\mathcal{I}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.07382em;">I</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>。</p>
+<p>最后，SymLM 融合一个节点的callers和callees的嵌入向量来生成语义嵌入 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><mi mathvariant="script">C</mi></msub></mrow><annotation encoding="application/x-tex">E_\mathcal{C}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.05834em;">C</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> ，并通过结合 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><mi mathvariant="script">I</mi></msub></mrow><annotation encoding="application/x-tex">E_\mathcal{I}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.07382em;">I</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 和 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><mi mathvariant="script">C</mi></msub></mrow><annotation encoding="application/x-tex">E_\mathcal{C}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.05834em;">C</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 得到最终的函数表征向量。</p>
+<br>
+<p><strong>关于如何下采样计算内部函数的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><mi mathvariant="script">I</mi></msub></mrow><annotation encoding="application/x-tex">E_\mathcal{I}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.07382em;">I</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>.</strong> 和TREX 中直接使用token embeddings的均值不同，SymLM 使用一个特别的pooling 策略来下采样获取更好的模型表现。具体来说，我们观察到，在自然语言处理任务中，直接使用 [CLS] 的嵌入或者所有token嵌入的平均值作为句子嵌入，这两者已被证明是无效的，它们会分别导致 17.5% 和 10.3% 性能下降。根本原因是基于 BERT 的预训练模型生成各向异性token 嵌入。我们将多种下采样嵌入向量拼接起来，包括[CLS] embedding，所有token embedding的均值，以及token-position-insensitive embedding ，三者拼接作为函数语义嵌入 <strong><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><mi mathvariant="script">I</mi></msub></mrow><annotation encoding="application/x-tex">E_\mathcal{I}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.07382em;">I</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></strong> 。其中token-position-insensitive embedding：从上图fig3 step1 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>H</mi></mrow><annotation encoding="application/x-tex">H</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.08125em;">H</span></span></span></span> 中取前 k （实验中k=5）行最大的向量作为<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>H</mi><mi>k</mi></msup></mrow><annotation encoding="application/x-tex">H^k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.849108em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.08125em;">H</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span></span></span></span></span></span></span></span>。关于如何比较每一行的大小，文章并没提到（盲猜直接求和一行）。</p>
+<br>
+<p><strong>关于外部函数的嵌入.</strong> 基于这样一个观察：“外部函数的语义通常是固定的，且很大程度上体现在其函数名上”，本文使用一个随机初始化的embedding layer 来根据外部调用函数的函数名获取其 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><mi mathvariant="script">I</mi></msub></mrow><annotation encoding="application/x-tex">E_\mathcal{I}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.07382em;">I</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 。相当于一个词汇表的嵌入，而这个词汇表是通过训练集中的外部调用函数名构建的。在模型训练期间更新这个嵌入层以获得外部函数名的最佳嵌入。当外部函数名不可用时，我们放弃融合对应的函数调用。</p>
+<br>
+<p><strong>关于如何融合多个 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><mi mathvariant="script">I</mi></msub></mrow><annotation encoding="application/x-tex">E_\mathcal{I}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.07382em;">I</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 获得 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><mi mathvariant="script">C</mi></msub></mrow><annotation encoding="application/x-tex">E_\mathcal{C}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.05834em;">C</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> .</strong> 我们提出了一个具有选择性的调用上下文融合策略：1）SymLM 根据caller和callee的call和called by 目标函数的频率排序，2）拼接top-n个caller和top-n个callee的向量：</p>
+<p><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><mi>C</mi></msub><mo>=</mo><mrow><mo fence="true">{</mo><msub><mi>E</mi><msubsup><mi>I</mi><mn>1</mn><mo>+</mo></msubsup></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>E</mi><msubsup><mi>I</mi><mi>n</mi><mo>+</mo></msubsup></msub><mo separator="true">,</mo><msub><mi>E</mi><msubsup><mi>I</mi><mn>1</mn><mo>−</mo></msubsup></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>E</mi><msubsup><mi>I</mi><mi>n</mi><mo>−</mo></msubsup></msub><mo fence="true">}</mo></mrow></mrow><annotation encoding="application/x-tex">E_C=\left\{E_{I_1^{+}}, \ldots, E_{I_n^{+}}, E_{I_1^{-}}, \ldots, E_{I_n^{-}}\right\}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.07153em;">C</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.80002em;vertical-align:-0.65002em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size2">{</span></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.47011em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07847em;">I</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8209857142857142em;"><span style="top:-2.188485714285714em;margin-left:-0.07847em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">1</span></span></span><span style="top:-2.904321428571429em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight">+</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.31151428571428574em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.44794999999999996em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.34186499999999986em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07847em;">I</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.7026642857142856em;"><span style="top:-2.214em;margin-left:-0.07847em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathdefault mtight">n</span></span></span><span style="top:-2.786em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight">+</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.35019999999999996em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.47011em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07847em;">I</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8209857142857142em;"><span style="top:-2.188485714285714em;margin-left:-0.07847em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">1</span></span></span><span style="top:-2.904321428571429em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight">−</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.31151428571428574em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.44794999999999996em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.34186499999999986em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07847em;">I</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.7026642857142856em;"><span style="top:-2.214em;margin-left:-0.07847em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathdefault mtight">n</span></span></span><span style="top:-2.786em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight">−</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.35019999999999996em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size2">}</span></span></span></span></span></span></p>
+<p>其中，<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><msubsup><mi>I</mi><mi>i</mi><mo>+</mo></msubsup></msub></mrow><annotation encoding="application/x-tex">E_{I_i^{+}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.13882em;vertical-align:-0.45548999999999995em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.47011em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07847em;">I</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8209857142857142em;"><span style="top:-2.177714285714286em;margin-left:-0.07847em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathdefault mtight">i</span></span></span><span style="top:-2.9043214285714285em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight">+</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3222857142857143em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.45548999999999995em;"><span></span></span></span></span></span></span></span></span></span> 和 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><msubsup><mi>I</mi><mi>j</mi><mo>−</mo></msubsup></msub></mrow><annotation encoding="application/x-tex">E_{I_j^{-}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.23604em;vertical-align:-0.5527099999999999em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.4701100000000005em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07847em;">I</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8209857142857142em;"><span style="top:-2.177714285714286em;margin-left:-0.07847em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathdefault mtight" style="margin-right:0.05724em;">j</span></span></span><span style="top:-2.9043214285714285em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight">−</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.46117142857142857em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.5527099999999999em;"><span></span></span></span></span></span></span></span></span></span> 分别是 𝑖-th caller and 𝑗-th callee 的嵌入向量。</p>
+<br>
+<p><strong>关于如何融合目标函数的 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><mi mathvariant="script">I</mi></msub></mrow><annotation encoding="application/x-tex">E_\mathcal{I}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.07382em;">I</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 和 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><mi mathvariant="script">C</mi></msub></mrow><annotation encoding="application/x-tex">E_\mathcal{C}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.05834em;">C</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 得到最终的模型输入.</strong> 拼接两个向量。</p>
+<h3 id="function-name-preprocessing-and-codewordnet-training"><a class="markdownIt-Anchor" href="#function-name-preprocessing-and-codewordnet-training"></a> Function Name Preprocessing and CodeWordNet Training</h3>
+<p>总结了7种OOV问题，如table 2，设计了多种方法来解决这些问题。</p>
+<p><img src="/images/SymLM_2022_CCS/SymLM2.png" alt="SymLM2" / srcset="/images/LoadingImage.gif" data-src="/images/SymLM_2022_CCS/SymLM2.png" class="lozad post-image"></p>
+<p>首先，在tokenization 过程中，我们对带数字的单词和单词的变形两种情况进行词形还原，以解决表 2 中的 6 和 7。其次，我们基于 unigram 语言模型构建了一个分词模型，对常见连词进行分隔，解决1 和 2。其余问题归结为 3、4 和 5。OOV 类别 3、4 和 5 中的词的关键原因是使用单词的变体（例如，同义词、缩写和拼写错误），我们设计了 CodeWordNet 模块，它可以在函数名称的上下文中生成单词的语义向量表示。借助该模块，SymLM 可以测量词的语义距离，建模函数名称语义，并解决类别 3、4 和 5 中的 OOV 问题。</p>
+<h3 id="training-and-inference"><a class="markdownIt-Anchor" href="#training-and-inference"></a> Training and Inference</h3>
+<p>为了学习从函数语义向量到函数名的映射，我们使用带有调试信息的二进制文件提取数据集训练 SymLM，其中函数名标签从符号表中解析得到。对于训练，SymLM 首先将完整的函数语义编码为嵌入，然后预处理函数名标签，通过多层感知 (MLP) 解码器将函数语义嵌入解码为要预测的名称，最后通过最小化预测损失进行训练。在推理阶段，SymLM 将剥离的二进制文件作为输入，并根据函数的语义嵌入预测函数名tokens，其中生成函数名时 SymLM 也利用到了 CodeWordNet 生成多个同义词。</p>
+<h1 id="4-detailed-design"><a class="markdownIt-Anchor" href="#4-detailed-design"></a> 4 DETAILED DESIGN</h1>
+<p>omit<br />
+。。。</p>
+<h1 id="5-evaluation"><a class="markdownIt-Anchor" href="#5-evaluation"></a> 5 EVALUATION</h1>
+<p>使用Ghidra 作为反编译工具，基于TREX 实现了microtrace-based pretrained model，增加了1864 行新代码。我们使用NLTK 和SentencePiece 构建了我们的函数名处理组件，使用Gensim 构建了CodeWordNet 。开发了一个Ghidra插件和脚本来反编译二进制和解析调试信息。其他部分使用Pytorch 和fairseq 实现。</p>
+<p>评估指标（同NFRE和NERO）：</p>
+<p>。。。</p>
+<h2 id="rq1-how-effective-is-symlm-in-function-name-prediction"><a class="markdownIt-Anchor" href="#rq1-how-effective-is-symlm-in-function-name-prediction"></a> RQ1: How effective is SymLM in function name prediction?</h2>
+<p><img src="/images/SymLM_2022_CCS/SymLM3.png" alt="SymLM3" / srcset="/images/LoadingImage.gif" data-src="/images/SymLM_2022_CCS/SymLM3.png" class="lozad post-image"></p>
+<p>SymLM 在预测二进制函数名任务上非常有效，它在不同的架构和优化中实现了 0.634 的精度、0.677 的召回率和 0.655 的 F1 分数。</p>
+<h2 id="rq2-how-does-symlm-compare-to-the-state-of-the-art"><a class="markdownIt-Anchor" href="#rq2-how-does-symlm-compare-to-the-state-of-the-art"></a> RQ2: How does SymLM compare to the state of the art?</h2>
+<p><img src="/images/SymLM_2022_CCS/SymLM4.png" alt="SymLM4" / srcset="/images/LoadingImage.gif" data-src="/images/SymLM_2022_CCS/SymLM4.png" class="lozad post-image"></p>
+<p><img src="/images/SymLM_2022_CCS/SymLM5.png" alt="SymLM5" / srcset="/images/LoadingImage.gif" data-src="/images/SymLM_2022_CCS/SymLM5.png" class="lozad post-image"></p>
+<p>SymLM 比之前最好的工作更有效。例如，它在准确率、召回率和 F1 分数上比 NERO 高出 15.4%、59.6% 和 35.0%。</p>
+<h2 id="rq3-how-can-symlm-generalize-to-unknown-binaries-and-resist-obfuscations"><a class="markdownIt-Anchor" href="#rq3-how-can-symlm-generalize-to-unknown-binaries-and-resist-obfuscations"></a> RQ3: How can SymLM generalize to unknown binaries and resist obfuscations?</h2>
+<p><img src="/images/SymLM_2022_CCS/SymLM6.png" alt="SymLM6" / srcset="/images/LoadingImage.gif" data-src="/images/SymLM_2022_CCS/SymLM6.png" class="lozad post-image"></p>
+<p>泛化性能更好，但是还是不够好</p>
+<p><img src="/images/SymLM_2022_CCS/SymLM7.png" alt="SymLM7" / srcset="/images/LoadingImage.gif" data-src="/images/SymLM_2022_CCS/SymLM7.png" class="lozad post-image"></p>
+<p>健壮性，抗混淆能力不错。</p>
+<h2 id="rq4-how-can-symlms-components-improve-its-performance"><a class="markdownIt-Anchor" href="#rq4-how-can-symlms-components-improve-its-performance"></a> RQ4: How can SymLM’s components improve its performance?</h2>
+<p><img src="/images/SymLM_2022_CCS/SymLM8.png" alt="SymLM8" / srcset="/images/LoadingImage.gif" data-src="/images/SymLM_2022_CCS/SymLM8.png" class="lozad post-image"></p>
+<ul>
+<li>
+<p>fig8 (a) 是预训练模型对预测模型的提升，也就是基于TREX 的指令token嵌入模型。</p>
+<p>在前20 epoch的提升比较明显，而在超过20 epoch后基本可以忽略不计。</p>
+</li>
+<li>
+<p>fig8 (b) 是调用上下文对预测模型效果的提升，即是否包含目标函数的上下文函数的嵌入 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><mi mathvariant="script">I</mi></msub></mrow><annotation encoding="application/x-tex">E_\mathcal{I}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.07382em;">I</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 。</p>
+<p>调用上下文的加入对模型能力上限有提升，7.9%。</p>
+</li>
+</ul>
+<p><img src="/images/SymLM_2022_CCS/SymLM9.png" alt="SymLM9" / srcset="/images/LoadingImage.gif" data-src="/images/SymLM_2022_CCS/SymLM9.png" class="lozad post-image"></p>
+<p>fig9 是fig3 step1中对函数tokens 的embedding 矩阵 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>H</mi></mrow><annotation encoding="application/x-tex">H</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.08125em;">H</span></span></span></span> 池化策略的不同，对模型的影响。</p>
+<p>本文的池化策略对模型的提升还是比较显著的，加入 token-position-insensitive embedding 后提升明显。</p>
+<p><img src="/images/SymLM_2022_CCS/SymLM10.png" alt="SymLM10" / srcset="/images/LoadingImage.gif" data-src="/images/SymLM_2022_CCS/SymLM10.png" class="lozad post-image"></p>
+<p>fig10 是对函数名token预处理后OOV问题的减轻程度，以及预测模型性能的提升。</p>
+<p><img src="/images/SymLM_2022_CCS/SymLM11.png" alt="SymLM11" / srcset="/images/LoadingImage.gif" data-src="/images/SymLM_2022_CCS/SymLM11.png" class="lozad post-image"></p>
+<p>不同的预测模型（解码器），MLP略优于LSTM。</p>
+<h1 id="6-case-study"><a class="markdownIt-Anchor" href="#6-case-study"></a> 6 CASE STUDY</h1>
+<p><img src="/images/SymLM_2022_CCS/SymLM12.png" alt="SymLM12" / srcset="/images/LoadingImage.gif" data-src="/images/SymLM_2022_CCS/SymLM12.png" class="lozad post-image"></p>
+<p>。。。</p>
+<h2 id="7-discussion"><a class="markdownIt-Anchor" href="#7-discussion"></a> 7 DISCUSSION</h2>
+<p>本节讨论我们工作的局限性和未来的方向。我们考虑以下可能使我们的评估结果产生偏差的案例，解决它们都可能是有趣的未来工作。</p>
+<p><strong>Dataset Size.</strong> 当前数据集规模不够大，更大的数据集应该能使模型具有更好的泛化性。</p>
+<p><strong>Obfuscation.</strong> 本文中仅考虑编译器混淆，而没有考虑其他形式的混淆，例如加密和加壳。我们将其看作和本文正交的研究问题，任何对这些问题的研究进展都能促进我们的方法提升。</p>
+<p><strong>Operating System.</strong> 我们仅关注Linux上的二进制，其他OS或许有不同的调用上下文语义，这可能会使SymML 失效。</p>
+<p><strong>Noise in Ground Truth.</strong> 虽然我们试图解决模棱两可的函数名称问题，但由于 SymLM 中使用的词嵌入算法的限制，该问题并未完全解决。此外，本文只考虑token级别的语义相似性，而未考虑具有多个token的相似短语。我们将在未来的研究中解决这些问题。</p>
+
+  </div>
+  <div>
+    
+      <div 
+        class="post-note note-info copyright" 
+        style="margin-top: 42px">
+        <p>
+          <span style="font-weight: bold;">作者：</span><a 
+            target="_blank" 
+            rel="nofollow noopener noreferrer" 
+            href="/about">
+            Ch3nYe
+          </a>
+        </p>
+        <p>
+          <span style="font-weight: bold;">文章链接：</span><a 
+            target="_blank" 
+            rel="nofollow noopener noreferrer" 
+            href="https://ch3nye.top/Note-SymLM-Predicting-Function-Names-in-Stripped-Binaries/">
+            https://ch3nye.top/Note-SymLM-Predicting-Function-Names-in-Stripped-Binaries/
+          </a>
+        </p>
+        <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+      </div>
+    
+  </div>
+</article>
+<div class="nav">
+  
+  
+    <div class="nav-item-next">
+      <a 
+        href="/Note-SafeDrop-Detecting-Memory-Deallocation-Bugs-of-Rust/" 
+        class="nav-link">
+        <div>
+          <div class="nav-label">下一篇</div>
+          
+            <div class="nav-title">Note 《SafeDrop Detecting Memory Deallocation Bugs of Rust Programs via Static Data-Flow Analysis》 </div>
+          
+        </div>
+        <i class="iconfont icon-right nav-next-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+  <div 
+    class="card card-content comment-card" 
+    style="margin-top: 16px;">
+    <div class="comment-card-title">评论</div>
+    
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: '049b30eb10ea05082ef1',
+      clientSecret: 'c33ad95041c69907b3136b895008320f000987db',
+      repo: 'Ch3nYe.github.io',
+      owner: 'Ch3nYe',
+      admin: "Ch3nYe",
+      id: md5(location.href),
+      distractionFreeMode: false,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+  </div>
+
+<div 
+  class="card card-content toc-card" 
+  id="mobiletoc">
+  <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#symlm-predicting-function-names-in-stripped-binaries-via-context-sensitive-execution-aware-code-embeddings"><span class="toc-text"> SymLM: Predicting Function Names in Stripped Binaries via Context-Sensitive Execution-Aware Code Embeddings</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0-abstract"><span class="toc-text"> 0 Abstract</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#1-introduction"><span class="toc-text"> 1 INTRODUCTION</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-background-and-motivation"><span class="toc-text"> 2 BACKGROUND AND MOTIVATION</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#21-problem-definition"><span class="toc-text"> 2.1 Problem Definition</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#22-challenges"><span class="toc-text"> 2.2 Challenges</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#23-prior-efforts-and-our-motivations"><span class="toc-text"> 2.3 Prior Efforts and Our Motivations</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#24-microtrace-based-pretraining"><span class="toc-text"> 2.4 Microtrace-Based Pretraining</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3-overview"><span class="toc-text"> 3 OVERVIEW</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#function-semantics-encoding"><span class="toc-text"> Function Semantics Encoding</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#function-name-preprocessing-and-codewordnet-training"><span class="toc-text"> Function Name Preprocessing and CodeWordNet Training</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#training-and-inference"><span class="toc-text"> Training and Inference</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#4-detailed-design"><span class="toc-text"> 4 DETAILED DESIGN</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#5-evaluation"><span class="toc-text"> 5 EVALUATION</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#rq1-how-effective-is-symlm-in-function-name-prediction"><span class="toc-text"> RQ1: How effective is SymLM in function name prediction?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rq2-how-does-symlm-compare-to-the-state-of-the-art"><span class="toc-text"> RQ2: How does SymLM compare to the state of the art?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rq3-how-can-symlm-generalize-to-unknown-binaries-and-resist-obfuscations"><span class="toc-text"> RQ3: How can SymLM generalize to unknown binaries and resist obfuscations?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rq4-how-can-symlms-components-improve-its-performance"><span class="toc-text"> RQ4: How can SymLM’s components improve its performance?</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#6-case-study"><span class="toc-text"> 6 CASE STUDY</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#7-discussion"><span class="toc-text"> 7 DISCUSSION</span></a></li></ol></li></ol>
+</div></main>
+            <aside class="left-column">
+              
+              <div class="card card-author">
+                
+  <img 
+    src="/images/logo.png" 
+    class="author-img"
+    width="88"
+    height="88"
+    alt="author avatar">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a 
+    class="author-posts-count" 
+    href="/archives">
+    <span>45</span>
+    <span>文章</span>
+  </a>
+  <a 
+    class="author-categories-count" 
+    href="/categories">
+    <span>7</span>
+    <span>分类</span>
+  </a>
+  <a 
+    class="author-tags-count" 
+    href="/tags">
+    <span>70</span>
+    <span>标签</span>
+  </a>
+</div>
+
+  <div class="author-card-society">
+    
+      <div class="author-card-society-icon">
+        <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+          <i class="iconfont icon-github society-icon"></i>
+        </a>
+      </div>
+    
+      <div class="author-card-society-icon">
+        <a href="mailto:sud0su@163.com">
+          <i class="iconfont icon-mail society-icon"></i>
+        </a>
+      </div>
+    
+  </div>
+
+              </div>
+               <div class="sticky-tablet">
+  
+  
+    <article class="display-when-two-columns spacer">
+      <div class="card card-content toc-card">
+        <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#symlm-predicting-function-names-in-stripped-binaries-via-context-sensitive-execution-aware-code-embeddings"><span class="toc-text"> SymLM: Predicting Function Names in Stripped Binaries via Context-Sensitive Execution-Aware Code Embeddings</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0-abstract"><span class="toc-text"> 0 Abstract</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#1-introduction"><span class="toc-text"> 1 INTRODUCTION</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-background-and-motivation"><span class="toc-text"> 2 BACKGROUND AND MOTIVATION</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#21-problem-definition"><span class="toc-text"> 2.1 Problem Definition</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#22-challenges"><span class="toc-text"> 2.2 Challenges</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#23-prior-efforts-and-our-motivations"><span class="toc-text"> 2.3 Prior Efforts and Our Motivations</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#24-microtrace-based-pretraining"><span class="toc-text"> 2.4 Microtrace-Based Pretraining</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3-overview"><span class="toc-text"> 3 OVERVIEW</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#function-semantics-encoding"><span class="toc-text"> Function Semantics Encoding</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#function-name-preprocessing-and-codewordnet-training"><span class="toc-text"> Function Name Preprocessing and CodeWordNet Training</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#training-and-inference"><span class="toc-text"> Training and Inference</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#4-detailed-design"><span class="toc-text"> 4 DETAILED DESIGN</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#5-evaluation"><span class="toc-text"> 5 EVALUATION</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#rq1-how-effective-is-symlm-in-function-name-prediction"><span class="toc-text"> RQ1: How effective is SymLM in function name prediction?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rq2-how-does-symlm-compare-to-the-state-of-the-art"><span class="toc-text"> RQ2: How does SymLM compare to the state of the art?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rq3-how-can-symlm-generalize-to-unknown-binaries-and-resist-obfuscations"><span class="toc-text"> RQ3: How can SymLM generalize to unknown binaries and resist obfuscations?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rq4-how-can-symlms-components-improve-its-performance"><span class="toc-text"> RQ4: How can SymLM’s components improve its performance?</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#6-case-study"><span class="toc-text"> 6 CASE STUDY</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#7-discussion"><span class="toc-text"> 7 DISCUSSION</span></a></li></ol></li></ol>
+      </div>
+    </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header">
+    <i 
+      class="iconfont icon-fenlei" 
+      style="padding-right: 2px;">
+    </i>分类
+  </div>
+  <div class="categories-list">
+    
+      <a href="/categories/%E7%94%9F%E6%B4%BB/">
+        <div class="categories-list-item">
+          生活
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E5%A4%87%E5%BF%98/">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E6%9D%8E%E5%AE%8F%E6%AF%85%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">15</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">14</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E5%AE%9E%E6%88%98/">
+        <div class="categories-list-item">
+          实战
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%AC%94%E8%AE%B0/">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%BF%BB%E8%AF%91/">
+        <div class="categories-list-item">
+          翻译
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header">
+    <i 
+      class="iconfont icon-biaoqian" 
+      style="padding-right: 2px;">
+    </i>热门标签
+  </div>
+  <div class="tags-list">
+    
+      <a 
+        href="/tags/%E7%AC%94%E8%AE%B0/" 
+        title="笔记">
+        <div class="tags-list-item">笔记</div>
+      </a>
+    
+      <a 
+        href="/tags/note/" 
+        title="note">
+        <div class="tags-list-item">note</div>
+      </a>
+    
+      <a 
+        href="/tags/ML/" 
+        title="ML">
+        <div class="tags-list-item">ML</div>
+      </a>
+    
+      <a 
+        href="/tags/%E8%AE%BA%E6%96%87/" 
+        title="论文">
+        <div class="tags-list-item">论文</div>
+      </a>
+    
+      <a 
+        href="/tags/Next-Step-of-ML/" 
+        title="Next-Step-of-ML">
+        <div class="tags-list-item">Next-Step-of-ML</div>
+      </a>
+    
+      <a 
+        href="/tags/Android/" 
+        title="Android">
+        <div class="tags-list-item">Android</div>
+      </a>
+    
+      <a 
+        href="/tags/Binary/" 
+        title="Binary">
+        <div class="tags-list-item">Binary</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%80%BB%E7%BB%93/" 
+        title="总结">
+        <div class="tags-list-item">总结</div>
+      </a>
+    
+      <a 
+        href="/tags/Rust/" 
+        title="Rust">
+        <div class="tags-list-item">Rust</div>
+      </a>
+    
+      <a 
+        href="/tags/Deep-Learning/" 
+        title="Deep-Learning">
+        <div class="tags-list-item">Deep-Learning</div>
+      </a>
+    
+      <a 
+        href="/tags/%E7%BF%BB%E8%AF%91/" 
+        title="翻译">
+        <div class="tags-list-item">翻译</div>
+      </a>
+    
+      <a 
+        href="/tags/%E5%AD%A6%E4%B9%A0/" 
+        title="学习">
+        <div class="tags-list-item">学习</div>
+      </a>
+    
+      <a 
+        href="/tags/%E5%AE%9E%E6%88%98/" 
+        title="实战">
+        <div class="tags-list-item">实战</div>
+      </a>
+    
+      <a 
+        href="/tags/crack/" 
+        title="crack">
+        <div class="tags-list-item">crack</div>
+      </a>
+    
+      <a 
+        href="/tags/%E4%BA%8C%E8%BF%9B%E5%88%B6/" 
+        title="二进制">
+        <div class="tags-list-item">二进制</div>
+      </a>
+    
+      <a 
+        href="/tags/HTTPS/" 
+        title="HTTPS">
+        <div class="tags-list-item">HTTPS</div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+            </aside>
+            <aside class="right-column">
+              <div class="sticky-widescreen">
+  
+  
+    <article class="card card-content toc-card">
+      <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#symlm-predicting-function-names-in-stripped-binaries-via-context-sensitive-execution-aware-code-embeddings"><span class="toc-text"> SymLM: Predicting Function Names in Stripped Binaries via Context-Sensitive Execution-Aware Code Embeddings</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0-abstract"><span class="toc-text"> 0 Abstract</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#1-introduction"><span class="toc-text"> 1 INTRODUCTION</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-background-and-motivation"><span class="toc-text"> 2 BACKGROUND AND MOTIVATION</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#21-problem-definition"><span class="toc-text"> 2.1 Problem Definition</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#22-challenges"><span class="toc-text"> 2.2 Challenges</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#23-prior-efforts-and-our-motivations"><span class="toc-text"> 2.3 Prior Efforts and Our Motivations</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#24-microtrace-based-pretraining"><span class="toc-text"> 2.4 Microtrace-Based Pretraining</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3-overview"><span class="toc-text"> 3 OVERVIEW</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#function-semantics-encoding"><span class="toc-text"> Function Semantics Encoding</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#function-name-preprocessing-and-codewordnet-training"><span class="toc-text"> Function Name Preprocessing and CodeWordNet Training</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#training-and-inference"><span class="toc-text"> Training and Inference</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#4-detailed-design"><span class="toc-text"> 4 DETAILED DESIGN</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#5-evaluation"><span class="toc-text"> 5 EVALUATION</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#rq1-how-effective-is-symlm-in-function-name-prediction"><span class="toc-text"> RQ1: How effective is SymLM in function name prediction?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rq2-how-does-symlm-compare-to-the-state-of-the-art"><span class="toc-text"> RQ2: How does SymLM compare to the state of the art?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rq3-how-can-symlm-generalize-to-unknown-binaries-and-resist-obfuscations"><span class="toc-text"> RQ3: How can SymLM generalize to unknown binaries and resist obfuscations?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rq4-how-can-symlms-components-improve-its-performance"><span class="toc-text"> RQ4: How can SymLM’s components improve its performance?</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#6-case-study"><span class="toc-text"> 6 CASE STUDY</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#7-discussion"><span class="toc-text"> 7 DISCUSSION</span></a></li></ol></li></ol>
+    </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header">
+    <i 
+      class="iconfont icon-wenzhang_huaban" 
+      style="padding-right: 2px;">
+    </i>最近文章
+  </div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-10-05</div>
+        <a href="/Note-SymLM-Predicting-Function-Names-in-Stripped-Binaries/"><div class="recent-posts-item-content">Note 《SymLM Predicting Function Names in Stripped Binaries via Context-Sensitive Execution-Aware Code Embeddings》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-09-13</div>
+        <a href="/Note-SafeDrop-Detecting-Memory-Deallocation-Bugs-of-Rust/"><div class="recent-posts-item-content">Note 《SafeDrop Detecting Memory Deallocation Bugs of Rust Programs via Static Data-Flow Analysis》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-06-01</div>
+        <a href="/Note-SoK-Demystifying-Binary-Lifters-Through-the-Lens-of-Downstream-Applications/"><div class="recent-posts-item-content">Note 《SoK Demystifying Binary Lifters Through the Lens of Downstream Applications》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-05-04</div>
+        <a href="/Rust%E7%B1%BB%E5%9E%8B%E7%B3%BB%E7%BB%9F%E5%9B%BE%E7%81%B5%E5%AE%8C%E5%A4%87%E7%9A%84%E8%AF%81%E6%98%8E/"><div class="recent-posts-item-content">Rust类型系统图灵完备的证明</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+     
+    <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>
+          Copyright ©
+          
+            2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a 
+          href="/" 
+          class="footer-link">
+          ch3nye's blog
+        </a>
+      </div>
+    </div>
+
+    
+      <div class="footer-dsc">
+        
+          Powered by
+          <a 
+            href="https://hexo.io/" 
+            class="footer-link" 
+            target="_blank" 
+            rel="nofollow noopener noreferrer">
+            &nbsp;Hexo
+          </a>
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          Theme -
+          <a 
+            href="https://github.com/theme-kaze" 
+            class="footer-link" 
+            target="_blank"
+            rel="nofollow noopener noreferrer">
+            &nbsp;Kaze
+          </a>
+        
+      </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+          本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+<!-- Default Statcounter code for My Blog https://ch3nye.top -->
+<script type="text/javascript">
+var sc_project=12696483; 
+var sc_invisible=1; 
+var sc_security="0f70f90d"; 
+</script>
+<script type="text/javascript"
+src="https://www.statcounter.com/counter/counter.js" async></script>
+<noscript><div class="statcounter"><a title="Web Analytics"
+href="https://statcounter.com/" target="_blank"><img class="statcounter"
+src="https://c.statcounter.com/12696483/0/0f70f90d/1/" alt="Web Analytics"
+referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
+<!-- End of Statcounter Code -->
+</footer> 
+    
+  <a 
+    role="button" 
+    id="scrollbutton" 
+    class="basebutton" 
+    aria-label="回到顶部">
+    <i class="iconfont icon-arrowleft button-icon"></i>
+  </a>
+
+<a 
+  role="button" 
+  id="menubutton"
+  aria-label="menu button"
+  class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="popbutton" 
+  class="basebutton" 
+  aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="darkbutton" 
+  class="basebutton darkwidget" 
+  aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="searchbutton" 
+  class="basebutton searchwidget" 
+  aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a> 
+     
+     
+      
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+ 
+     
+     
+      <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img')
+    var i
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a')
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'))
+      wrapper.setAttribute('aria-label', 'illustration')
+      wrapper.style.cssText =
+        'width: 100%; display: flex; justify-content: center;'
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt
+      wrapper.dataset.nolink = true
+      img[i].before(wrapper)
+      wrapper.append(img[i])
+      var divWrap = document.createElement('div')
+      divWrap.classList.add('gallery')
+      wrapper.before(divWrap)
+      divWrap.append(wrapper)
+    }
+    baguetteBox.run('.gallery')
+  }
+</script>
+<script>
+  loadScript(
+    "/js/lib/lightbox/baguetteBox.min.js",
+    addImgLayout
+  )
+</script>
+ 
+     
+     
+    <script src="/js/main.js"></script> 
+    
+      <script> 
+        loadScript('/js/lib/busuanzi.min.js') 
+      </script>
+     
+    
+      <script>
+        var addLazyload = function () {
+          var observer = lozad('.lozad', {
+            load: function (el) {
+              el.srcset = el.getAttribute('data-src')
+            },
+            loaded: function (el) {
+              el.classList.add('loaded')
+            },
+          })
+          observer.observe()
+        }
+      </script>
+      <script>
+        loadScript('/js/lib/lozad.min.js', addLazyload)
+      </script>
+     
+    
+      <script>
+        var googleAnalytics = function () {
+          window.dataLayer = window.dataLayer || []
+          function gtag() {
+            dataLayer.push(arguments)
+          }
+          gtag('js', new Date())
+          gtag('config', 'G-WHGL11014T')
+        }
+    </script>
+      <script>
+        loadScript(
+          'https://www.googletagmanager.com/gtag/js?id=' +
+            'G-WHGL11014T',
+          googleAnalytics
+        )
+      </script>
+    
+    
+      <script>
+        setTimeout(() => {localSearch("search.json")}, 0)
+      </script>
+    
+  </body>
+</html>
