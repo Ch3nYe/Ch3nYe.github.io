@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+  <meta charset="UTF-8">
+  <meta 
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta 
+    http-equiv="X-UA-Compatible" 
+    content="ie=edge">
+  <meta 
+    name="theme-color" 
+    content="#fff" 
+    id="theme-color">
+  <meta 
+    name="description" 
+    content="网络安全 Android ML CTF">
+  <link 
+    rel="icon" 
+    href="/images/logo.png">
+  <title>基于机器学习的函数名恢复总结</title>
+  
+    
+      <meta 
+        property="og:title" 
+        content="基于机器学习的函数名恢复总结">
+    
+    
+      <meta 
+        property="og:url" 
+        content="https://ch3nye.top/%E5%9F%BA%E4%BA%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%9A%84%E5%87%BD%E6%95%B0%E5%90%8D%E6%81%A2%E5%A4%8D%E6%80%BB%E7%BB%93/index.html">
+    
+    
+      <meta 
+        property="og:img" 
+        content="/images/logo.png">
+    
+    
+      <meta 
+        property="og:img" 
+        content="网络安全 Android ML CTF">
+    
+    
+      <meta 
+        property="og:type" 
+        content="article">
+      <meta 
+        property="og:article:published_time" 
+        content="2022-10-25">
+      <meta 
+        property="og:article:modified_time" 
+        content="2022-10-25">
+      <meta 
+        property="og:article:author" 
+        content="Ch3nYe">
+      
+        
+          <meta 
+            property="og:article:tag" 
+            content="论文">
+        
+          <meta 
+            property="og:article:tag" 
+            content="笔记">
+        
+          <meta 
+            property="og:article:tag" 
+            content="Binary">
+        
+          <meta 
+            property="og:article:tag" 
+            content="Reassignment">
+        
+      
+    
+  
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+    function loadCSS(href, data, attr) {
+      var sheet = document.createElement('link');
+      sheet.ref = 'stylesheet';
+      sheet.href = href;
+      sheet.dataset[data] = attr;
+      document.head.appendChild(sheet);
+    }
+    function changeCSS(cssFile, data, attr) {
+      var oldlink = document.querySelector(data);
+      var newlink = document.createElement("link");
+      newlink.setAttribute("rel", "stylesheet");
+      newlink.setAttribute("href", cssFile);
+      newlink.dataset.prism = attr;
+      document.head.replaceChild(newlink, oldlink);
+    }
+  </script>
+  
+    
+      
+      
+      
+      
+        
+        
+        
+        <script>
+          function prismThemeChange() {
+            if(document.getElementById('theme-color').dataset.mode === 'dark') {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism-tomorrow.min.css', '[data-prism]', 'prism-tomorrow');
+              } else {
+                loadCSS('/js/lib/prism/prism-tomorrow.min.css', 'prism', 'prism-tomorrow');
+              }
+            } else {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism.min.css', '[data-prism]', 'prism');
+              } else {
+                loadCSS('/js/lib/prism/prism.min.css', 'prism', 'prism');
+              }
+            }
+          }
+          prismThemeChange()
+        </script>
+      
+      
+        
+        <link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+      
+    
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+  </script>
+  
+    <script>
+      var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+        document.getElementById('theme-color').dataset.mode = getCssMediaQuery();
+        prismThemeChange();
+      }
+    };
+    setDarkmode();
+    </script>
+  
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+    <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  <link rel="stylesheet" href="/css/main.css">
+  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+  
+    <link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+  <body>
+    <div class="wrapper">
+       
+      <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+        <img 
+          class="navbar-logo-img"
+          width="32"
+          height="32"
+          src="/images/logo.png" 
+          alt="blog logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+      <a 
+        href="/" 
+        class="navbar-menu-item">
+        
+          首页
+        
+      </a>
+    
+      <a 
+        href="/archives" 
+        class="navbar-menu-item">
+        
+          归档
+        
+      </a>
+    
+      <a 
+        href="/tags" 
+        class="navbar-menu-item">
+        
+          标签
+        
+      </a>
+    
+      <a 
+        href="/categories" 
+        class="navbar-menu-item">
+        
+          分类
+        
+      </a>
+    
+      <a 
+        href="/about" 
+        class="navbar-menu-item">
+        
+          关于
+        
+      </a>
+    
+      <a 
+        href="/links" 
+        class="navbar-menu-item">
+        
+          友链
+        
+      </a>
+    
+      <a 
+        href="/shuoshuo" 
+        class="navbar-menu-item">
+        
+          说说
+        
+      </a>
+    
+    <a 
+      class="navbar-menu-item darknavbar" 
+      id="dark">
+      <i class="iconfont icon-weather"></i>
+    </a>
+    <a 
+      class="navbar-menu-item searchnavbar" 
+      id="search">
+      <i 
+        class="iconfont icon-search" 
+        style="font-size: 1.2rem; font-weight: 400;">
+      </i>
+    </a>
+  </div>
+</nav> 
+      
+      <div 
+        id="local-search" 
+        style="display: none">
+        <input
+          class="navbar-menu-item"
+          id="search-input"
+          placeholder="请输入搜索内容..." />
+        <div id="search-content"></div>
+      </div>
+      
+      <div class="section-wrap">
+        <div class="container">
+          <div class="columns">
+            <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      基于机器学习的函数名恢复总结
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2022-10-24T16:00:00.000Z">
+      <i 
+        class="iconfont icon-calendar" 
+        style="margin-right: 2px;">
+      </i>
+      <span>2022-10-25</span>
+    </time>
+    
+      <span class="dot"></span>
+      
+        <a 
+          href="/categories/%E7%AC%94%E8%AE%B0/" 
+          class="post-meta-link">
+          笔记
+        </a>
+      
+    
+    
+      <span class="dot"></span>
+      <span>6.3k 字</span>
+    
+  </div>
+  
+    <div 
+      class="post-meta post-show-meta" 
+      style="margin-top: -10px;">
+      <div style="display: flex; align-items: center;">
+        <i 
+          class="iconfont icon-biaoqian" 
+          style="margin-right: 2px; font-size: 1.15rem;">
+        </i>
+        
+          
+          <a 
+            href="/tags/%E8%AE%BA%E6%96%87/" 
+            class="post-meta-link">
+            论文
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/%E7%AC%94%E8%AE%B0/" 
+            class="post-meta-link">
+            笔记
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/Binary/" 
+            class="post-meta-link">
+            Binary
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/Reassignment/" 
+            class="post-meta-link">
+            Reassignment
+          </a>
+        
+      </div>
+    </div>
+  
+  </header>
+  <div 
+    id="section" 
+    class="post-content">
+    <h1 id="基于机器学习的函数名恢复总结"><a class="markdownIt-Anchor" href="#基于机器学习的函数名恢复总结"></a> 基于机器学习的函数名恢复总结</h1>
+<blockquote>
+<p>本文总结2018年至今（2022.10）发表的关于使用机器学习方法恢复二进制代码中函数名的工作，帮助中文社区快速了解该课题当前的研究进展，期待更多研究者的加入，加速解决该任务的进度。同时欢迎对该课题感兴趣的同学做交流。</p>
+<p>总结将包含6篇工作，按照关键词，摘要，方法，主要实验和讨论的模板进行总结，篇幅过长本文将分为上下两节。</p>
+<p><strong>必须的预备知识：逆向分析基础，Transformer，LSTM，图网络模型，自然语言处理基础</strong></p>
+</blockquote>
+<br>
+<h1 id="debin"><a class="markdownIt-Anchor" href="#debin"></a> DEBIN</h1>
+<p>CCS 2018, Debin: Predicting Debug Information in Stripped Binaries</p>
+<h2 id="关键词"><a class="markdownIt-Anchor" href="#关键词"></a> 关键词</h2>
+<p>BAP-IR, Conditional Random Field(CRF), MAP inference, Extremely Randomized Trees, Undirected dependency graph</p>
+<h2 id="摘要"><a class="markdownIt-Anchor" href="#摘要"></a> 摘要</h2>
+<p>我们提出了一种预测剥离二进制文件中调试信息的新方法。我们首先在数千个未剥离的二进制文件上训练机器学习模型，然后使用模型来预测剥离二进制文件缺失的调试信息，包括符号名（symbol names）、类型（types）和位置（locations），它们是在编译和剥离时被擦除的源码级信息。</p>
+<p>我们的方法能区分并抽取出二进制代码中的关键元素，例如寄存器上的变量和内存中的变量。为了预测这些抽取出的元素的符号名和类型，我们使用概率图模型和一个广泛的特征集来捕捉二进制代码中的关健特征。</p>
+<p>针对这个研究任务，我们实现了一个自动化工具DEBIN 用于处理ELF 文件。它可以实现输入剥离二进制文件输出恢复调试信息后的二进制文件的功能。支持的ELF 文件架构有x86，x64，ARM。在x64数据集上的实验结果，预测符号名和类型达到68.8% precision 和68.3% recall 。我们还证明，DEBIN 能辅助分析真实世界的恶意软件——它揭示了可疑的库文件调用和其他可疑行为，例如 DNS 解析器读取器。</p>
+<p>code: None</p>
+<h2 id="方法"><a class="markdownIt-Anchor" href="#方法"></a> 方法</h2>
+<p>DEBIN 恢复样例展示：</p>
+<p><img src="/images/ReassignmentSum/DEBIN.png" alt="image" / srcset="/images/LoadingImage.gif" data-src="/images/ReassignmentSum/DEBIN.png" class="lozad post-image"></p>
+<p>上图是DEBIN在一个真实样本中的DNS resolver reader 函数上的恢复效果。</p>
+<br>
+<p><img src="/images/ReassignmentSum/DEBIN1.png" alt="image" / srcset="/images/LoadingImage.gif" data-src="/images/ReassignmentSum/DEBIN1.png" class="lozad post-image"></p>
+<p>DEBIN对二进制文件的分析过程如上图所示，接下来简单叙述一下。</p>
+<ol>
+<li>
+<p>Lift Assembly into BAP-IR</p>
+<p>使用<a target="_blank" rel="noopener" href="https://github.com/BinaryAnalysisPlatform/bap">BAP</a>做code lift，得到fig2(b)</p>
+</li>
+<li>
+<p>Extract Unknown and Known Elements with Variable Recovery Classification.</p>
+<p>将IR程序元素划分为两个集合：</p>
+<ol>
+<li>unknow elements，这些元素的信息被strip掉了，例如存储变量的寄存器</li>
+<li>know elements，这些元素的信息已经出现在二进制代码中了不需要做预测，例如临时寄存器，常量和指令</li>
+</ol>
+<p>因为人工判断上述两种元素是很困难且费时费力的，所以本文要训练一个二分类模型（Sec3.1）来做判断。</p>
+</li>
+<li>
+<p>Build Dependency Graph.</p>
+<p>基于整个二进制文件构建一个无向依赖图（undirected dependency graph）节点是BAP-IR 抽取出来的代码元素，边是这些代码元素之间的关系。如fig2 (d)所示，关系划分为两种Pairwise 和Factor ：</p>
+<ol>
+<li>
+<p>Pairwise</p>
+<p>EDX.3 和ECX.1 两个代码元素之间存在 “不相等” 的条件比较关系，EDX.3 和EDX.2 之间存在赋值的依赖关系</p>
+</li>
+<li>
+<p>Factor</p>
+<p>如果两个节点可以演化出一个常量节点，就使用一个灰色菱形连接。上如图所示 EDX.3=EDX.2+1 ，这种Factor 关系常用于表达 i++ 的操作，其作用可以理解为通过链接多个节点来增强模型的表达能力</p>
+</li>
+</ol>
+<p>总体来说，依赖图上的这两种关系源自于，作者分析出的二进制代码元素的语义行为。抽取代码元素的具体过程在原文Sec4详细叙述。依赖图模型表征条件随机场CRF概率模型，它可以捕捉节点之间的关系，并且其后可以接入一个预测模型，判断一个代码元素是否需要分析。</p>
+</li>
+<li>
+<p>Probabilistic Prediction.</p>
+<p>DEBIN 在依赖图上使用Maximum Posterior（MAP）推断。</p>
+<p>如图fig2 (e)所示，概率预测的时候是通过给每个unknown node 命名，且每个node 都附带一个表，表中是其和相邻node 的关系，每个可能的关系组合都会赋值一个weight，这个权重是通过训练数据得到的先验值，其在直觉上表示赋值的似然估计。</p>
+<p>MAP 推断算法的优化目标是找到一个全局最优的赋值方案使得weight 的总和最大化。</p>
+</li>
+<li>
+<p>Output Debug Information.</p>
+<p>DEBIN 最终的输出如图fig2 (f)，它恢复了sum函数的函数名和返回值类型（int），变量res, n, i 的变量名与类型，以及他们在汇编代码中的位置。这些变量和汇编代码中的位置之间的关系是一对多的。</p>
+<p>DEBIN将恢复出来的调试信息打包成DWARF格式，输出一个带有调试信息的二进制文件。</p>
+</li>
+</ol>
+<br>
+<p><strong>关于二分类模型.</strong> 预测寄存器或内存偏移是否映射到源码中变量，该变量可以是局部变量、全局变量或函数参数（不区分）。每个寄存器或内存偏移都可以用一个特征向量表示，生成这些代码元素的特征向量的方法是人工定义的规则。本文使用的二元分类模型是一个Extremely Randomized Trees ，它将特征向量作为输入，并输出一个布尔值，表示它是否为需要预测的变量。</p>
+<br>
+<p><strong>关于条件随机场模型在依赖图上的计算.</strong> 这里有个关键的事情还没讲，Feature Functions，文中根据依赖图上的Pairwise和Factor分成两类特征函数：</p>
+<ul>
+<li>Pairwise Feature Functions：当赋予两个可能的值到两个代码元素，应用这个特征函数，根据两个节点之间的关系计算一个标量数值。</li>
+<li>Factor Feature Functions：当一种factor连接的多个节点都被赋值后，应用这个特征函数，根据节点之间的关系计算一个标量数值。</li>
+</ul>
+<p>这里忽略关系的定义和各种关系应用的Feature Functions 的细节。</p>
+<h2 id="主要实验"><a class="markdownIt-Anchor" href="#主要实验"></a> 主要实验</h2>
+<p><strong>Dataset.</strong> x86, x64, ARM 架构，每个架构收集了3000个编译自C语言的未剥离二进制文件。</p>
+<br>
+<p><strong>二分类模型性能</strong>：</p>
+<p>Accuracy: x86 = 87.1%, x64 = 88.9%, ARM = 90.6%.</p>
+<br>
+<p><strong>预测模型性能</strong>：</p>
+<img src="/images/ReassignmentSum/DEBIN2.png" alt="image" style="zoom:50%;" / srcset="/images/LoadingImage.gif" data-src="/images/ReassignmentSum/DEBIN2.png" class="lozad post-image">
+<br>
+<p><strong>对比之前的工作</strong>：</p>
+<img src="/images/ReassignmentSum/DEBIN3.png" alt="image" style="zoom: 67%;" / srcset="/images/LoadingImage.gif" data-src="/images/ReassignmentSum/DEBIN3.png" class="lozad post-image">
+<h2 id="讨论"><a class="markdownIt-Anchor" href="#讨论"></a> 讨论</h2>
+<p><strong>时间消耗.</strong> 每个架构的符号名和类型预测的训练阶段持续大约 5 小时：大约 4 小时训练两个 ET 二分类模型（一个用于寄存器，另一个用于内存偏移），一个小时用于训练 CRF 模型（60线程）。每个二进制文件（一个线程）的平均预测时间约为 2 分钟，其中大约 80% 用于二分类变量确定是否需要预测，20% 用于运行我们的分析以构建依赖关系图并对该图执行 MAP 推理。未来可能的工作项目是提高二分类模块的效率。</p>
+<p><strong>恶意样本分析上的局限性.</strong> 使用我们的概率模型，DEBIN 从我们的训练集学习二进制代码的特征，这些都是良性样本。然而，恶意二进制文件通常表现出比良性二进制文件更复杂的行为。例如，我们在恶意软件数据集中发现了使用自定义字符串编码的样本。还可以执行诸如控制流扁平化之类的混淆技术来阻碍分析。DEBIN 可能对混淆的二进制文件还不能做出准确的预测。安全分析师可以将去混淆方法与DEBIN 相结合来解决这些问题。</p>
+<h1 id="punstrip"><a class="markdownIt-Anchor" href="#punstrip"></a> PUNSTRIP</h1>
+<p>ACSAC 2020, Probabilistic Naming of Functions in Stripped Binaries</p>
+<h2 id="关键词-2"><a class="markdownIt-Anchor" href="#关键词-2"></a> 关键词</h2>
+<p>VEX-IR, Conditional Random Field(CRF), Word2Vec, call-graph, Intraprocedural-CFG</p>
+<h2 id="摘要-2"><a class="markdownIt-Anchor" href="#摘要-2"></a> 摘要</h2>
+<p>二进制可执行文件中的调试（符号）信息包含所有函数名和变量名。当调试信息存在的时候很大程度减轻了逆向工程的难度，但是这些信息大概率在发布二进制文件之前就被移除了（stripped）。我们设计了punstrip，它使用二进制代码的概率指纹和概率图模型来学习<strong>函数名</strong>和二进制代码结构之间的关系。punstrip 提供了一种判断语义上相似（即使文本完全不同）的函数名的方法，我们称为 Symbol2Vec ，用于在剥离二进制文件中推荐有意义的函数名。本文证明了我们的方法能够识别跨不同编译器和优化级别的相同函数，并且证明了我们的工具可以根据二进制代码结构预测出语义相似的函数名。我们使用来自 Debian 软件源的开源C语言二进制文件评估我们的方法，并与最先进的方法进行比较。为了促进相关研究，我们将我们的代码和数据集开源。</p>
+<p>code:</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/punstrip/Symbol2Vec">punstrip/Symbol2Vec: Symbol2Vec Embeddings (github.com)</a></p>
+<p>dataset:</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/punstrip/debian-unstripped">https://github.com/punstrip/debian-unstripped</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/punstrip/cross-compile-dataset">https://github.com/punstrip/cross-compile-dataset</a></p>
+<h2 id="方法-2"><a class="markdownIt-Anchor" href="#方法-2"></a> 方法</h2>
+<p><img src="/images/ReassignmentSum/punstrip1.png" alt="image" / srcset="/images/LoadingImage.gif" data-src="/images/ReassignmentSum/punstrip1.png" class="lozad post-image"></p>
+<p>上图fig1 是punstrip 恢复剥离二进制文件中函数名的工作流。</p>
+<p>(a) 反汇编器从剥离二进制中确定函数边界，恢复汇编代码。</p>
+<p>(b) 为了实现夸编译器和跨优化选项的能力，将汇编代码提升到中间语言（IR），在中间语言上提取特征。这里选择 VEX IR 原因是它提供比 BAP IR 更抽象代码表征。实际执行的时候反汇编器先划分基本块，然后在基本块上执行SSA 以提升到 IR 。</p>
+<p>© 从 IR 上抽取高级特征和函数之间的关系后，我们以条件随机场 (CRF) 的形式构建概率图形模型。CRF 模型对二进制文件中的<strong>所有函数</strong>的code 和 data 之间的pairwise 和 factor 关系进行建模。在大量未剥离二进制文件上训练图模型，我们可以同时最大化所有未知函数名的联合概率，而不是孤立地考虑每个函数。</p>
+<p>(d) 最后，在我们推断出未知函数名后，我们修改 ELF 可执行文件符号表并将条目插入到 strtab 和 symtab 部分。</p>
+<p>(e) 我们考虑相似函数名称的问题，并实现一种方法 Symbol2Vec 来计算函数名相似性。</p>
+<br>
+<p><strong>关于IR上的特征提取.</strong> 所有的特征抽取如下图tab1 所示：</p>
+<p><img src="/images/ReassignmentSum/punstrip2.png" alt="image" / srcset="/images/LoadingImage.gif" data-src="/images/ReassignmentSum/punstrip2.png" class="lozad post-image"></p>
+<ol>
+<li>
+<p>静态特征：</p>
+<p>其中包括两个有助于找到精确匹配的低级特征：二进制代码的哈希，反汇编操作码的哈希。操作码哈希可以模糊代码中的偏移量、立即数和地址等数值。其他特征均从IR上提取。</p>
+<p>其中使用Graph2Vec 将该函数的<strong>过程内CFG</strong>嵌入到一个300维的向量，该向量表征函数的图结果，相似的图结构得到的嵌入向量的欧氏距离更近。</p>
+</li>
+<li>
+<p>符号特征：</p>
+<p>我们使用我们自己建立在 VEX IR 之上的动态符号执行来提取符号语义特征。我们基于ANGR 实现了自己的执行引擎，以提供跨多个平台的分析。</p>
+</li>
+</ol>
+<p>最终的目标是将上述提取的特征转换成一个对所有可能符号名的概率分布（函数的概率指纹）。对于所有标量和向量类型的特征，将他们拼接为一个向量输入贝叶斯分类器（实验发现贝叶斯优于其他机器学习和深度学习算法）学习分布。将binary和dict类型的特征中出现在所有函数体的特征拿出来通过一层全连接神经网络学习分布，输出softmax层维度是所有可能的函数名的数量。</p>
+<p><strong>关于 CRF 模型上的计算.</strong> CRF Generation 如下图fig2：</p>
+<img src="/images/ReassignmentSum/punstrip3.png" alt="image" style="zoom:50%;" / srcset="/images/LoadingImage.gif" data-src="/images/ReassignmentSum/punstrip3.png" class="lozad post-image">
+<p>对于若干个随机变量组成的图，且假定这些变量之间有依赖关系，CRF 模型要根据已知的变量预测这个图中每个未知变量的值。具体到本文就是：对于一个binary中根据已知函数名（known nodes），已知特征的函数（known features），未知函数（unknown nodes），综合考虑，推断函数名。</p>
+<p>这里在图上定义了两种关系（细节见tab2）：</p>
+<ol>
+<li>
+<p>label-node: 一个函数 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>y</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">y_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 和它的特征（定义在tab1）的概率关系。</p>
+</li>
+<li>
+<p>label-label: 两个函数之间的各种概率关系</p>
+<p>比如<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>d</mi><mrow><mi>t</mi><mi>h</mi></mrow></msup></mrow><annotation encoding="application/x-tex">d^{th}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.849108em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault">d</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">t</span><span class="mord mathdefault mtight">h</span></span></span></span></span></span></span></span></span></span></span></span>就是两个函数之间相隔d 个node 的调用概率</p>
+</li>
+</ol>
+<p><img src="/images/ReassignmentSum/punstrip4.png" alt="image" / srcset="/images/LoadingImage.gif" data-src="/images/ReassignmentSum/punstrip4.png" class="lozad post-image"></p>
+<p>CRF的推断就不写了，如果不太懂，可以将CRF看作黑盒，只需要知道通过CRF 同时得到所有未知函数名使得所有函数名的联合概率最大。</p>
+<br>
+<p><strong>关于Symbol2Vec.</strong> 给函数赋予一个描述性的名字是相当主观的，或则说同一个函数可能具有两个在词法上完全不同的名字，它们却有相同的含义，这种情况是算法难以处理的。为了缓解这种情况，我们创建了一种方法来度量函数名的相似度。我们通过将函数名投影到高维向量空间中来做到这一点，这样语义相似的函数名在向量空间中看起来很接近，而不同的函数名则相距很远。</p>
+<p>类似预Word2Vec，本文具体做法是：在二进制文件的调用图上预测给定中心函数周围上下文函数。</p>
+<h2 id="主要实验-2"><a class="markdownIt-Anchor" href="#主要实验-2"></a> 主要实验</h2>
+<p><strong>Metric.</strong> 并非预测和真值完全相同才算正确，而是有两种判断方法：</p>
+<ol>
+<li>通过NLP 处理函数名后，计算Jaccard 距离作为度量，当距离低于一个阈值时，就认为两者是相似的。</li>
+<li>通过Symbol2Vec 计算语义相似度，设定一个阈值，作为相似的判断标准。</li>
+</ol>
+<br>
+<p><strong>实验1</strong></p>
+<p>我们执行这个实验来评估我们的概率指纹如何识别编译到不同二进制文件和不同设置下的函数。在给定的编译选项训练集训练模型，然后在不同编译选项的测试集推断函数名。</p>
+<p><strong>Dataset.</strong> 二进制文件来自coreutils, moreutils, findutils, x11-utils and x11-xserver-utils，它们可以产生 149 个的二进制文件和 1,362,379 个符号。通过交叉编译产生可2132 个不同的二进制文件。149 个二进制文件分割为15：134作为测试集和训练集。另外，这些程序在它们之间具有适度的代码重用，我们确保训练集的函数名不会出现在测试集。</p>
+<p><img src="/images/ReassignmentSum/punstrip5.png" alt="image" / srcset="/images/LoadingImage.gif" data-src="/images/ReassignmentSum/punstrip5.png" class="lozad post-image"></p>
+<br>
+<p><strong>实验2</strong></p>
+<p>为了测试punstrip 是否可以学习到一般意义上的任意函数之间的抽象关系，有必要构建一个包含来自不同软件包的带有调试信息的大型二进制数据集。我们从Debian 软件源中的数千个开源软件包构建这个数据集。</p>
+<p><strong>Dataset.</strong> 188,253 个binary，得到82GB可执行文件，我们仅使用C语言编译的部分，17,549个binary，将这些可执行文件随机分成 10 个大小相等的组，进行10-fold 交叉验证。</p>
+<img src="/images/ReassignmentSum/punstrip6.png" alt="image" style="zoom:50%;" / srcset="/images/LoadingImage.gif" data-src="/images/ReassignmentSum/punstrip6.png" class="lozad post-image">
+<p>可以看到不管是精确匹配函数名还是使用NLP 或Symbol2Vec 作为评判标准，punstrip 都要强于DEBIN。</p>
+<h2 id="讨论-2"><a class="markdownIt-Anchor" href="#讨论-2"></a> 讨论</h2>
+<p><strong>限制</strong>：</p>
+<p>在我们的方法中，我们未考虑函数边界确定的准确性。在现实世界环境中，函数边界提取阶段可能会出现错误，由于恢复的图结构不准确，可能会对概率推理产生不良影响。</p>
+<p>当汇编代码只出现微小变化时，我们的概率指纹成功概率更高；然而，在完全未知二进制代码，或者代码被混淆的情况下，punstrip 表现不佳。 换句话说，punstrip 受限于二进制分析的正确性，利用程序分析来恢复代码特征和关系，所有能误导或阻碍程序分析的技术都可能对punstrip 产生影响。</p>
+<p><strong>对抗限制</strong>：</p>
+<p>punstrip 可以与现有的逆向工程软件套件或调试器相结合，以分析动态执行期间，包含未知代码的内存区域。</p>
+<h1 id="nero"><a class="markdownIt-Anchor" href="#nero"></a> NERO</h1>
+<p>PACMPL 2020, Neural reverse engineering of stripped binaries using augmented control flow graphs</p>
+<h2 id="关键词-3"><a class="markdownIt-Anchor" href="#关键词-3"></a> 关键词</h2>
+<p>binary slice, call site, CFG, LSTM, Transformer, GCN</p>
+<h2 id="摘要-3"><a class="markdownIt-Anchor" href="#摘要-3"></a> 摘要</h2>
+<p>我们实现了一个新方法用于预测剥离二进制文件中的函数名。我们的方法结合了静态分析和神经网络模型。主要的思路是使用静态分析的方法增强函数调用点（call site）的表征，使用控制流图（CFG）组织这些调用点，最后分析这些调用点生成预测的函数名。我们使用这些增强调用点表征来驱动 graph-based, LSTM-based and Transformer-based 的函数名预测方法。</p>
+<p>我们的实验表明，与当前最好的无静态分析的神经网络文本模型方法相比，我们方法分别提高了 28% 和 100%。</p>
+<p>code: <a target="_blank" rel="noopener" href="https://github.com/tech-srl/Nero">https://github.com/tech-srl/Nero</a></p>
+<h2 id="方法-3"><a class="markdownIt-Anchor" href="#方法-3"></a> 方法</h2>
+<p><img src="/images/ReassignmentSum/NERO1.png" alt="image" / srcset="/images/LoadingImage.gif" data-src="/images/ReassignmentSum/NERO1.png" class="lozad post-image"></p>
+<p>上图是Nero 基于控制流进行的调用点（call site）增强示例图：</p>
+<p>(a) 是二进制程序的控制流图，其中省略了call指令之外的指令。我们现在关注call connect这条外部调用指令，从程序入口到这条调用指令的路径是紫色虚线的三个基本块。</p>
+<p>(b) 这是call connect这条指令重构时每个参数的数据流切片，即与调用点处每个参数相关的指令序列。切片算法参考了Lyle and Binkley 1993，在原文中有详细阐述，这里不会展开细节。</p>
+<p>© 基于 (b) 中的每个参数的程序切片，分析得到对应的抽象表示。抽象表示包括：(1) concrete value 具体数值 (2) ARG 代表传入该函数的参数 (3) GLOBAL 代表全局变量 (4) RET 代表调用另一个函数的返回值 (5) STK 代表栈上的变量。</p>
+<br>
+<p>完成上述处理后，每个函数得到一个 augmented call site graph ，基于这个增强调用图取执行路径作为神经网络的输入，训练神经网络预测函数名。</p>
+<h3 id="an-augmented-call-site-graph-example"><a class="markdownIt-Anchor" href="#an-augmented-call-site-graph-example"></a> An augmented call site graph example</h3>
+<img src="/images/ReassignmentSum/NERO2.png" alt="image" style="zoom: 50%;" / srcset="/images/LoadingImage.gif" data-src="/images/ReassignmentSum/NERO2.png" class="lozad post-image">
+<p>上图展示了一个CFG 和一个增强的调用图 augmented call site graph。<strong>CFG 中node 4在增强图中表示为两个不同的路径上的函数调用</strong>，原因是对node 4处的调用中的第二个参数做切片分析时选取的CFG 的路径不同，从而导致创建的切片也不同，之后得到的augmented arguments representation 也就不同。</p>
+<p>同时也注意到node 1中的一个内部调用，缺少了过程名，就用UnknownInternel表示。</p>
+<h3 id="models"><a class="markdownIt-Anchor" href="#models"></a> Models</h3>
+<p>这里简要阐述一下，本文使用的Models 如何输入上述得到的augmented call site graph。</p>
+<p><strong>1 embedding function name and argument</strong></p>
+<p>将训练数据库中的函数名分割成token，<strong>通过学习</strong>得到一个embedding vocab：<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>E</mi><mrow><mtext> </mtext><mi>n</mi><mi>a</mi><mi>m</mi><mi>e</mi><mi>s</mi></mrow></msup></mrow><annotation encoding="application/x-tex">E^{\ names}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.664392em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mspace mtight"><span class="mtight"> </span></span><span class="mord mathdefault mtight">n</span><span class="mord mathdefault mtight">a</span><span class="mord mathdefault mtight">m</span><span class="mord mathdefault mtight">e</span><span class="mord mathdefault mtight">s</span></span></span></span></span></span></span></span></span></span></span></span>，每个token都对应一个embedding。</p>
+<p>此外，<strong>通过学习</strong>给每个抽象的参数值定一个embedding，包括具体数值也有。 记作：<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>E</mi><mrow><mtext> </mtext><mi>v</mi><mi>a</mi><mi>l</mi><mi>u</mi><mi>e</mi><mi>s</mi></mrow></msup></mrow><annotation encoding="application/x-tex">E^{\ values}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.849108em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mspace mtight"><span class="mtight"> </span></span><span class="mord mathdefault mtight" style="margin-right:0.03588em;">v</span><span class="mord mathdefault mtight">a</span><span class="mord mathdefault mtight" style="margin-right:0.01968em;">l</span><span class="mord mathdefault mtight">u</span><span class="mord mathdefault mtight">e</span><span class="mord mathdefault mtight">s</span></span></span></span></span></span></span></span></span></span></span></span></p>
+<br>
+<p><strong>2 encoding a call site</strong></p>
+<p>对于一个call site 把上述token 的embedding 求和得到一个向量作为encoding 的第一部分；把<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>k</mi><mrow><mi>a</mi><mi>r</mi><mi>g</mi><mi>s</mi></mrow></msub></mrow><annotation encoding="application/x-tex">k_{args}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.980548em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-left:-0.03148em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">a</span><span class="mord mathdefault mtight" style="margin-right:0.02778em;">r</span><span class="mord mathdefault mtight" style="margin-right:0.03588em;">g</span><span class="mord mathdefault mtight">s</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span>（高参设定）个参数的embedding 首位相接，作为第二部分。形式化为：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mtext> encode_callsite </mtext><mrow><mo fence="true">(</mo><msub><mi>w</mi><mn>1</mn></msub><mo>…</mo><msub><mi>w</mi><msub><mi>k</mi><mi>s</mi></msub></msub><mo separator="true">,</mo><msub><mtext> value </mtext><mn>1</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mtext> value </mtext><msub><mi>k</mi><mtext>args </mtext></msub></msub><mo fence="true">)</mo></mrow><mo>=</mo><mrow><mo fence="true">[</mo><mrow><mo fence="true">(</mo><munderover><mo>∑</mo><mi>i</mi><msub><mi>k</mi><mi>s</mi></msub></munderover><msubsup><mi>E</mi><msub><mi>w</mi><mi>i</mi></msub><mtext>names </mtext></msubsup><mo fence="true">)</mo></mrow><mo separator="true">;</mo><msubsup><mi>E</mi><msub><mtext>value </mtext><mn>1</mn></msub><mtext>values </mtext></msubsup><mo separator="true">;</mo><mo>…</mo><mo separator="true">;</mo><msub><mi>E</mi><msubsup><mtext>value </mtext><msub><mi>k</mi><mtext>args </mtext></msub><mtext>values</mtext></msubsup></msub><mo fence="true">]</mo></mrow></mrow><annotation encoding="application/x-tex">\text{ encode\_callsite }\left(w_1 \ldots w_{k_s}, \text{ value }_1, \ldots, \text{ value }_{k_{\text{args }}}\right)=\left[\left(\sum_i^{k_s} E_{w_i}^{\text{names }}\right); E_{\text{value }_1}^{\text{values }} ; \ldots ; E_{\text{value }_{k_{\text{args }}}^{\text{values}}}\right]
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.20001em;vertical-align:-0.35001em;"></span><span class="mord text"><span class="mord"> encode_callsite </span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size1">(</span></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02691em;">w</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.02691em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.02691em;">w</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.02691em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.16454285714285719em;"><span style="top:-2.357em;margin-left:-0.03148em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2501em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord text"><span class="mord"> value </span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord text"><span class="mord"> value </span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.16454285714285716em;"><span style="top:-2.357em;margin-left:-0.03148em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">args </span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2818857142857143em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.34731999999999996em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size1">)</span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:3.1248820000000004em;vertical-align:-1.277669em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size4">[</span></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size4">(</span></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.8472130000000004em;"><span style="top:-1.872331em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span><span style="top:-3.050005em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.311105em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.16454285714285719em;"><span style="top:-2.357em;margin-left:-0.03148em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathdefault mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.277669em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.714392em;"><span style="top:-2.453em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.02691em;">w</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3280857142857143em;"><span style="top:-2.357em;margin-left:-0.02691em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-3.1130000000000004em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">names </span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.34709999999999996em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size4">)</span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mpunct">;</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.899108em;"><span style="top:-2.453em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">value </span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31731428571428577em;"><span style="top:-2.357em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-3.1130000000000004em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">values </span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.34709999999999996em;"><span></span></span></span></span></span></span><span class="mpunct">;</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mpunct">;</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.4562200000000005em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">value </span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8408285714285714em;"><span style="top:-2.1527714285714286em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.23056em;"><span style="top:-2.3000000000000003em;margin-left:-0.03148em;margin-right:0.1em;"><span class="pstrut" style="height:2.5em;"></span><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">args </span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.39444em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-2.8448em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">values</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.6289714285714285em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.6840599999999999em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size4">]</span></span></span></span></span></span></span></p>
+<p>使用一个专门的no_arg 符号的embedding 补全 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>k</mi><mrow><mi>a</mi><mi>r</mi><mi>g</mi><mi>s</mi></mrow></msub></mrow><annotation encoding="application/x-tex">k_{args}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.980548em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-left:-0.03148em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">a</span><span class="mord mathdefault mtight" style="margin-right:0.02778em;">r</span><span class="mord mathdefault mtight" style="margin-right:0.03588em;">g</span><span class="mord mathdefault mtight">s</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span> 个参数。</p>
+<br>
+<p><strong>3 Encoding Call Site Sequences with LSTMs and Transformers</strong></p>
+<p>使用LSTM-based 和Transformer-based 的seq2seq 模型，本文抽取一个程序上入口到终结节点的所有可能的路径，用这样一个集合表征这个程序。</p>
+<p>注意，这里和传统的seq2seq 范式的<strong>区别在于</strong>，输入不是标准的单一符号序列，而是一组call site序列，所以这些model 可以说是 “set-of-sequences-to-sequence”。</p>
+<br>
+<p><strong>4 Encoding Call Site Sequences with Graph Neural Networks</strong></p>
+<p>本文使用GCN 模型时，直接把一个程序的CFG 图作为输入。</p>
+<p>这里由于直接输入CFG 不像上面输入call site 序列，所以要处理一下CFG ：</p>
+<p>从节点是基本块的CFG 开始，一个基本块上可能有多个函数调用。因此，我们将每个基本块拆分为一个调用点链，一个调用链的的第一个节点连接这个基本块所有传入的边，最后一个节点连接到该基本块的所有出边。</p>
+<p>同样的，这里在重构调用点参数时，选取的CFG 上的路径不同构造出的参数抽象值或具体值可能不同，所以这里也复制了这些可能不同的调用点，组合所有参数的可能的值，如上面图fig4所示。</p>
+<h2 id="主要实验-3"><a class="markdownIt-Anchor" href="#主要实验-3"></a> 主要实验</h2>
+<p><strong>Dataset.</strong> 我们的评估重点是在 Linux 上运行的 Intel 64 bit 可执行文件。我们从 GNU 代码仓库中收集了一个包含各种软件的数据集。其中不包含多种语言混合开发的软件。为了避免不同工程之间的代码重用问题，我们采取了以下策略：</p>
+<ul>
+<li>排除同一工程的不同版本</li>
+<li>排除C++编译的工程</li>
+<li>排除可能是用于测试或者作为样例的工程</li>
+<li>排除静态连接的文件</li>
+</ul>
+<p>最终数据集包含67,246个函数用于训练，在二进制文件级别上按照 8:1:1 切割。统计结果：平均每个函数名2.42 (±0.04) 个token，每个函数489.63 (±2.82)个汇编指令，5.6 (±0.03)节点 (in GNN); 9.05 (±0.18) 路径 (in LSTMs and Transformers)。</p>
+<p>数据集中大约有15%的函数没有外部函数调用，但是他们仍有内部调用，得益于我们的增强调用点的工作，这些数据也能用于训练。</p>
+<br>
+<p><strong>Metrics.</strong> 我们采用了以前工作使用的评估方法，函数名切割成token，实行大小写无关、顺序无关和重复不敏感以及忽略非字母字符的评判标准，统计precision, recall 和 F1 指标。例如，对于真值时’open file’ 的函数名，预测为 ‘open’ 给出precision 100% recall 50%；而预测’file open input file’ 给出 67% 的precision 和 100% recall。</p>
+<br>
+<img src="/images/ReassignmentSum/NERO3.png" alt="image" style="zoom:67%;" / srcset="/images/LoadingImage.gif" data-src="/images/ReassignmentSum/NERO3.png" class="lozad post-image">
+<p>Nero 优于DIRE和Debin，分别有28%和35%的提升。混淆API调用的对抗性能，Nero要优于其他工具，主要就是Nero 更依赖增强调用点的分析工作。</p>
+<h2 id="消融实验"><a class="markdownIt-Anchor" href="#消融实验"></a> 消融实验</h2>
+<p><img src="/images/ReassignmentSum/NERO4.png" alt="image" / srcset="/images/LoadingImage.gif" data-src="/images/ReassignmentSum/NERO4.png" class="lozad post-image"></p>
+<p><strong>no-values</strong>: 调用点仅使用调用函数名，不分析参数，不使用任何增强的参数表示。</p>
+<p><strong>no-library-debug</strong>: 重构调用点的时候对外部调用不使用外部调用符号名信息。</p>
+<br>
+<p>可以看出，GNN 的效果在本文方法中优于set of sequences to sequences 的序列模型LSTM、Transformer。</p>
+<p>去掉library-debug对三个模型的影响很小，可以说是误差级别了。</p>
+<p><strong>values对序列模型的提升较大</strong>，在F1上对LSTM、Transformer、GNN提升分别大约是14%、14%、8%。</p>
+<h2 id="讨论-3"><a class="markdownIt-Anchor" href="#讨论-3"></a> 讨论</h2>
+<p>Limitations：</p>
+<p><strong>Heavy obfuscations and packers.</strong> 在我们的评估实验中探究了API 混淆的影响，实验表明它们会导致模型的精度显著下降。要解决这些问题最好是在静态分析阶段检测它们并在尝试预测函数名之前采用一些反混淆和解包方法。</p>
+<p><strong>Representation depending on call sites.</strong> 由于我们对程序的表征是基于调用点的重建和抽象，该算法强假设目标程序至少有一个调用点，并且非常依赖静态检测和分析调用点的能力。另外，实验发现较小的程序（平均4个调用，10个基本块）预测函数名的效果小幅优于整体水平。</p>
+<p><strong>Predicting names for C++ or python extension modules.</strong> Nero 实际上可以用来预测类或类方法名。增加 C++ 代码进行训练并支持 C++ 的预测是一个很好的未来工作方向。 Python 扩展模块包含更多信息，也是一个可以扩展的方向。</p>
+<p>本文决定专注于从 C 代码创建的二进制文件，是因为 C 二进制包含的信息量最少，而且我们比较的其他工作也是这样做的。</p>
+
+  </div>
+  <div>
+    
+      <div 
+        class="post-note note-info copyright" 
+        style="margin-top: 42px">
+        <p>
+          <span style="font-weight: bold;">作者：</span><a 
+            target="_blank" 
+            rel="nofollow noopener noreferrer" 
+            href="/about">
+            Ch3nYe
+          </a>
+        </p>
+        <p>
+          <span style="font-weight: bold;">文章链接：</span><a 
+            target="_blank" 
+            rel="nofollow noopener noreferrer" 
+            href="https://ch3nye.top/%E5%9F%BA%E4%BA%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%9A%84%E5%87%BD%E6%95%B0%E5%90%8D%E6%81%A2%E5%A4%8D%E6%80%BB%E7%BB%93/">
+            https://ch3nye.top/%E5%9F%BA%E4%BA%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%9A%84%E5%87%BD%E6%95%B0%E5%90%8D%E6%81%A2%E5%A4%8D%E6%80%BB%E7%BB%93/
+          </a>
+        </p>
+        <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+      </div>
+    
+  </div>
+</article>
+<div class="nav">
+  
+  
+    <div class="nav-item-next">
+      <a 
+        href="/Note-SymLM-Predicting-Function-Names-in-Stripped-Binaries/" 
+        class="nav-link">
+        <div>
+          <div class="nav-label">下一篇</div>
+          
+            <div class="nav-title">Note 《SymLM Predicting Function Names in Stripped Binaries via Context-Sensitive Execution-Aware Code Embeddings》 </div>
+          
+        </div>
+        <i class="iconfont icon-right nav-next-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+  <div 
+    class="card card-content comment-card" 
+    style="margin-top: 16px;">
+    <div class="comment-card-title">评论</div>
+    
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: '049b30eb10ea05082ef1',
+      clientSecret: 'c33ad95041c69907b3136b895008320f000987db',
+      repo: 'Ch3nYe.github.io',
+      owner: 'Ch3nYe',
+      admin: "Ch3nYe",
+      id: md5(location.href),
+      distractionFreeMode: false,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+  </div>
+
+<div 
+  class="card card-content toc-card" 
+  id="mobiletoc">
+  <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9F%BA%E4%BA%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%9A%84%E5%87%BD%E6%95%B0%E5%90%8D%E6%81%A2%E5%A4%8D%E6%80%BB%E7%BB%93"><span class="toc-text"> 基于机器学习的函数名恢复总结</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#debin"><span class="toc-text"> DEBIN</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E8%AF%8D"><span class="toc-text"> 关键词</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%91%98%E8%A6%81"><span class="toc-text"> 摘要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95"><span class="toc-text"> 方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E5%AE%9E%E9%AA%8C"><span class="toc-text"> 主要实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A8%E8%AE%BA"><span class="toc-text"> 讨论</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#punstrip"><span class="toc-text"> PUNSTRIP</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E8%AF%8D-2"><span class="toc-text"> 关键词</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%91%98%E8%A6%81-2"><span class="toc-text"> 摘要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95-2"><span class="toc-text"> 方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E5%AE%9E%E9%AA%8C-2"><span class="toc-text"> 主要实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A8%E8%AE%BA-2"><span class="toc-text"> 讨论</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#nero"><span class="toc-text"> NERO</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E8%AF%8D-3"><span class="toc-text"> 关键词</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%91%98%E8%A6%81-3"><span class="toc-text"> 摘要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95-3"><span class="toc-text"> 方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#an-augmented-call-site-graph-example"><span class="toc-text"> An augmented call site graph example</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#models"><span class="toc-text"> Models</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E5%AE%9E%E9%AA%8C-3"><span class="toc-text"> 主要实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E8%9E%8D%E5%AE%9E%E9%AA%8C"><span class="toc-text"> 消融实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A8%E8%AE%BA-3"><span class="toc-text"> 讨论</span></a></li></ol></li></ol>
+</div></main>
+            <aside class="left-column">
+              
+              <div class="card card-author">
+                
+  <img 
+    src="/images/logo.png" 
+    class="author-img"
+    width="88"
+    height="88"
+    alt="author avatar">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a 
+    class="author-posts-count" 
+    href="/archives">
+    <span>46</span>
+    <span>文章</span>
+  </a>
+  <a 
+    class="author-categories-count" 
+    href="/categories">
+    <span>7</span>
+    <span>分类</span>
+  </a>
+  <a 
+    class="author-tags-count" 
+    href="/tags">
+    <span>70</span>
+    <span>标签</span>
+  </a>
+</div>
+
+  <div class="author-card-society">
+    
+      <div class="author-card-society-icon">
+        <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+          <i class="iconfont icon-github society-icon"></i>
+        </a>
+      </div>
+    
+      <div class="author-card-society-icon">
+        <a href="mailto:sud0su@163.com">
+          <i class="iconfont icon-mail society-icon"></i>
+        </a>
+      </div>
+    
+  </div>
+
+              </div>
+               <div class="sticky-tablet">
+  
+  
+    <article class="display-when-two-columns spacer">
+      <div class="card card-content toc-card">
+        <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9F%BA%E4%BA%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%9A%84%E5%87%BD%E6%95%B0%E5%90%8D%E6%81%A2%E5%A4%8D%E6%80%BB%E7%BB%93"><span class="toc-text"> 基于机器学习的函数名恢复总结</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#debin"><span class="toc-text"> DEBIN</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E8%AF%8D"><span class="toc-text"> 关键词</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%91%98%E8%A6%81"><span class="toc-text"> 摘要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95"><span class="toc-text"> 方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E5%AE%9E%E9%AA%8C"><span class="toc-text"> 主要实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A8%E8%AE%BA"><span class="toc-text"> 讨论</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#punstrip"><span class="toc-text"> PUNSTRIP</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E8%AF%8D-2"><span class="toc-text"> 关键词</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%91%98%E8%A6%81-2"><span class="toc-text"> 摘要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95-2"><span class="toc-text"> 方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E5%AE%9E%E9%AA%8C-2"><span class="toc-text"> 主要实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A8%E8%AE%BA-2"><span class="toc-text"> 讨论</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#nero"><span class="toc-text"> NERO</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E8%AF%8D-3"><span class="toc-text"> 关键词</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%91%98%E8%A6%81-3"><span class="toc-text"> 摘要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95-3"><span class="toc-text"> 方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#an-augmented-call-site-graph-example"><span class="toc-text"> An augmented call site graph example</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#models"><span class="toc-text"> Models</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E5%AE%9E%E9%AA%8C-3"><span class="toc-text"> 主要实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E8%9E%8D%E5%AE%9E%E9%AA%8C"><span class="toc-text"> 消融实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A8%E8%AE%BA-3"><span class="toc-text"> 讨论</span></a></li></ol></li></ol>
+      </div>
+    </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header">
+    <i 
+      class="iconfont icon-fenlei" 
+      style="padding-right: 2px;">
+    </i>分类
+  </div>
+  <div class="categories-list">
+    
+      <a href="/categories/%E5%A4%87%E5%BF%98/">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%94%9F%E6%B4%BB/">
+        <div class="categories-list-item">
+          生活
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E6%9D%8E%E5%AE%8F%E6%AF%85%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">15</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">14</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E5%AE%9E%E6%88%98/">
+        <div class="categories-list-item">
+          实战
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%AC%94%E8%AE%B0/">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">7</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%BF%BB%E8%AF%91/">
+        <div class="categories-list-item">
+          翻译
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header">
+    <i 
+      class="iconfont icon-biaoqian" 
+      style="padding-right: 2px;">
+    </i>热门标签
+  </div>
+  <div class="tags-list">
+    
+      <a 
+        href="/tags/%E7%AC%94%E8%AE%B0/" 
+        title="笔记">
+        <div class="tags-list-item">笔记</div>
+      </a>
+    
+      <a 
+        href="/tags/%E8%AE%BA%E6%96%87/" 
+        title="论文">
+        <div class="tags-list-item">论文</div>
+      </a>
+    
+      <a 
+        href="/tags/note/" 
+        title="note">
+        <div class="tags-list-item">note</div>
+      </a>
+    
+      <a 
+        href="/tags/ML/" 
+        title="ML">
+        <div class="tags-list-item">ML</div>
+      </a>
+    
+      <a 
+        href="/tags/Next-Step-of-ML/" 
+        title="Next-Step-of-ML">
+        <div class="tags-list-item">Next-Step-of-ML</div>
+      </a>
+    
+      <a 
+        href="/tags/Android/" 
+        title="Android">
+        <div class="tags-list-item">Android</div>
+      </a>
+    
+      <a 
+        href="/tags/Binary/" 
+        title="Binary">
+        <div class="tags-list-item">Binary</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%80%BB%E7%BB%93/" 
+        title="总结">
+        <div class="tags-list-item">总结</div>
+      </a>
+    
+      <a 
+        href="/tags/Rust/" 
+        title="Rust">
+        <div class="tags-list-item">Rust</div>
+      </a>
+    
+      <a 
+        href="/tags/Deep-Learning/" 
+        title="Deep-Learning">
+        <div class="tags-list-item">Deep-Learning</div>
+      </a>
+    
+      <a 
+        href="/tags/%E7%BF%BB%E8%AF%91/" 
+        title="翻译">
+        <div class="tags-list-item">翻译</div>
+      </a>
+    
+      <a 
+        href="/tags/%E5%AD%A6%E4%B9%A0/" 
+        title="学习">
+        <div class="tags-list-item">学习</div>
+      </a>
+    
+      <a 
+        href="/tags/%E5%AE%9E%E6%88%98/" 
+        title="实战">
+        <div class="tags-list-item">实战</div>
+      </a>
+    
+      <a 
+        href="/tags/crack/" 
+        title="crack">
+        <div class="tags-list-item">crack</div>
+      </a>
+    
+      <a 
+        href="/tags/%E4%BA%8C%E8%BF%9B%E5%88%B6/" 
+        title="二进制">
+        <div class="tags-list-item">二进制</div>
+      </a>
+    
+      <a 
+        href="/tags/HTTPS/" 
+        title="HTTPS">
+        <div class="tags-list-item">HTTPS</div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+            </aside>
+            <aside class="right-column">
+              <div class="sticky-widescreen">
+  
+  
+    <article class="card card-content toc-card">
+      <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9F%BA%E4%BA%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%9A%84%E5%87%BD%E6%95%B0%E5%90%8D%E6%81%A2%E5%A4%8D%E6%80%BB%E7%BB%93"><span class="toc-text"> 基于机器学习的函数名恢复总结</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#debin"><span class="toc-text"> DEBIN</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E8%AF%8D"><span class="toc-text"> 关键词</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%91%98%E8%A6%81"><span class="toc-text"> 摘要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95"><span class="toc-text"> 方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E5%AE%9E%E9%AA%8C"><span class="toc-text"> 主要实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A8%E8%AE%BA"><span class="toc-text"> 讨论</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#punstrip"><span class="toc-text"> PUNSTRIP</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E8%AF%8D-2"><span class="toc-text"> 关键词</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%91%98%E8%A6%81-2"><span class="toc-text"> 摘要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95-2"><span class="toc-text"> 方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E5%AE%9E%E9%AA%8C-2"><span class="toc-text"> 主要实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A8%E8%AE%BA-2"><span class="toc-text"> 讨论</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#nero"><span class="toc-text"> NERO</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E8%AF%8D-3"><span class="toc-text"> 关键词</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%91%98%E8%A6%81-3"><span class="toc-text"> 摘要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95-3"><span class="toc-text"> 方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#an-augmented-call-site-graph-example"><span class="toc-text"> An augmented call site graph example</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#models"><span class="toc-text"> Models</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E5%AE%9E%E9%AA%8C-3"><span class="toc-text"> 主要实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E8%9E%8D%E5%AE%9E%E9%AA%8C"><span class="toc-text"> 消融实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A8%E8%AE%BA-3"><span class="toc-text"> 讨论</span></a></li></ol></li></ol>
+    </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header">
+    <i 
+      class="iconfont icon-wenzhang_huaban" 
+      style="padding-right: 2px;">
+    </i>最近文章
+  </div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-10-25</div>
+        <a href="/%E5%9F%BA%E4%BA%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%9A%84%E5%87%BD%E6%95%B0%E5%90%8D%E6%81%A2%E5%A4%8D%E6%80%BB%E7%BB%93/"><div class="recent-posts-item-content">基于机器学习的函数名恢复总结</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-10-05</div>
+        <a href="/Note-SymLM-Predicting-Function-Names-in-Stripped-Binaries/"><div class="recent-posts-item-content">Note 《SymLM Predicting Function Names in Stripped Binaries via Context-Sensitive Execution-Aware Code Embeddings》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-09-13</div>
+        <a href="/Note-SafeDrop-Detecting-Memory-Deallocation-Bugs-of-Rust/"><div class="recent-posts-item-content">Note 《SafeDrop Detecting Memory Deallocation Bugs of Rust Programs via Static Data-Flow Analysis》</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-06-01</div>
+        <a href="/Note-SoK-Demystifying-Binary-Lifters-Through-the-Lens-of-Downstream-Applications/"><div class="recent-posts-item-content">Note 《SoK Demystifying Binary Lifters Through the Lens of Downstream Applications》</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+     
+    <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>
+          Copyright ©
+          
+            2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a 
+          href="/" 
+          class="footer-link">
+          ch3nye's blog
+        </a>
+      </div>
+    </div>
+
+    
+      <div class="footer-dsc">
+        
+          Powered by
+          <a 
+            href="https://hexo.io/" 
+            class="footer-link" 
+            target="_blank" 
+            rel="nofollow noopener noreferrer">
+            &nbsp;Hexo
+          </a>
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          Theme -
+          <a 
+            href="https://github.com/theme-kaze" 
+            class="footer-link" 
+            target="_blank"
+            rel="nofollow noopener noreferrer">
+            &nbsp;Kaze
+          </a>
+        
+      </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+          本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+<!-- Default Statcounter code for My Blog https://ch3nye.top -->
+<script type="text/javascript">
+var sc_project=12696483; 
+var sc_invisible=1; 
+var sc_security="0f70f90d"; 
+</script>
+<script type="text/javascript"
+src="https://www.statcounter.com/counter/counter.js" async></script>
+<noscript><div class="statcounter"><a title="Web Analytics"
+href="https://statcounter.com/" target="_blank"><img class="statcounter"
+src="https://c.statcounter.com/12696483/0/0f70f90d/1/" alt="Web Analytics"
+referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
+<!-- End of Statcounter Code -->
+</footer> 
+    
+  <a 
+    role="button" 
+    id="scrollbutton" 
+    class="basebutton" 
+    aria-label="回到顶部">
+    <i class="iconfont icon-arrowleft button-icon"></i>
+  </a>
+
+<a 
+  role="button" 
+  id="menubutton"
+  aria-label="menu button"
+  class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="popbutton" 
+  class="basebutton" 
+  aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="darkbutton" 
+  class="basebutton darkwidget" 
+  aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="searchbutton" 
+  class="basebutton searchwidget" 
+  aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a> 
+     
+     
+      
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+ 
+     
+     
+      <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img')
+    var i
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a')
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'))
+      wrapper.setAttribute('aria-label', 'illustration')
+      wrapper.style.cssText =
+        'width: 100%; display: flex; justify-content: center;'
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt
+      wrapper.dataset.nolink = true
+      img[i].before(wrapper)
+      wrapper.append(img[i])
+      var divWrap = document.createElement('div')
+      divWrap.classList.add('gallery')
+      wrapper.before(divWrap)
+      divWrap.append(wrapper)
+    }
+    baguetteBox.run('.gallery')
+  }
+</script>
+<script>
+  loadScript(
+    "/js/lib/lightbox/baguetteBox.min.js",
+    addImgLayout
+  )
+</script>
+ 
+     
+     
+    <script src="/js/main.js"></script> 
+    
+      <script> 
+        loadScript('/js/lib/busuanzi.min.js') 
+      </script>
+     
+    
+      <script>
+        var addLazyload = function () {
+          var observer = lozad('.lozad', {
+            load: function (el) {
+              el.srcset = el.getAttribute('data-src')
+            },
+            loaded: function (el) {
+              el.classList.add('loaded')
+            },
+          })
+          observer.observe()
+        }
+      </script>
+      <script>
+        loadScript('/js/lib/lozad.min.js', addLazyload)
+      </script>
+     
+    
+      <script>
+        var googleAnalytics = function () {
+          window.dataLayer = window.dataLayer || []
+          function gtag() {
+            dataLayer.push(arguments)
+          }
+          gtag('js', new Date())
+          gtag('config', 'G-WHGL11014T')
+        }
+    </script>
+      <script>
+        loadScript(
+          'https://www.googletagmanager.com/gtag/js?id=' +
+            'G-WHGL11014T',
+          googleAnalytics
+        )
+      </script>
+    
+    
+      <script>
+        setTimeout(() => {localSearch("search.json")}, 0)
+      </script>
+    
+  </body>
+</html>
